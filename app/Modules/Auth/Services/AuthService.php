@@ -4,31 +4,56 @@ namespace App\Modules\Auth\Services;
 
 use App\Core\Tenancy\Contracts\ActiveOrganizerServiceInterface;
 use App\Core\Tenancy\Contracts\OrganizerContextInterface;
+use App\Modules\Auth\Contracts\AuthServiceInterface;
+use App\Modules\Auth\Contracts\PersonalAccessTokenServiceInterface;
 use App\Modules\Auth\Contracts\UserRoleResolverInterface;
 use App\Modules\Auth\DTOs\AuthenticatedUserDto;
+use App\Modules\Auth\DTOs\LoginDto;
 use App\Modules\Auth\Enums\UserRole;
 use App\Modules\Auth\Exceptions\AccountSuspendedException;
 use App\Modules\Auth\Exceptions\EmailNotVerifiedException;
 use App\Modules\Auth\Exceptions\InvalidCredentialsException;
 use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Repositories\Contracts\UserRepositoryInterface;
-use App\Modules\Auth\Contracts\AuthServiceInterface;
-use App\Modules\Auth\Contracts\PersonalAccessTokenServiceInterface;
-use App\Modules\Auth\DTOs\LoginDto;
 use App\Modules\Organizer\Models\OrganizerMember;
-use Illuminate\Auth\AuthManager;
+use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Contracts\Auth\StatefulGuard;
 
 class AuthService implements AuthServiceInterface
 {
+    /** @var UserRepositoryInterface */
+    private $users;
+
+    /** @var AuthFactory */
+    private $auth;
+
+    /** @var UserRoleResolverInterface */
+    private $roleResolver;
+
+    /** @var ActiveOrganizerServiceInterface */
+    private $activeOrganizerService;
+
+    /** @var OrganizerContextInterface */
+    private $organizerContext;
+
+    /** @var PersonalAccessTokenServiceInterface */
+    private $tokenService;
+
     public function __construct(
-        private readonly UserRepositoryInterface $users,
-        private readonly AuthManager $auth,
-        private readonly UserRoleResolverInterface $roleResolver,
-        private readonly ActiveOrganizerServiceInterface $activeOrganizerService,
-        private readonly OrganizerContextInterface $organizerContext,
-        private readonly PersonalAccessTokenServiceInterface $tokenService,
-    ) {}
+        UserRepositoryInterface $users,
+        AuthFactory $auth,
+        UserRoleResolverInterface $roleResolver,
+        ActiveOrganizerServiceInterface $activeOrganizerService,
+        OrganizerContextInterface $organizerContext,
+        PersonalAccessTokenServiceInterface $tokenService
+    ) {
+        $this->users = $users;
+        $this->auth = $auth;
+        $this->roleResolver = $roleResolver;
+        $this->activeOrganizerService = $activeOrganizerService;
+        $this->organizerContext = $organizerContext;
+        $this->tokenService = $tokenService;
+    }
 
     public function login(LoginDto $dto): User
     {
@@ -93,9 +118,12 @@ class AuthService implements AuthServiceInterface
         $activeMembership = null;
 
         if ($activeOrganizerId !== null) {
-            $organizer = $this->organizerContext->organizer()
-                ?? $this->activeOrganizerService->getAvailableOrganizers($user)
+            $organizer = $this->organizerContext->organizer();
+
+            if ($organizer === null) {
+                $organizer = $this->activeOrganizerService->getAvailableOrganizers($user)
                     ->firstWhere('id', $activeOrganizerId);
+            }
 
             if ($organizer !== null) {
                 $activeOrganizer = [
@@ -107,12 +135,15 @@ class AuthService implements AuthServiceInterface
                 ];
             }
 
-            $membership = $this->organizerContext->membership()
-                ?? OrganizerMember::query()
+            $membership = $this->organizerContext->membership();
+
+            if ($membership === null) {
+                $membership = OrganizerMember::query()
                     ->where('user_id', $user->id)
                     ->where('organizer_id', $activeOrganizerId)
                     ->where('status', 'active')
                     ->first();
+            }
 
             if ($membership !== null) {
                 $activeMembership = [
@@ -124,28 +155,31 @@ class AuthService implements AuthServiceInterface
         }
 
         return new AuthenticatedUserDto(
-            id: $user->id,
-            uuid: $user->uuid,
-            name: $user->name,
-            email: $user->email,
-            phone: $user->phone,
-            avatarUrl: $user->avatar_url,
-            emailVerified: $user->email_verified_at !== null,
-            roles: $roles,
-            activeOrganizer: $activeOrganizer,
-            activeMembership: $activeMembership,
-            primaryRole: $this->roleResolver->resolvePrimaryRole($user, $activeOrganizerId),
+            $user->id,
+            $user->uuid,
+            $user->name,
+            $user->email,
+            $user->phone,
+            $user->avatar_url,
+            $user->email_verified_at !== null,
+            $roles,
+            $activeOrganizer,
+            $activeMembership,
+            $this->roleResolver->resolvePrimaryRole($user, $activeOrganizerId)
         );
     }
 
     private function mapMembershipRole(string $role): string
     {
-        return match ($role) {
-            'owner' => UserRole::OrganizerOwner->value,
-            'admin' => UserRole::OrganizerAdmin->value,
-            'staff' => UserRole::OrganizerStaff->value,
-            'scanner' => UserRole::EventScanner->value,
-            default => UserRole::Participant->value,
-        };
+        switch ($role) {
+            case 'owner':
+            case 'admin':
+                return UserRole::ORGANIZER;
+            case 'staff':
+            case 'scanner':
+                return UserRole::STAFF;
+            default:
+                return UserRole::PARTICIPANT;
+        }
     }
 }

@@ -4,7 +4,7 @@ namespace App\Modules\Auth\Exceptions;
 
 class InvalidCredentialsException extends AuthException
 {
-    protected string $errorCode = 'INVALID_CREDENTIALS';
+    protected $errorCode = 'INVALID_CREDENTIALS';
 
     public static function make(): self
     {

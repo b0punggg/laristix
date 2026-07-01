@@ -4,15 +4,17 @@ namespace App\Modules\Auth\Contracts;
 
 use App\Modules\Auth\Models\User;
 use Laravel\Sanctum\NewAccessToken;
-use Laravel\Sanctum\PersonalAccessToken;
 
 interface PersonalAccessTokenServiceInterface
 {
+    /**
+     * @param  list<string>  $abilities
+     */
     public function createToken(
         User $user,
         string $name,
         array $abilities,
-        ?\DateTimeInterface $expiresAt = null,
+        ?\DateTimeInterface $expiresAt = null
     ): NewAccessToken;
 
     public function createScannerToken(User $user, string $deviceName): NewAccessToken;

@@ -2,9 +2,13 @@
 
 namespace App\Modules\Auth\DTOs;
 
-readonly class ForgotPasswordDto
+class ForgotPasswordDto
 {
-    public function __construct(
-        public string $email,
-    ) {}
+    /** @var string */
+    public $email;
+
+    public function __construct(string $email)
+    {
+        $this->email = $email;
+    }
 }

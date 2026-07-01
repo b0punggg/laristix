@@ -25,8 +25,13 @@ Route::prefix('auth')->name('auth.')->group(function () {
     });
 
     Route::get('email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware(['signed', 'throttle:'.config('auth_module.rate_limits.verify_email')])
+        ->middleware('throttle:'.config('auth_module.rate_limits.verify_email'))
         ->name('verification.verify');
+
+    Route::middleware('throttle:'.config('auth_module.rate_limits.verify_email'))->group(function () {
+        Route::post('email/resend-verification', [EmailVerificationController::class, 'resendPublic'])
+            ->name('verification.resend');
+    });
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');

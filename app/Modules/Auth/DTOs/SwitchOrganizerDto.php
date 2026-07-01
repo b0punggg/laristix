@@ -2,9 +2,13 @@
 
 namespace App\Modules\Auth\DTOs;
 
-readonly class SwitchOrganizerDto
+class SwitchOrganizerDto
 {
-    public function __construct(
-        public int $organizerId,
-    ) {}
+    /** @var int */
+    public $organizerId;
+
+    public function __construct(int $organizerId)
+    {
+        $this->organizerId = $organizerId;
+    }
 }

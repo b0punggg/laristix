@@ -12,7 +12,7 @@ class PersonalAccessTokenService implements PersonalAccessTokenServiceInterface
         User $user,
         string $name,
         array $abilities,
-        ?\DateTimeInterface $expiresAt = null,
+        ?\DateTimeInterface $expiresAt = null
     ): NewAccessToken {
         return $user->createToken($name, $abilities, $expiresAt);
     }
@@ -25,7 +25,7 @@ class PersonalAccessTokenService implements PersonalAccessTokenServiceInterface
             $user,
             config('auth_module.token.scanner_token_name', 'scanner').':'.$deviceName,
             config('auth_module.token.scanner_abilities', ['check-in:scan', 'check-in:read']),
-            $expiresAt,
+            $expiresAt
         );
     }
 

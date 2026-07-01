@@ -2,32 +2,41 @@
 
 namespace App\Modules\Auth\Enums;
 
-enum UserRole: string
+class UserRole
 {
-    case SuperAdmin = 'super_admin';
-    case OrganizerOwner = 'organizer_owner';
-    case OrganizerAdmin = 'organizer_admin';
-    case OrganizerStaff = 'organizer_staff';
-    case EventScanner = 'event_scanner';
-    case Participant = 'participant';
+    public const SUPER_ADMIN = 'super_admin';
+
+    public const ORGANIZER = 'organizer';
+
+    public const STAFF = 'staff';
+
+    public const PARTICIPANT = 'participant';
 
     /**
      * @return list<string>
      */
     public static function values(): array
     {
-        return array_column(self::cases(), 'value');
+        return [
+            self::SUPER_ADMIN,
+            self::ORGANIZER,
+            self::STAFF,
+            self::PARTICIPANT,
+        ];
     }
 
-    public function label(): string
+    /**
+     * Highest precedence first (used for primary role resolution).
+     *
+     * @return list<string>
+     */
+    public static function priority(): array
     {
-        return match ($this) {
-            self::SuperAdmin => 'Super Admin',
-            self::OrganizerOwner => 'Organizer Owner',
-            self::OrganizerAdmin => 'Organizer Admin',
-            self::OrganizerStaff => 'Organizer Staff',
-            self::EventScanner => 'Event Scanner',
-            self::Participant => 'Participant',
-        };
+        return [
+            self::SUPER_ADMIN,
+            self::ORGANIZER,
+            self::STAFF,
+            self::PARTICIPANT,
+        ];
     }
 }

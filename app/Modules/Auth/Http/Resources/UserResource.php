@@ -2,17 +2,15 @@
 
 namespace App\Modules\Auth\Http\Resources;
 
-use App\Modules\Auth\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin User */
 class UserResource extends JsonResource
 {
     /**
+     * @param  \Illuminate\Http\Request  $request
      * @return array<string, mixed>
      */
-    public function toArray(Request $request): array
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,
@@ -24,7 +22,7 @@ class UserResource extends JsonResource
             'email_verified' => $this->email_verified_at !== null,
             'platform_role' => $this->platform_role,
             'status' => $this->status,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
         ];
     }
 }

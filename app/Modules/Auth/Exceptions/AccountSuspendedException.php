@@ -6,9 +6,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AccountSuspendedException extends AuthException
 {
-    protected int $statusCode = Response::HTTP_FORBIDDEN;
+    protected $statusCode = Response::HTTP_FORBIDDEN;
 
-    protected string $errorCode = 'ACCOUNT_SUSPENDED';
+    protected $errorCode = 'ACCOUNT_SUSPENDED';
 
     public static function make(): self
     {

@@ -2,11 +2,21 @@
 
 namespace App\Modules\Auth\DTOs;
 
-readonly class LoginDto
+class LoginDto
 {
-    public function __construct(
-        public string $email,
-        public string $password,
-        public bool $remember = false,
-    ) {}
+    /** @var string */
+    public $email;
+
+    /** @var string */
+    public $password;
+
+    /** @var bool */
+    public $remember;
+
+    public function __construct(string $email, string $password, bool $remember = false)
+    {
+        $this->email = $email;
+        $this->password = $password;
+        $this->remember = $remember;
+    }
 }

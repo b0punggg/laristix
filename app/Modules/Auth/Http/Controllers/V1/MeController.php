@@ -7,7 +7,6 @@ use App\Core\Tenancy\Contracts\ActiveOrganizerServiceInterface;
 use App\Core\Tenancy\Contracts\OrganizerContextInterface;
 use App\Core\Tenancy\Contracts\OrganizerMembershipValidatorInterface;
 use App\Modules\Auth\Contracts\AuthServiceInterface;
-use App\Modules\Auth\DTOs\SwitchOrganizerDto;
 use App\Modules\Auth\Http\Requests\SwitchOrganizerRequest;
 use App\Modules\Auth\Http\Resources\MeResource;
 use App\Modules\Auth\Http\Resources\OrganizerSummaryResource;

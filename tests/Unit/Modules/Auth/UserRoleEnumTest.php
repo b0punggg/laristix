@@ -9,13 +9,33 @@ use PHPUnit\Framework\TestCase;
 class UserRoleEnumTest extends TestCase
 {
     #[Test]
-    public function it_maps_organizer_member_roles_to_user_roles(): void
+    public function it_exposes_expected_role_constants(): void
     {
-        $this->assertSame('organizer_owner', UserRole::OrganizerOwner->value);
-        $this->assertSame('organizer_admin', UserRole::OrganizerAdmin->value);
-        $this->assertSame('organizer_staff', UserRole::OrganizerStaff->value);
-        $this->assertSame('event_scanner', UserRole::EventScanner->value);
-        $this->assertSame('participant', UserRole::Participant->value);
-        $this->assertSame('super_admin', UserRole::SuperAdmin->value);
+        $this->assertSame('super_admin', UserRole::SUPER_ADMIN);
+        $this->assertSame('organizer', UserRole::ORGANIZER);
+        $this->assertSame('staff', UserRole::STAFF);
+        $this->assertSame('participant', UserRole::PARTICIPANT);
+    }
+
+    #[Test]
+    public function it_lists_all_role_values(): void
+    {
+        $this->assertSame([
+            UserRole::SUPER_ADMIN,
+            UserRole::ORGANIZER,
+            UserRole::STAFF,
+            UserRole::PARTICIPANT,
+        ], UserRole::values());
+    }
+
+    #[Test]
+    public function it_orders_roles_by_priority(): void
+    {
+        $this->assertSame([
+            UserRole::SUPER_ADMIN,
+            UserRole::ORGANIZER,
+            UserRole::STAFF,
+            UserRole::PARTICIPANT,
+        ], UserRole::priority());
     }
 }

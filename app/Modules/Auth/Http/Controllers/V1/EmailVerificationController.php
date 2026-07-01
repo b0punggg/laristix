@@ -42,4 +42,21 @@ class EmailVerificationController extends Controller
             'message' => 'Email verified successfully.',
         ]);
     }
+
+    public function resendPublic(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email'],
+        ]);
+
+        $user = User::query()->where('email', $validated['email'])->first();
+
+        if ($user !== null && ! $user->hasVerifiedEmail()) {
+            $this->emailVerification->sendVerificationNotification($user);
+        }
+
+        return response()->json([
+            'message' => 'If your email is registered and not yet verified, we sent a new verification link.',
+        ]);
+    }
 }

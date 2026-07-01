@@ -12,9 +12,13 @@ use Illuminate\Support\Str;
 
 class PasswordResetService implements PasswordResetServiceInterface
 {
-    public function __construct(
-        private readonly UserRepositoryInterface $users,
-    ) {}
+    /** @var UserRepositoryInterface */
+    private $users;
+
+    public function __construct(UserRepositoryInterface $users)
+    {
+        $this->users = $users;
+    }
 
     public function sendResetLink(ForgotPasswordDto $dto): string
     {

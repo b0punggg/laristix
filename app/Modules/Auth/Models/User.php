@@ -4,22 +4,24 @@ namespace App\Modules\Auth\Models;
 
 use App\Core\Support\Traits\HasUuid;
 use App\Modules\Auth\Notifications\VerifyEmailNotification;
-use App\Modules\CheckIn\Models\CheckIn;
-use App\Modules\Event\Models\EventStaff;
+use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
-use App\Modules\Order\Models\Order;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens;
     use HasFactory;
+    use HasRoles;
     use HasUuid;
     use Notifiable;
     use SoftDeletes;
@@ -42,14 +44,22 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    protected $guard_name = 'web';
+
+    protected static function newFactory(): UserFactory
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'last_login_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return UserFactory::new();
     }
+
+    // -------------------------------------------------------------------------
+    // Organizer membership (cross-module; Organizer module owns business rules)
+    // -------------------------------------------------------------------------
 
     public function organizerMembers(): HasMany
     {
@@ -61,24 +71,42 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->organizerMembers()->where('status', 'active');
     }
 
-    public function eventStaffs(): HasMany
+    public function organizers(): BelongsToMany
     {
-        return $this->hasMany(EventStaff::class);
+        return $this->belongsToMany(Organizer::class, 'organizer_members')
+            ->withPivot(['role', 'status', 'invited_by', 'invited_at', 'accepted_at'])
+            ->withTimestamps();
     }
 
-    public function orders(): HasMany
+    public function activeOrganizers(): BelongsToMany
     {
-        return $this->hasMany(Order::class);
+        return $this->organizers()->wherePivot('status', 'active');
     }
 
-    public function checkIns(): HasMany
+    /** Memberships this user invited (organizer_members.invited_by). */
+    public function sentOrganizerInvitations(): HasMany
     {
-        return $this->hasMany(CheckIn::class, 'scanned_by');
+        return $this->hasMany(OrganizerMember::class, 'invited_by');
     }
+
+    // -------------------------------------------------------------------------
+    // Sanctum API tokens (personal_access_tokens.tokenable morph)
+    // -------------------------------------------------------------------------
+
+    // Provided by HasApiTokens: tokens(), createToken(), currentAccessToken(), etc.
+
+    // -------------------------------------------------------------------------
+    // Domain helpers
+    // -------------------------------------------------------------------------
 
     public function isSuperAdmin(): bool
     {
         return $this->platform_role === 'super_admin';
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
     }
 
     public function isParticipant(): bool

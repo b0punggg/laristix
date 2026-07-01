@@ -6,6 +6,7 @@ use App\Modules\Auth\Contracts\EmailVerificationServiceInterface;
 use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Notifications\VerifyEmailNotification;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 
 class EmailVerificationService implements EmailVerificationServiceInterface
@@ -29,9 +30,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
             abort(403, 'Invalid verification link.');
         }
 
-        if (! URL::hasValidSignature(request())) {
-            abort(403, 'Verification link has expired.');
-        }
+        $this->assertValidSignedVerificationRequest($id, $hash);
 
         if ($user->hasVerifiedEmail()) {
             return;
@@ -39,6 +38,26 @@ class EmailVerificationService implements EmailVerificationServiceInterface
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
+        }
+    }
+
+    private function assertValidSignedVerificationRequest(int $id, string $hash): void
+    {
+        $request = request();
+
+        if (! $request->has('expires') || ! $request->has('signature')) {
+            abort(403, 'Invalid verification link.');
+        }
+
+        $signedUrl = rtrim((string) config('app.url'), '/')
+            .URL::route('api.v1.auth.verification.verify', ['id' => $id, 'hash' => $hash], false)
+            .'?expires='.$request->query('expires')
+            .'&signature='.$request->query('signature');
+
+        $validationRequest = Request::create($signedUrl, 'GET');
+
+        if (! $validationRequest->hasValidSignature()) {
+            abort(403, 'Verification link has expired or is invalid.');
         }
     }
 }

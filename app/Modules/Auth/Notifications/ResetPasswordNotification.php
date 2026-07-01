@@ -6,22 +6,32 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\URL;
 
 class ResetPasswordNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(
-        private readonly string $token,
-    ) {}
+    /** @var string */
+    private $token;
 
-    public function via(object $notifiable): array
+    public function __construct(string $token)
+    {
+        $this->token = $token;
+    }
+
+    /**
+     * @param  mixed  $notifiable
+     * @return array<int, string>
+     */
+    public function via($notifiable): array
     {
         return ['mail'];
     }
 
-    public function toMail(object $notifiable): MailMessage
+    /**
+     * @param  mixed  $notifiable
+     */
+    public function toMail($notifiable): MailMessage
     {
         $frontendUrl = config('app.frontend_url', config('app.url'));
         $resetUrl = $frontendUrl.'/forgot-password?token='.$this->token.'&email='.urlencode($notifiable->getEmailForPasswordReset());

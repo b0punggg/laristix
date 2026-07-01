@@ -6,9 +6,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EmailNotVerifiedException extends AuthException
 {
-    protected int $statusCode = Response::HTTP_FORBIDDEN;
+    protected $statusCode = Response::HTTP_FORBIDDEN;
 
-    protected string $errorCode = 'EMAIL_NOT_VERIFIED';
+    protected $errorCode = 'EMAIL_NOT_VERIFIED';
 
     public static function make(): self
     {

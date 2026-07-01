@@ -2,12 +2,25 @@
 
 namespace App\Modules\Auth\DTOs;
 
-readonly class ResetPasswordDto
+class ResetPasswordDto
 {
-    public function __construct(
-        public string $email,
-        public string $password,
-        public string $passwordConfirmation,
-        public string $token,
-    ) {}
+    /** @var string */
+    public $email;
+
+    /** @var string */
+    public $password;
+
+    /** @var string */
+    public $passwordConfirmation;
+
+    /** @var string */
+    public $token;
+
+    public function __construct(string $email, string $password, string $passwordConfirmation, string $token)
+    {
+        $this->email = $email;
+        $this->password = $password;
+        $this->passwordConfirmation = $passwordConfirmation;
+        $this->token = $token;
+    }
 }
