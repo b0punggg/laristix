@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EventCategory extends Model
 {
+    protected $table = 'event_categories';
 
     protected $fillable = [
         'organizer_id',
@@ -19,12 +20,9 @@ class EventCategory extends Model
         'is_active',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     public function organizer(): BelongsTo
     {
@@ -34,5 +32,10 @@ class EventCategory extends Model
     public function events(): HasMany
     {
         return $this->hasMany(Event::class, 'category_id');
+    }
+
+    public function isGlobal(): bool
+    {
+        return $this->organizer_id === null;
     }
 }

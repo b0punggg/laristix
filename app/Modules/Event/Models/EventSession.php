@@ -3,10 +3,8 @@
 namespace App\Modules\Event\Models;
 
 use App\Core\Support\Traits\HasOrganizer;
-use App\Modules\Ticketing\Models\Waitlist;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EventSession extends Model
@@ -31,15 +29,12 @@ class EventSession extends Model
         'settings',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'start_at' => 'datetime',
-            'end_at' => 'datetime',
-            'is_active' => 'boolean',
-            'settings' => 'array',
-        ];
-    }
+    protected $casts = [
+        'start_at' => 'datetime',
+        'end_at' => 'datetime',
+        'is_active' => 'boolean',
+        'settings' => 'array',
+    ];
 
     public function event(): BelongsTo
     {
@@ -54,10 +49,5 @@ class EventSession extends Model
     public function venue(): BelongsTo
     {
         return $this->belongsTo(Venue::class);
-    }
-
-    public function waitlists(): HasMany
-    {
-        return $this->hasMany(Waitlist::class, 'session_id');
     }
 }

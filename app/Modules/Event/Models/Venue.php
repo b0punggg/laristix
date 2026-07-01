@@ -3,13 +3,13 @@
 namespace App\Modules\Event\Models;
 
 use App\Core\Support\Traits\HasOrganizer;
-use App\Modules\Organizer\Models\Organizer;
+use App\Core\Tenancy\Contracts\TenantAware;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Venue extends Model
+class Venue extends Model implements TenantAware
 {
     use HasOrganizer;
     use SoftDeletes;
@@ -29,26 +29,13 @@ class Venue extends Model
         'capacity',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'latitude' => 'decimal:8',
-            'longitude' => 'decimal:8',
-        ];
-    }
-
-    public function organizer(): BelongsTo
-    {
-        return $this->belongsTo(Organizer::class);
-    }
+    protected $casts = [
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+    ];
 
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);
-    }
-
-    public function sessions(): HasMany
-    {
-        return $this->hasMany(EventSession::class);
     }
 }

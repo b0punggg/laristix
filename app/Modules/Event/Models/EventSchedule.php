@@ -5,7 +5,6 @@ namespace App\Modules\Event\Models;
 use App\Core\Support\Traits\HasOrganizer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EventSchedule extends Model
 {
@@ -21,20 +20,17 @@ class EventSchedule extends Model
         'sort_order',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'start_at' => 'datetime',
-            'end_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'start_at' => 'datetime',
+        'end_at' => 'datetime',
+    ];
 
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
-    public function sessions(): HasMany
+    public function sessions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(EventSession::class, 'schedule_id');
     }

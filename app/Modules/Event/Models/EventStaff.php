@@ -27,14 +27,11 @@ class EventStaff extends Model
         'removed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'permissions' => 'array',
-            'assigned_at' => 'datetime',
-            'removed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'permissions' => 'array',
+        'assigned_at' => 'datetime',
+        'removed_at' => 'datetime',
+    ];
 
     public function event(): BelongsTo
     {
