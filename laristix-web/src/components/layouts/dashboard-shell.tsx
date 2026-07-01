@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 const organizerNavItems = [
   { href: routes.organizerDashboard, label: "Dashboard" },
   { href: routes.organizerEvents, label: "Events" },
+  { href: routes.scanner, label: "Scanner" },
   { href: routes.selectOrganizer, label: "Switch organizer" },
 ];
 

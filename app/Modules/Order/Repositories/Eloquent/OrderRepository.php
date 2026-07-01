@@ -11,7 +11,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function findByUuid(string $uuid): ?Order
     {
         return Order::withoutOrganizerScope()
-            ->with(['items.ticketType', 'payment', 'registrations.ticket', 'event', 'organizer'])
+            ->with(['items.ticketType', 'payment', 'registrations.ticket', 'event.venue', 'event.category', 'organizer'])
             ->where('uuid', $uuid)
             ->first();
     }
@@ -56,7 +56,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function paginateForUser(int $userId, int $perPage = 15): LengthAwarePaginator
     {
         return Order::withoutOrganizerScope()
-            ->with(['items', 'payment', 'registrations.ticket', 'event'])
+            ->with(['items', 'payment', 'registrations.ticket', 'event.venue', 'event.category'])
             ->where('user_id', $userId)
             ->orderByDesc('created_at')
             ->paginate($perPage);

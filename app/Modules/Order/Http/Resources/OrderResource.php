@@ -29,11 +29,31 @@ class OrderResource extends JsonResource
             'expires_at' => $this->expires_at?->toIso8601String(),
             'paid_at' => $this->paid_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
-            'event' => $this->whenLoaded('event', fn () => [
-                'uuid' => $this->event->uuid,
-                'title' => $this->event->title,
-                'slug' => $this->event->slug,
-            ]),
+            'event' => $this->whenLoaded('event', function () {
+                $event = $this->event;
+
+                return [
+                    'uuid' => $event->uuid,
+                    'title' => $event->title,
+                    'slug' => $event->slug,
+                    'start_at' => $event->start_at?->toIso8601String(),
+                    'end_at' => $event->end_at?->toIso8601String(),
+                    'timezone' => $event->timezone,
+                    'venue' => $event->relationLoaded('venue') && $event->venue
+                        ? [
+                            'name' => $event->venue->name,
+                            'city' => $event->venue->city,
+                            'address' => $event->venue->address,
+                        ]
+                        : null,
+                    'category' => $event->relationLoaded('category') && $event->category
+                        ? [
+                            'name' => $event->category->name,
+                            'slug' => $event->category->slug,
+                        ]
+                        : null,
+                ];
+            }),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'payment' => new PaymentResource($this->whenLoaded('payment')),
             'registrations' => RegistrationResource::collection($this->whenLoaded('registrations')),

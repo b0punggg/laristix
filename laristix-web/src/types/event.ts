@@ -13,6 +13,7 @@ export interface EventVenue {
   id: number;
   name: string;
   type: string;
+  address?: string | null;
   city: string | null;
 }
 
@@ -93,14 +94,21 @@ export interface CreateEventPayload {
   slug?: string;
   description?: string;
   short_description?: string;
-  venue_id?: number | null;
-  category_id?: number | null;
+  venue_id: number;
+  category_id: number;
   start_at: string;
   end_at: string;
   timezone: string;
   capacity?: number | null;
   is_free?: boolean;
   visibility?: EventVisibility;
+}
+
+export interface CreateVenuePayload {
+  name: string;
+  type?: "physical" | "online" | "hybrid";
+  address?: string;
+  city?: string;
 }
 
 export interface UpdateEventPayload {

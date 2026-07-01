@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { routes } from "@/config/env";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { eventApi } from "@/services/event/event-api";
-import type { CreateEventPayload, EventListFilters, UpdateEventPayload, AdminEventListFilters } from "@/types/event";
+import type { CreateEventPayload, CreateVenuePayload, EventListFilters, EventVenue, UpdateEventPayload, AdminEventListFilters } from "@/types/event";
 
 export const eventKeys = {
   all: ["events"] as const,
@@ -50,6 +50,29 @@ export function useEventCategoriesQuery() {
   return useQuery({
     queryKey: eventKeys.categories,
     queryFn: () => eventApi.categories(),
+  });
+}
+
+export function useCreateVenueMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateVenuePayload) => eventApi.createVenue(payload),
+    onSuccess: (venue) => {
+      queryClient.setQueryData<EventVenue[]>(eventKeys.venues, (current) => {
+        if (!current) {
+          return [venue];
+        }
+
+        if (current.some((item) => item.id === venue.id)) {
+          return current;
+        }
+
+        return [...current, venue].sort((a, b) => a.name.localeCompare(b.name));
+      });
+      toast.success("Venue berhasil ditambahkan.");
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, "Gagal menyimpan venue.")),
   });
 }
 

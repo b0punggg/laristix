@@ -27,6 +27,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import type { Event } from "@/types/event";
 import { EventActions } from "./event-actions";
 import { EventStatusBadge } from "./event-status-badge";
+import { VenueQuickAdd } from "./venue-quick-add";
 
 const timezones = [
   "Asia/Jakarta",
@@ -47,8 +48,8 @@ const baseSchema = z
     start_at: z.string().min(1, "Start time is required."),
     end_at: z.string().min(1, "End time is required."),
     timezone: z.string().min(1, "Timezone is required."),
-    venue_id: z.string().optional(),
-    category_id: z.string().optional(),
+    venue_id: z.string().min(1, "Venue wajib dipilih."),
+    category_id: z.string().min(1, "Kategori wajib dipilih."),
     capacity: z.string().optional(),
     is_free: z.boolean(),
     visibility: z.enum(["public", "private", "unlisted"]),
@@ -117,6 +118,7 @@ export function EventForm({ mode, uuid }: EventFormProps) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<EventFormValues>({
     resolver: zodResolver(baseSchema),
@@ -158,8 +160,8 @@ export function EventForm({ mode, uuid }: EventFormProps) {
       start_at: fromDatetimeLocalValue(values.start_at),
       end_at: fromDatetimeLocalValue(values.end_at),
       timezone: values.timezone,
-      venue_id: toOptionalId(values.venue_id),
-      category_id: toOptionalId(values.category_id),
+      venue_id: toOptionalId(values.venue_id) as number,
+      category_id: toOptionalId(values.category_id) as number,
       capacity: toOptionalNumber(values.capacity),
       is_free: values.is_free,
       visibility: values.visibility,
@@ -340,9 +342,33 @@ export function EventForm({ mode, uuid }: EventFormProps) {
               <h3 className="mb-4 text-sm font-medium">Location & category</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="venue_id">Venue</Label>
+                  <Label htmlFor="category_id">Category *</Label>
+                  <Select
+                    id="category_id"
+                    {...register("category_id")}
+                    disabled={categoriesQuery.isLoading}
+                  >
+                    <option value="">Pilih kategori</option>
+                    {(categoriesQuery.data ?? []).map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </Select>
+                  {errors.category_id ? (
+                    <p className="text-sm text-destructive">{errors.category_id.message}</p>
+                  ) : null}
+                  {!categoriesQuery.isLoading && (categoriesQuery.data ?? []).length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Belum ada kategori. Jalankan <code>php artisan db:seed</code> untuk kategori default.
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="venue_id">Venue *</Label>
                   <Select id="venue_id" {...register("venue_id")} disabled={venuesQuery.isLoading}>
-                    <option value="">No venue</option>
+                    <option value="">Pilih venue</option>
                     {(venuesQuery.data ?? []).map((venue) => (
                       <option key={venue.id} value={venue.id}>
                         {venue.name}
@@ -350,22 +376,17 @@ export function EventForm({ mode, uuid }: EventFormProps) {
                       </option>
                     ))}
                   </Select>
+                  {errors.venue_id ? (
+                    <p className="text-sm text-destructive">{errors.venue_id.message}</p>
+                  ) : null}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category_id">Category</Label>
-                  <Select
-                    id="category_id"
-                    {...register("category_id")}
-                    disabled={categoriesQuery.isLoading}
-                  >
-                    <option value="">No category</option>
-                    {(categoriesQuery.data ?? []).map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </Select>
+                <div className="sm:col-span-2">
+                  <VenueQuickAdd
+                    onCreated={(venueId) => {
+                      setValue("venue_id", String(venueId), { shouldValidate: true });
+                    }}
+                  />
                 </div>
 
                 <div className="space-y-2">

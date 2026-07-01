@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Rocket, RotateCcw, Ticket, Trash2 } from "lucide-react";
+import { Pencil, Rocket, RotateCcw, Ticket, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/config/env";
 import {
@@ -38,6 +38,15 @@ export function EventActions({ event, layout = "row" }: EventActionsProps) {
             Tickets
           </Link>
         </Button>
+
+        {event.status === "published" ? (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={routes.organizerEventAttendance(event.uuid)}>
+              <Users className="size-4" />
+              Kehadiran
+            </Link>
+          </Button>
+        ) : null}
 
         {flags?.can_edit ? (
           <Button variant="outline" size="sm" asChild>

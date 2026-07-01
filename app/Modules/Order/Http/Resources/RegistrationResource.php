@@ -23,6 +23,7 @@ class RegistrationResource extends JsonResource
                 'ticket_code' => $this->ticket->ticket_code,
                 'status' => $this->ticket->status,
                 'issued_at' => $this->ticket->issued_at?->toIso8601String(),
+                'checked_in_at' => $this->ticket->checked_in_at?->toIso8601String(),
             ]),
         ];
     }

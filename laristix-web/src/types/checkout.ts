@@ -10,6 +10,28 @@ export type OrderStatus =
 
 export type PaymentStatusLabel = "pending" | "paid" | "failed" | "expired" | "refunded";
 
+export interface CheckoutOrderEventVenue {
+  name: string;
+  city: string | null;
+  address: string | null;
+}
+
+export interface CheckoutOrderEventCategory {
+  name: string;
+  slug: string;
+}
+
+export interface CheckoutOrderEvent {
+  uuid: string;
+  title: string;
+  slug: string;
+  start_at?: string;
+  end_at?: string;
+  timezone?: string;
+  venue?: CheckoutOrderEventVenue | null;
+  category?: CheckoutOrderEventCategory | null;
+}
+
 export interface CheckoutOrderItem {
   id: number;
   ticket_type_id: number;
@@ -43,6 +65,7 @@ export interface CheckoutRegistration {
     ticket_code: string;
     status: string;
     issued_at: string;
+    checked_in_at?: string | null;
   } | null;
 }
 
@@ -61,11 +84,7 @@ export interface CheckoutOrder {
   expires_at: string | null;
   paid_at: string | null;
   completed_at: string | null;
-  event?: {
-    uuid: string;
-    title: string;
-    slug: string;
-  };
+  event?: CheckoutOrderEvent;
   items: CheckoutOrderItem[];
   payment?: CheckoutPayment | null;
   registrations: CheckoutRegistration[];

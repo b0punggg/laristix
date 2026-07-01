@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, MapPin, Tag, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { routes } from "@/config/env";
 import { useOrderQuery, useValidatePaymentMutation } from "@/hooks/use-checkout";
+import { formatVenueLabel } from "@/lib/event-display";
+import { formatEventDateShort } from "@/lib/datetime";
 
 interface CheckoutFinishPanelProps {
   orderUuid: string;
@@ -36,7 +38,12 @@ export function CheckoutFinishPanel({ orderUuid }: CheckoutFinishPanelProps) {
 
   const isSuccess = order.status === "completed";
   const isPending = order.status === "awaiting_payment" || order.status === "pending";
-  const isFailed = ["expired", "cancelled"].includes(order.status);
+  const venueLabel = formatVenueLabel(order.event?.venue);
+  const categoryName = order.event?.category?.name;
+  const eventSchedule =
+    order.event?.start_at
+      ? formatEventDateShort(order.event.start_at, order.event.timezone)
+      : null;
 
   return (
     <div className="mx-auto max-w-lg space-y-6 text-center">
@@ -62,6 +69,19 @@ export function CheckoutFinishPanel({ orderUuid }: CheckoutFinishPanelProps) {
           <CardTitle className="text-lg">{order.event?.title ?? "Event"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
+          {categoryName ? (
+            <p className="flex items-center gap-1 text-muted-foreground">
+              <Tag className="size-3.5" />
+              {categoryName}
+            </p>
+          ) : null}
+          {eventSchedule ? <p className="text-muted-foreground">{eventSchedule}</p> : null}
+          {venueLabel ? (
+            <p className="flex items-center gap-1 text-muted-foreground">
+              <MapPin className="size-3.5 shrink-0" />
+              {venueLabel}
+            </p>
+          ) : null}
           <p>
             Status pesanan: <span className="font-medium">{order.status}</span>
           </p>

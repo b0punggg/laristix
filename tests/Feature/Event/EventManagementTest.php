@@ -4,6 +4,8 @@ namespace Tests\Feature\Event;
 
 use App\Modules\Auth\Models\User;
 use App\Modules\Event\Enums\EventStatus;
+use App\Modules\Event\Models\EventCategory;
+use App\Modules\Event\Models\Venue;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,10 +47,26 @@ class EventManagementTest extends TestCase
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>
      */
-    private function eventPayload(array $overrides = []): array
+    private function eventPayload(Organizer $organizer, array $overrides = []): array
     {
+        $venue = Venue::withoutOrganizerScope()->create([
+            'organizer_id' => $organizer->id,
+            'name' => 'Test Venue',
+            'type' => 'physical',
+            'city' => 'Jakarta',
+        ]);
+
+        $category = EventCategory::query()->create([
+            'organizer_id' => null,
+            'name' => 'Conference',
+            'slug' => 'conference-'.Str::lower(Str::random(8)),
+            'is_active' => true,
+        ]);
+
         return array_merge([
             'title' => 'Tech Conference 2026',
+            'venue_id' => $venue->id,
+            'category_id' => $category->id,
             'start_at' => now()->addDays(7)->toIso8601String(),
             'end_at' => now()->addDays(8)->toIso8601String(),
             'timezone' => 'Asia/Jakarta',
@@ -59,10 +77,10 @@ class EventManagementTest extends TestCase
 
     public function test_owner_can_create_event_as_draft(): void
     {
-        [$user] = $this->createOrganizerOwner();
+        [$user, $organizer] = $this->createOrganizerOwner();
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/v1/events', $this->eventPayload());
+        $response = $this->postJson('/api/v1/events', $this->eventPayload($organizer));
 
         $response->assertCreated();
         $response->assertJsonPath('data.status', EventStatus::DRAFT);
@@ -73,10 +91,10 @@ class EventManagementTest extends TestCase
 
     public function test_owner_can_edit_draft_event(): void
     {
-        [$user] = $this->createOrganizerOwner();
+        [$user, $organizer] = $this->createOrganizerOwner();
         Sanctum::actingAs($user);
 
-        $create = $this->postJson('/api/v1/events', $this->eventPayload());
+        $create = $this->postJson('/api/v1/events', $this->eventPayload($organizer));
         $uuid = $create->json('data.uuid');
 
         $response = $this->patchJson("/api/v1/events/{$uuid}", [
@@ -91,10 +109,10 @@ class EventManagementTest extends TestCase
 
     public function test_owner_can_publish_draft_event(): void
     {
-        [$user] = $this->createOrganizerOwner();
+        [$user, $organizer] = $this->createOrganizerOwner();
         Sanctum::actingAs($user);
 
-        $create = $this->postJson('/api/v1/events', $this->eventPayload());
+        $create = $this->postJson('/api/v1/events', $this->eventPayload($organizer));
         $uuid = $create->json('data.uuid');
 
         $response = $this->postJson("/api/v1/events/{$uuid}/publish");
@@ -107,10 +125,10 @@ class EventManagementTest extends TestCase
 
     public function test_owner_can_revert_published_event_to_draft(): void
     {
-        [$user] = $this->createOrganizerOwner();
+        [$user, $organizer] = $this->createOrganizerOwner();
         Sanctum::actingAs($user);
 
-        $create = $this->postJson('/api/v1/events', $this->eventPayload());
+        $create = $this->postJson('/api/v1/events', $this->eventPayload($organizer));
         $uuid = $create->json('data.uuid');
 
         $this->postJson("/api/v1/events/{$uuid}/publish")->assertOk();
@@ -125,10 +143,10 @@ class EventManagementTest extends TestCase
 
     public function test_owner_can_delete_draft_event(): void
     {
-        [$user] = $this->createOrganizerOwner();
+        [$user, $organizer] = $this->createOrganizerOwner();
         Sanctum::actingAs($user);
 
-        $create = $this->postJson('/api/v1/events', $this->eventPayload());
+        $create = $this->postJson('/api/v1/events', $this->eventPayload($organizer));
         $uuid = $create->json('data.uuid');
 
         $response = $this->deleteJson("/api/v1/events/{$uuid}");
@@ -159,7 +177,7 @@ class EventManagementTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/v1/events', $this->eventPayload());
+        $response = $this->postJson('/api/v1/events', $this->eventPayload($organizer));
 
         $response->assertForbidden();
     }
@@ -169,8 +187,8 @@ class EventManagementTest extends TestCase
         [$user, $organizer] = $this->createOrganizerOwner();
         Sanctum::actingAs($user);
 
-        $this->postJson('/api/v1/events', $this->eventPayload(['title' => 'Event A']));
-        $this->postJson('/api/v1/events', $this->eventPayload(['title' => 'Event B']));
+        $this->postJson('/api/v1/events', $this->eventPayload($organizer, ['title' => 'Event A']));
+        $this->postJson('/api/v1/events', $this->eventPayload($organizer, ['title' => 'Event B']));
 
         $response = $this->getJson('/api/v1/events?status=draft');
 

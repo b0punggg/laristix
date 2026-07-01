@@ -16,3 +16,4 @@ require base_path('app/Modules/Event/routes/v1.php');
 require base_path('app/Modules/Ticketing/routes/v1.php');
 require base_path('app/Modules/Order/routes/v1.php');
 require base_path('app/Modules/Payment/routes/v1.php');
+require base_path('app/Modules/CheckIn/routes/v1.php');

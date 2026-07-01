@@ -8,5 +8,7 @@ final class RegistrationStatus
 
     public const CONFIRMED = 'confirmed';
 
+    public const CHECKED_IN = 'checked_in';
+
     public const CANCELLED = 'cancelled';
 }

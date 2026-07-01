@@ -174,6 +174,7 @@ return [
         App\Modules\Ticketing\Providers\TicketingServiceProvider::class,
         App\Modules\Order\Providers\OrderServiceProvider::class,
         App\Modules\Payment\Providers\PaymentServiceProvider::class,
+        App\Modules\CheckIn\Providers\CheckInServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,

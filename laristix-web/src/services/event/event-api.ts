@@ -4,6 +4,7 @@ import type { ApiResponse } from "@/types/auth";
 import type {
   AdminEventListFilters,
   CreateEventPayload,
+  CreateVenuePayload,
   Event,
   EventCategory,
   EventListFilters,
@@ -68,6 +69,12 @@ export const eventApi = {
 
   async venues() {
     const { data } = await apiClient.get<ApiResponse<EventVenue[]>>(apiPaths.venues.list);
+    return data.data;
+  },
+
+  async createVenue(payload: CreateVenuePayload) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<ApiResponse<EventVenue>>(apiPaths.venues.create, payload);
     return data.data;
   },
 

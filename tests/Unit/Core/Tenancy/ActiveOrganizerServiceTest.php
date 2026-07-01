@@ -42,6 +42,8 @@ class ActiveOrganizerServiceTest extends TestCase
     #[Test]
     public function it_rejects_header_hint_without_membership(): void
     {
+        config(['tenancy.auto_select_single_organizer' => false]);
+
         $session = $this->makeSession([]);
         $validator = $this->createMock(OrganizerMembershipValidatorInterface::class);
         $validator->method('hasActiveMembership')->willReturn(false);

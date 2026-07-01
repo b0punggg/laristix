@@ -1,9 +1,10 @@
+import { Suspense } from "react";
+import { ScannerPageContent } from "@/components/features/check-in/scanner-page-content";
+
 export default function ScannerPage() {
   return (
-    <div className="space-y-4">
-      <p className="text-muted-foreground">
-        Ticket scanning UI placeholder. Camera / QR scanning will be implemented in a later phase.
-      </p>
-    </div>
+    <Suspense fallback={<p className="text-muted-foreground">Memuat scanner...</p>}>
+      <ScannerPageContent />
+    </Suspense>
   );
 }

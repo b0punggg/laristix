@@ -37,6 +37,7 @@ export const apiPaths = {
   },
   venues: {
     list: "/api/v1/venues",
+    create: "/api/v1/venues",
   },
   eventCategories: "/api/v1/event-categories",
   ticketTypes: {
@@ -58,6 +59,15 @@ export const apiPaths = {
     listOrders: "/api/v1/public/orders",
     showOrder: (uuid: string) => `/api/v1/public/orders/${uuid}`,
     validatePayment: (uuid: string) => `/api/v1/public/orders/${uuid}/validate-payment`,
+  },
+  checkIn: {
+    gates: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/gates`,
+    verify: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/verify`,
+    scan: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/scan`,
+    manual: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/manual`,
+    list: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins`,
+    stats: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/stats`,
+    ticketQr: (ticketUuid: string) => `/api/v1/tickets/${ticketUuid}/qr`,
   },
 } as const;
 
@@ -90,6 +100,7 @@ export const routes = {
   adminDashboard: "/admin/dashboard",
   adminEvents: "/admin/events",
   scanner: "/scan",
+  organizerEventAttendance: (uuid: string) => `/events/${uuid}/attendance`,
 } as const;
 
 export const roleRoutes: Record<string, string> = {

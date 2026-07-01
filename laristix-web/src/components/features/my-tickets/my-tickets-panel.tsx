@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Ticket } from "lucide-react";
+import { ChevronRight, MapPin, Tag, Ticket } from "lucide-react";
+import { TicketQrDisplay } from "@/components/features/check-in/ticket-qr-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { routes } from "@/config/env";
 import { useMyOrdersQuery } from "@/hooks/use-my-orders";
+import { formatVenueLabel } from "@/lib/event-display";
+import { formatEventDateShort } from "@/lib/datetime";
 import type { CheckoutOrder, OrderStatus } from "@/types/checkout";
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -52,6 +55,12 @@ function formatDate(value: string | null) {
 
 function OrderCard({ order }: { order: CheckoutOrder }) {
   const hasTickets = order.status === "completed" && order.registrations.length > 0;
+  const venueLabel = formatVenueLabel(order.event?.venue);
+  const categoryName = order.event?.category?.name;
+  const eventSchedule =
+    order.event?.start_at
+      ? formatEventDateShort(order.event.start_at, order.event.timezone)
+      : null;
 
   return (
     <Card>
@@ -60,6 +69,21 @@ function OrderCard({ order }: { order: CheckoutOrder }) {
           <CardTitle className="text-lg">
             {order.event?.title ?? "Event"}
           </CardTitle>
+          {categoryName ? (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Tag className="size-3.5" />
+              {categoryName}
+            </div>
+          ) : null}
+          {eventSchedule ? (
+            <p className="text-sm text-muted-foreground">{eventSchedule}</p>
+          ) : null}
+          {venueLabel ? (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="size-3.5 shrink-0" />
+              {venueLabel}
+            </div>
+          ) : null}
           <p className="text-sm text-muted-foreground">
             {order.order_number} · {formatDate(order.created_at)}
           </p>
@@ -87,14 +111,28 @@ function OrderCard({ order }: { order: CheckoutOrder }) {
               {order.registrations.map((registration) => (
                 <li
                   key={registration.uuid}
-                  className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 text-sm"
                 >
                   <span className="text-muted-foreground">
                     {registration.attendee_name ?? registration.attendee_email ?? "Peserta"}
                   </span>
-                  <code className="rounded bg-background px-2 py-1 font-mono text-sm font-semibold">
-                    {registration.ticket?.ticket_code ?? "-"}
-                  </code>
+                  {registration.ticket ? (
+                    <div className="flex items-center gap-3">
+                      {registration.ticket.status === "valid" ? (
+                        <TicketQrDisplay
+                          ticketUuid={registration.ticket.uuid}
+                          ticketCode={registration.ticket.ticket_code}
+                          status={registration.ticket.status}
+                        />
+                      ) : (
+                        <code className="rounded bg-background px-2 py-1 font-mono text-sm font-semibold">
+                          {registration.ticket.ticket_code}
+                        </code>
+                      )}
+                    </div>
+                  ) : (
+                    <span>-</span>
+                  )}
                 </li>
               ))}
             </ul>

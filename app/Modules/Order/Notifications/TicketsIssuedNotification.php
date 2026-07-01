@@ -26,18 +26,35 @@ class TicketsIssuedNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $this->order->loadMissing(['event', 'registrations.ticket', 'items']);
+        $this->order->loadMissing(['event.venue', 'event.category', 'registrations.ticket', 'items']);
 
         $frontendUrl = rtrim((string) config('app.frontend_url', 'http://localhost:3000'), '/');
         $myTicketsUrl = $frontendUrl.'/my/tickets';
         $orderUrl = $frontendUrl.'/checkout/'.$this->order->uuid.'/finish';
 
+        $event = $this->order->event;
+        $venueLabel = $event?->venue
+            ? trim($event->venue->name.($event->venue->city ? ', '.$event->venue->city : ''))
+            : null;
+
         $mail = (new MailMessage)
-            ->subject('Tiket Anda untuk '.($this->order->event?->title ?? 'Event'))
+            ->subject('Tiket Anda untuk '.($event?->title ?? 'Event'))
             ->greeting('Halo '.$this->order->buyer_name.',')
             ->line('Pembayaran Anda telah dikonfirmasi. Berikut detail tiket Anda:')
             ->line('**No. pesanan:** '.$this->order->order_number)
-            ->line('**Event:** '.($this->order->event?->title ?? '-'));
+            ->line('**Event:** '.($event?->title ?? '-'));
+
+        if ($event?->category) {
+            $mail->line('**Kategori:** '.$event->category->name);
+        }
+
+        if ($event?->start_at) {
+            $mail->line('**Jadwal:** '.$event->start_at->timezone($event->timezone)->format('d M Y H:i').' '.$event->timezone);
+        }
+
+        if ($venueLabel) {
+            $mail->line('**Venue:** '.$venueLabel);
+        }
 
         foreach ($this->order->registrations as $registration) {
             $ticketCode = $registration->ticket?->ticket_code ?? '-';

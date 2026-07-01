@@ -40,8 +40,9 @@
     36 => 'App\\Modules\\Ticketing\\Providers\\TicketingServiceProvider',
     37 => 'App\\Modules\\Order\\Providers\\OrderServiceProvider',
     38 => 'App\\Modules\\Payment\\Providers\\PaymentServiceProvider',
-    39 => 'App\\Providers\\EventServiceProvider',
-    40 => 'App\\Providers\\RouteServiceProvider',
+    39 => 'App\\Modules\\CheckIn\\Providers\\CheckInServiceProvider',
+    40 => 'App\\Providers\\EventServiceProvider',
+    41 => 'App\\Providers\\RouteServiceProvider',
   ),
   'eager' => 
   array (
@@ -70,8 +71,9 @@
     22 => 'App\\Modules\\Ticketing\\Providers\\TicketingServiceProvider',
     23 => 'App\\Modules\\Order\\Providers\\OrderServiceProvider',
     24 => 'App\\Modules\\Payment\\Providers\\PaymentServiceProvider',
-    25 => 'App\\Providers\\EventServiceProvider',
-    26 => 'App\\Providers\\RouteServiceProvider',
+    25 => 'App\\Modules\\CheckIn\\Providers\\CheckInServiceProvider',
+    26 => 'App\\Providers\\EventServiceProvider',
+    27 => 'App\\Providers\\RouteServiceProvider',
   ),
   'deferred' => 
   array (
