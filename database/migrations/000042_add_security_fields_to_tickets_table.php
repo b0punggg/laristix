@@ -12,16 +12,16 @@ return new class extends Migration
             $table->string('qr_token', 128)->nullable()->after('ticket_code');
             $table->timestamp('checked_in_at')->nullable()->after('used_at');
 
-            $table->unique('qr_token');
-            $table->index('checked_in_at');
+            $table->unique('qr_token', 'uniq_tickets_qr_token');
+            $table->index('checked_in_at', 'idx_tickets_checked_in');
         });
     }
 
     public function down(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->dropIndex(['checked_in_at']);
-            $table->dropUnique(['qr_token']);
+            $table->dropIndex('idx_tickets_checked_in');
+            $table->dropUnique('uniq_tickets_qr_token');
             $table->dropColumn(['qr_token', 'checked_in_at']);
         });
     }

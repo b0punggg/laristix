@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('check_in_gates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('event_id')->constrained('events', 'id', 'fk_chk_gates_events')->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_chk_gates_org')->cascadeOnDelete();
             $table->string('name', 100);
             $table->string('code', 20);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['event_id', 'code']);
-            $table->index('organizer_id');
+            $table->unique(['event_id', 'code'], 'uniq_chk_gates_code');
+            $table->index('organizer_id', 'idx_chk_gates_org');
         });
     }
 

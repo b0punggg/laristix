@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('notification_jobs', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
-            $table->foreignId('organizer_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('notification_template_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('notification_log_id')->nullable()->constrained('notification_logs')->nullOnDelete();
+            $table->uuid('uuid')->unique('uniq_notif_jobs_uuid');
+            $table->foreignId('organizer_id')->nullable()->constrained('organizers', 'id', 'fk_notif_jobs_org')->nullOnDelete();
+            $table->foreignId('notification_template_id')->nullable()->constrained('notification_templates', 'id', 'fk_notif_jobs_tpl')->nullOnDelete();
+            $table->foreignId('notification_log_id')->nullable()->constrained('notification_logs', 'id', 'fk_notif_jobs_log')->nullOnDelete();
             $table->enum('channel', ['email', 'whatsapp', 'sms'])->default('email');
             $table->string('recipient');
-            $table->nullableMorphs('notifiable');
+            $table->nullableMorphs('notifiable', 'idx_notif_jobs_notifiable');
             $table->json('payload')->nullable();
             $table->enum('status', ['pending', 'processing', 'sent', 'failed', 'cancelled'])->default('pending');
             $table->unsignedTinyInteger('attempts')->default(0);
@@ -29,11 +29,10 @@ return new class extends Migration
             $table->uuid('correlation_id')->nullable();
             $table->timestamps();
 
-            $table->index(['status', 'scheduled_at']);
-            $table->index(['organizer_id', 'status', 'created_at']);
-            $table->index(['channel', 'status']);
-            $table->index('correlation_id');
-            $table->index(['notifiable_type', 'notifiable_id']);
+            $table->index(['status', 'scheduled_at'], 'idx_notif_jobs_stat_sched');
+            $table->index(['organizer_id', 'status', 'created_at'], 'idx_notif_jobs_org_stat');
+            $table->index(['channel', 'status'], 'idx_notif_jobs_channel');
+            $table->index('correlation_id', 'idx_notif_jobs_corr');
         });
     }
 

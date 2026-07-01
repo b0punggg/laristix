@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('venues', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_venues_org')->cascadeOnDelete();
             $table->string('name');
             $table->enum('type', ['physical', 'online', 'hybrid'])->default('physical');
             $table->text('address')->nullable();
@@ -25,8 +25,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('organizer_id');
-            $table->index(['organizer_id', 'name']);
+            $table->index('organizer_id', 'idx_venues_org');
+            $table->index(['organizer_id', 'name'], 'idx_venues_org_name');
         });
     }
 

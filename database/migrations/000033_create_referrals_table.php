@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('referrals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('referral_code_id')->constrained()->restrictOnDelete();
-            $table->foreignId('organizer_id')->constrained()->restrictOnDelete();
-            $table->foreignId('event_id')->constrained()->restrictOnDelete();
-            $table->foreignId('order_id')->nullable()->unique()->constrained()->nullOnDelete();
-            $table->foreignId('referred_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('referral_code_id')->constrained('referral_codes', 'id', 'fk_referrals_ref_code')->restrictOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_referrals_org')->restrictOnDelete();
+            $table->foreignId('event_id')->constrained('events', 'id', 'fk_referrals_events')->restrictOnDelete();
+            $table->foreignId('order_id')->nullable()->unique('uniq_referrals_order')->constrained('orders', 'id', 'fk_referrals_orders')->nullOnDelete();
+            $table->foreignId('referred_user_id')->nullable()->constrained('users', 'id', 'fk_referrals_users')->nullOnDelete();
             $table->string('referred_email')->nullable();
             $table->enum('status', ['clicked', 'registered', 'converted', 'paid', 'commissioned', 'void'])->default('clicked');
             $table->decimal('order_amount', 15, 2)->nullable();
@@ -24,9 +24,9 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['referral_code_id', 'status']);
-            $table->index(['event_id', 'status']);
-            $table->index(['organizer_id', 'status']);
+            $table->index(['referral_code_id', 'status'], 'idx_referrals_code_stat');
+            $table->index(['event_id', 'status'], 'idx_referrals_evt_stat');
+            $table->index(['organizer_id', 'status'], 'idx_referrals_org_stat');
         });
     }
 

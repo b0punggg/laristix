@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('form_fields', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('form_id')->constrained('registration_forms')->cascadeOnDelete();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('form_id')->constrained('registration_forms', 'id', 'fk_form_fld_forms')->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_form_fld_org')->cascadeOnDelete();
             $table->string('label');
             $table->string('name', 100);
             $table->enum('type', [
@@ -29,9 +29,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['form_id', 'name']);
-            $table->index(['form_id', 'sort_order']);
-            $table->index('organizer_id');
+            $table->unique(['form_id', 'name'], 'uniq_form_fld_name');
+            $table->index(['form_id', 'sort_order'], 'idx_form_fld_sort');
+            $table->index('organizer_id', 'idx_form_fld_org');
         });
     }
 

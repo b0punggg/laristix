@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('event_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organizer_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('organizer_id')->nullable()->constrained('organizers', 'id', 'fk_evt_cat_org')->cascadeOnDelete();
             $table->string('name', 100);
             $table->string('slug', 100);
             $table->string('icon', 50)->nullable();
@@ -18,8 +18,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['organizer_id', 'slug']);
-            $table->index('is_active');
+            $table->unique(['organizer_id', 'slug'], 'uniq_evt_cat_slug');
+            $table->index('is_active', 'idx_evt_cat_active');
         });
     }
 

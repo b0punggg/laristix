@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organizer_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('organizer_id')->nullable()->constrained('organizers', 'id', 'fk_audit_logs_org')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users', 'id', 'fk_audit_logs_users')->nullOnDelete();
             $table->enum('category', ['auth', 'financial', 'admin', 'security', 'system']);
             $table->string('event', 100);
             $table->string('auditable_type')->nullable();
@@ -23,10 +23,10 @@ return new class extends Migration
             $table->uuid('request_id')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
-            $table->index(['organizer_id', 'category', 'created_at']);
-            $table->index(['auditable_type', 'auditable_id']);
-            $table->index(['event', 'created_at']);
-            $table->index('request_id');
+            $table->index(['organizer_id', 'category', 'created_at'], 'idx_audit_logs_org_cat');
+            $table->index(['auditable_type', 'auditable_id'], 'idx_audit_logs_auditable');
+            $table->index(['event', 'created_at'], 'idx_audit_logs_event');
+            $table->index('request_id', 'idx_audit_logs_request');
         });
     }
 

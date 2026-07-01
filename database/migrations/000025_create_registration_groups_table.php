@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('registration_groups', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organizer_id')->constrained()->restrictOnDelete();
-            $table->foreignId('event_id')->constrained()->restrictOnDelete();
-            $table->foreignId('order_id')->constrained()->restrictOnDelete();
-            $table->foreignId('order_item_id')->constrained()->restrictOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_reg_groups_org')->restrictOnDelete();
+            $table->foreignId('event_id')->constrained('events', 'id', 'fk_reg_groups_events')->restrictOnDelete();
+            $table->foreignId('order_id')->constrained('orders', 'id', 'fk_reg_groups_orders')->restrictOnDelete();
+            $table->foreignId('order_item_id')->constrained('order_items', 'id', 'fk_reg_groups_items')->restrictOnDelete();
             $table->string('name');
             $table->string('company_name')->nullable();
             $table->string('contact_name');
@@ -24,9 +24,9 @@ return new class extends Migration
             $table->enum('status', ['open', 'complete', 'closed', 'cancelled'])->default('open');
             $table->timestamps();
 
-            $table->index(['order_id', 'status']);
-            $table->index(['organizer_id', 'event_id']);
-            $table->index('order_item_id');
+            $table->index(['order_id', 'status'], 'idx_reg_groups_order');
+            $table->index(['organizer_id', 'event_id'], 'idx_reg_groups_org_evt');
+            $table->index('order_item_id', 'idx_reg_groups_item');
         });
     }
 

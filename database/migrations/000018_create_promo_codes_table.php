@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('promo_codes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('event_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_promo_codes_org')->cascadeOnDelete();
+            $table->foreignId('event_id')->nullable()->constrained('events', 'id', 'fk_promo_codes_events')->cascadeOnDelete();
             $table->string('code', 50);
             $table->string('description')->nullable();
             $table->enum('discount_type', ['percentage', 'fixed']);
@@ -26,9 +26,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['organizer_id', 'code']);
-            $table->index('event_id');
-            $table->index(['organizer_id', 'is_active']);
+            $table->unique(['organizer_id', 'code'], 'uniq_promo_codes_code');
+            $table->index('event_id', 'idx_promo_codes_event');
+            $table->index(['organizer_id', 'is_active'], 'idx_promo_codes_active');
         });
     }
 

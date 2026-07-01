@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('platform_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('key', 100)->unique();
+            $table->string('key', 100)->unique('uniq_plat_settings_key');
             $table->json('value');
             $table->string('description')->nullable();
-            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users', 'id', 'fk_plat_settings_users')->nullOnDelete();
             $table->timestamps();
         });
     }

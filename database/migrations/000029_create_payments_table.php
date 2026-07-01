@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
-            $table->foreignId('order_id')->constrained()->restrictOnDelete();
-            $table->foreignId('organizer_id')->constrained()->restrictOnDelete();
+            $table->uuid('uuid')->unique('uniq_payments_uuid');
+            $table->foreignId('order_id')->constrained('orders', 'id', 'fk_payments_orders')->restrictOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_payments_org')->restrictOnDelete();
             $table->string('gateway', 30)->default('midtrans');
             $table->string('gateway_transaction_id', 100);
             $table->string('payment_method', 50)->nullable();
@@ -27,10 +27,10 @@ return new class extends Migration
             $table->timestamp('expired_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['gateway', 'gateway_transaction_id']);
-            $table->index('order_id');
-            $table->index(['organizer_id', 'status', 'created_at']);
-            $table->index(['status', 'created_at']);
+            $table->unique(['gateway', 'gateway_transaction_id'], 'uniq_payments_gateway_tx');
+            $table->index('order_id', 'idx_payments_order');
+            $table->index(['organizer_id', 'status', 'created_at'], 'idx_payments_org_stat');
+            $table->index(['status', 'created_at'], 'idx_payments_stat');
         });
     }
 

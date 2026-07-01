@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
+            $table->uuid('uuid')->unique('uniq_users_uuid');
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('email')->unique('uniq_users_email');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('phone', 30)->nullable();
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('status');
+            $table->index('status', 'idx_users_status');
         });
     }
 

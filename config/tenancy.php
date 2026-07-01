@@ -37,7 +37,7 @@ return [
     | Organizer statuses considered accessible to members
     |--------------------------------------------------------------------------
     */
-    'accessible_organizer_statuses' => ['active'],
+    'accessible_organizer_statuses' => ['active', 'pending'],
 
     /*
     |--------------------------------------------------------------------------

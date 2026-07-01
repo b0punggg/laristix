@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('event_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('schedule_id')->nullable()->constrained('event_schedules')->nullOnDelete();
-            $table->foreignId('venue_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('event_id')->constrained('events', 'id', 'fk_evt_sess_events')->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_evt_sess_org')->cascadeOnDelete();
+            $table->foreignId('schedule_id')->nullable()->constrained('event_schedules', 'id', 'fk_evt_sess_sched')->nullOnDelete();
+            $table->foreignId('venue_id')->nullable()->constrained('venues', 'id', 'fk_evt_sess_venues')->nullOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
             $table->enum('session_type', ['keynote', 'workshop', 'breakout', 'networking', 'other'])->default('other');
@@ -27,9 +27,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['event_id', 'start_at']);
-            $table->index('organizer_id');
-            $table->index('schedule_id');
+            $table->index(['event_id', 'start_at'], 'idx_evt_sess_start');
+            $table->index('organizer_id', 'idx_evt_sess_org');
+            $table->index('schedule_id', 'idx_evt_sess_sched');
         });
     }
 

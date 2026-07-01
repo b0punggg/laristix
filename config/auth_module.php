@@ -27,6 +27,16 @@ return [
     'switch_organizer' => '10,1',
   ],
 
+  'roles' => [
+    'guard' => 'web',
+    'application' => [
+      'super_admin',
+      'organizer',
+      'staff',
+      'participant',
+    ],
+  ],
+
   'require_email_verification' => env('AUTH_REQUIRE_EMAIL_VERIFICATION', true),
 
   'session' => [

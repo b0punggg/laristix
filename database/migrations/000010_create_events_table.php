@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
-            $table->foreignId('organizer_id')->constrained()->restrictOnDelete();
-            $table->foreignId('venue_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('category_id')->nullable()->constrained('event_categories')->nullOnDelete();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->uuid('uuid')->unique('uniq_events_uuid');
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_events_org')->restrictOnDelete();
+            $table->foreignId('venue_id')->nullable()->constrained('venues', 'id', 'fk_events_venues')->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('event_categories', 'id', 'fk_events_evt_cat')->nullOnDelete();
+            $table->foreignId('created_by')->constrained('users', 'id', 'fk_events_users')->restrictOnDelete();
             $table->string('title');
             $table->string('slug');
             $table->longText('description')->nullable();
@@ -32,10 +32,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['organizer_id', 'slug']);
-            $table->index(['organizer_id', 'status', 'start_at']);
-            $table->index(['status', 'start_at']);
-            $table->index(['organizer_id', 'created_at']);
+            $table->unique(['organizer_id', 'slug'], 'uniq_events_org_slug');
+            $table->index(['organizer_id', 'status', 'start_at'], 'idx_events_org_stat_start');
+            $table->index(['status', 'start_at'], 'idx_events_stat_start');
+            $table->index(['organizer_id', 'created_at'], 'idx_events_org_created');
         });
     }
 

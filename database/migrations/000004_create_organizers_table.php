@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('organizers', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->unique();
+            $table->uuid('uuid')->unique('uniq_org_uuid');
             $table->string('name');
-            $table->string('slug', 100)->unique();
+            $table->string('slug', 100)->unique('uniq_org_slug');
             $table->string('email');
             $table->string('phone', 30)->nullable();
             $table->string('logo_url', 500)->nullable();
@@ -26,12 +26,12 @@ return new class extends Migration
             $table->string('db_connection', 50)->nullable()->comment('Future dedicated DB connection name');
             $table->enum('migration_status', ['shared', 'pending', 'migrating', 'dedicated'])->default('shared');
             $table->timestamp('approved_at')->nullable();
-            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('approved_by')->nullable()->constrained('users', 'id', 'fk_org_users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('status');
-            $table->index('migration_status');
+            $table->index('status', 'idx_org_status');
+            $table->index('migration_status', 'idx_org_migr_status');
         });
     }
 

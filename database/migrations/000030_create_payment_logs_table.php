@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('payment_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('payment_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('order_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('organizer_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('payment_id')->nullable()->constrained('payments', 'id', 'fk_pay_logs_payments')->nullOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained('orders', 'id', 'fk_pay_logs_orders')->nullOnDelete();
+            $table->foreignId('organizer_id')->nullable()->constrained('organizers', 'id', 'fk_pay_logs_org')->nullOnDelete();
             $table->string('gateway', 30);
             $table->string('event_type', 50);
             $table->string('gateway_event_id', 100)->nullable();
@@ -24,11 +24,11 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
-            $table->unique(['gateway', 'gateway_event_id']);
-            $table->index(['payment_id', 'created_at']);
-            $table->index(['order_id', 'created_at']);
-            $table->index(['processed', 'created_at']);
-            $table->index('organizer_id');
+            $table->unique(['gateway', 'gateway_event_id'], 'uniq_pay_logs_gateway_evt');
+            $table->index(['payment_id', 'created_at'], 'idx_pay_logs_payment');
+            $table->index(['order_id', 'created_at'], 'idx_pay_logs_order');
+            $table->index(['processed', 'created_at'], 'idx_pay_logs_processed');
+            $table->index('organizer_id', 'idx_pay_logs_org');
         });
     }
 

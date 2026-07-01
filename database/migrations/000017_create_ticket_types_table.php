@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('ticket_types', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->restrictOnDelete();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('event_id')->constrained('events', 'id', 'fk_tkt_types_events')->restrictOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_tkt_types_org')->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('price', 15, 2)->default(0);
@@ -35,10 +35,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['event_id', 'status', 'sort_order']);
-            $table->index('organizer_id');
-            $table->index(['event_id', 'sales_start_at', 'sales_end_at']);
-            $table->index(['organizer_id', 'package_type']);
+            $table->index(['event_id', 'status', 'sort_order'], 'idx_tkt_types_evt_stat');
+            $table->index('organizer_id', 'idx_tkt_types_org');
+            $table->index(['event_id', 'sales_start_at', 'sales_end_at'], 'idx_tkt_types_sales');
+            $table->index(['organizer_id', 'package_type'], 'idx_tkt_types_pkg');
         });
     }
 

@@ -10,16 +10,16 @@ return new class extends Migration
     {
         Schema::create('registration_forms', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('organizer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('event_id')->constrained('events', 'id', 'fk_reg_forms_events')->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers', 'id', 'fk_reg_forms_org')->cascadeOnDelete();
             $table->string('title')->default('Registration Form');
             $table->text('description')->nullable();
             $table->json('settings')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique('event_id');
-            $table->index('organizer_id');
+            $table->unique('event_id', 'uniq_reg_forms_event');
+            $table->index('organizer_id', 'idx_reg_forms_org');
         });
     }
 
