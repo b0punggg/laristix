@@ -3,16 +3,14 @@
 namespace App\Modules\Organizer\Models;
 
 use App\Modules\Auth\Models\User;
-use App\Modules\Event\Models\EventStaff;
+use App\Modules\Organizer\Enums\OrganizerMemberRole;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrganizerMember extends Model
 {
     /**
-     * Intentionally does NOT use HasOrganizer — membership queries must work
-     * across all organizers for the authenticated user during context resolution.
+     * Does not use HasOrganizer — membership queries span all organizers.
      */
     protected $fillable = [
         'organizer_id',
@@ -24,13 +22,10 @@ class OrganizerMember extends Model
         'status',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'invited_at' => 'datetime',
-            'accepted_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'invited_at' => 'datetime',
+        'accepted_at' => 'datetime',
+    ];
 
     public function organizer(): BelongsTo
     {
@@ -47,13 +42,18 @@ class OrganizerMember extends Model
         return $this->belongsTo(User::class, 'invited_by');
     }
 
-    public function eventStaffs(): HasMany
-    {
-        return $this->hasMany(EventStaff::class);
-    }
-
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === OrganizerMemberRole::OWNER;
+    }
+
+    public function canManageMembers(): bool
+    {
+        return in_array($this->role, OrganizerMemberRole::managers(), true);
     }
 }
