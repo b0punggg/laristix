@@ -4,30 +4,21 @@ namespace App\Core\Tenancy\Exceptions;
 
 class InactiveOrganizerException extends TenancyException
 {
-    protected string $errorCode = 'ORGANIZER_INACTIVE';
+    protected $errorCode = 'ORGANIZER_INACTIVE';
+
+    /** @var array<string, mixed> */
+    protected $contextData = [];
 
     public static function withStatus(string $status): self
     {
-        return new self(
-            "Organizer is not accessible (status: {$status}).",
-            context: ['status' => $status]
-        );
-    }
+        $exception = new self("Organizer is not accessible (status: {$status}).");
+        $exception->contextData = ['status' => $status];
 
-    /**
-     * @param  array<string, mixed>  $context
-     */
-    public function __construct(
-        string $message = '',
-        int $code = 0,
-        ?\Throwable $previous = null,
-        protected array $context = [],
-    ) {
-        parent::__construct($message, $code, $previous);
+        return $exception;
     }
 
     public function context(): array
     {
-        return $this->context;
+        return $this->contextData;
     }
 }

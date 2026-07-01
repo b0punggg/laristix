@@ -4,7 +4,6 @@ namespace App\Core\Tenancy\Contracts;
 
 use App\Modules\Auth\Models\User;
 use App\Modules\Organizer\Models\Organizer;
-use App\Modules\Organizer\Models\OrganizerMember;
 use Illuminate\Support\Collection;
 
 interface ActiveOrganizerServiceInterface

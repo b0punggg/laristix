@@ -9,9 +9,13 @@ use Illuminate\Database\Eloquent\Scope;
 
 class OrganizerScope implements Scope
 {
-    public function __construct(
-        private readonly OrganizerContextInterface $context,
-    ) {}
+    /** @var OrganizerContextInterface */
+    private $context;
+
+    public function __construct(OrganizerContextInterface $context)
+    {
+        $this->context = $context;
+    }
 
     public function apply(Builder $builder, Model $model): void
     {

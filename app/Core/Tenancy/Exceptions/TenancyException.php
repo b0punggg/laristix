@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TenancyException extends DomainException
 {
-    protected int $statusCode = Response::HTTP_FORBIDDEN;
+    protected $statusCode = Response::HTTP_FORBIDDEN;
 
-    protected string $errorCode = 'TENANCY_ERROR';
+    protected $errorCode = 'TENANCY_ERROR';
 }

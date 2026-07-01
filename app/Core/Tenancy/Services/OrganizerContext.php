@@ -10,11 +10,14 @@ use App\Modules\Organizer\Models\OrganizerMember;
 
 class OrganizerContext implements OrganizerContextInterface
 {
-    private ?Organizer $organizer = null;
+    /** @var Organizer|null */
+    private $organizer = null;
 
-    private ?User $user = null;
+    /** @var User|null */
+    private $user = null;
 
-    private ?OrganizerMember $membership = null;
+    /** @var OrganizerMember|null */
+    private $membership = null;
 
     public function set(Organizer $organizer, User $user, OrganizerMember $membership): void
     {
@@ -37,12 +40,12 @@ class OrganizerContext implements OrganizerContextInterface
 
     public function getOrganizerId(): ?int
     {
-        return $this->organizer?->id;
+        return $this->organizer ? $this->organizer->id : null;
     }
 
     public function getUserId(): ?int
     {
-        return $this->user?->id;
+        return $this->user ? $this->user->id : null;
     }
 
     public function organizer(): ?Organizer
@@ -62,7 +65,7 @@ class OrganizerContext implements OrganizerContextInterface
 
     public function role(): ?string
     {
-        return $this->membership?->role;
+        return $this->membership ? $this->membership->role : null;
     }
 
     public function requireOrganizerId(): int

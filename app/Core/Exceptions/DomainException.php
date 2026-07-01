@@ -7,9 +7,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 abstract class DomainException extends Exception
 {
-    protected int $statusCode = Response::HTTP_UNPROCESSABLE_ENTITY;
+    protected $statusCode = Response::HTTP_UNPROCESSABLE_ENTITY;
 
-    protected string $errorCode = 'DOMAIN_ERROR';
+    protected $errorCode = 'DOMAIN_ERROR';
 
     public function statusCode(): int
     {

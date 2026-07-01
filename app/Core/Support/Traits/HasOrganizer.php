@@ -2,13 +2,12 @@
 
 namespace App\Core\Support\Traits;
 
-use App\Core\Tenancy\Contracts\TenantAware;
 use App\Core\Tenancy\Scopes\OrganizerScope;
 use App\Modules\Organizer\Models\Organizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-trait HasOrganizer implements TenantAware
+trait HasOrganizer
 {
     public static function bootHasOrganizer(): void
     {

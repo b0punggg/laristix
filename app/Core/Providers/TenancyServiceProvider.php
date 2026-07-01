@@ -20,8 +20,10 @@ class TenancyServiceProvider extends ServiceProvider
             'tenancy'
         );
 
-        $this->app->scoped(OrganizerContextInterface::class, OrganizerContext::class);
-        $this->app->scoped(OrganizerContext::class);
+        // Laravel 10: use singleton (scoped() is Laravel 11+).
+        // Context is cleared at the start of each request in middleware.
+        $this->app->singleton(OrganizerContext::class);
+        $this->app->alias(OrganizerContext::class, OrganizerContextInterface::class);
 
         $this->app->singleton(OrganizerScope::class, function ($app) {
             return new OrganizerScope($app->make(OrganizerContextInterface::class));

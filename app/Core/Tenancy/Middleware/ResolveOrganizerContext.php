@@ -6,21 +6,32 @@ use App\Core\Tenancy\Contracts\ActiveOrganizerServiceInterface;
 use App\Core\Tenancy\Contracts\OrganizerContextInterface;
 use App\Core\Tenancy\Contracts\OrganizerMembershipValidatorInterface;
 use App\Core\Tenancy\Exceptions\OrganizerAccessDeniedException;
-use App\Core\Tenancy\Scopes\OrganizerScope;
 use App\Modules\Organizer\Models\Organizer;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class ResolveOrganizerContext
 {
-    public function __construct(
-        private readonly OrganizerContextInterface $context,
-        private readonly ActiveOrganizerServiceInterface $activeOrganizerService,
-        private readonly OrganizerMembershipValidatorInterface $membershipValidator,
-    ) {}
+    /** @var OrganizerContextInterface */
+    private $context;
 
-    public function handle(Request $request, Closure $next): Response
+    /** @var ActiveOrganizerServiceInterface */
+    private $activeOrganizerService;
+
+    /** @var OrganizerMembershipValidatorInterface */
+    private $membershipValidator;
+
+    public function __construct(
+        OrganizerContextInterface $context,
+        ActiveOrganizerServiceInterface $activeOrganizerService,
+        OrganizerMembershipValidatorInterface $membershipValidator
+    ) {
+        $this->context = $context;
+        $this->activeOrganizerService = $activeOrganizerService;
+        $this->membershipValidator = $membershipValidator;
+    }
+
+    public function handle(Request $request, Closure $next)
     {
         $this->context->clear();
 
@@ -43,9 +54,7 @@ class ResolveOrganizerContext
 
         $membership = $this->membershipValidator->validateMembership($user, $organizerId);
 
-        $organizer = Organizer::query()
-            ->withoutGlobalScope(OrganizerScope::class)
-            ->find($organizerId);
+        $organizer = Organizer::query()->find($organizerId);
 
         if ($organizer === null) {
             throw OrganizerAccessDeniedException::make('Organizer not found.');

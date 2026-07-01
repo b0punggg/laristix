@@ -7,7 +7,7 @@ use App\Core\Tenancy\Scopes\OrganizerScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class OrganizerScopeTest extends TestCase
 {

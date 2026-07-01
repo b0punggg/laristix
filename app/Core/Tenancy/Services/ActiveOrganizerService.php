@@ -5,7 +5,6 @@ namespace App\Core\Tenancy\Services;
 use App\Core\Tenancy\Contracts\ActiveOrganizerServiceInterface;
 use App\Core\Tenancy\Contracts\OrganizerMembershipValidatorInterface;
 use App\Core\Tenancy\Exceptions\OrganizerAccessDeniedException;
-use App\Core\Tenancy\Scopes\OrganizerScope;
 use App\Modules\Auth\Models\User;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
@@ -14,10 +13,19 @@ use Illuminate\Support\Collection;
 
 class ActiveOrganizerService implements ActiveOrganizerServiceInterface
 {
+    /** @var Session */
+    private $session;
+
+    /** @var OrganizerMembershipValidatorInterface */
+    private $membershipValidator;
+
     public function __construct(
-        private readonly Session $session,
-        private readonly OrganizerMembershipValidatorInterface $membershipValidator,
-    ) {}
+        Session $session,
+        OrganizerMembershipValidatorInterface $membershipValidator
+    ) {
+        $this->session = $session;
+        $this->membershipValidator = $membershipValidator;
+    }
 
     public function sessionKey(): string
     {
@@ -52,8 +60,7 @@ class ActiveOrganizerService implements ActiveOrganizerServiceInterface
     public function getAvailableOrganizers(User $user): Collection
     {
         $memberships = OrganizerMember::query()
-            ->withoutGlobalScope(OrganizerScope::class)
-            ->with(['organizer' => fn ($query) => $query->withoutGlobalScope(OrganizerScope::class)])
+            ->with('organizer')
             ->where('user_id', $user->id)
             ->where('status', 'active')
             ->get();
@@ -61,9 +68,13 @@ class ActiveOrganizerService implements ActiveOrganizerServiceInterface
         $accessibleStatuses = config('tenancy.accessible_organizer_statuses', ['active']);
 
         return $memberships
-            ->map(fn (OrganizerMember $membership) => $membership->organizer)
+            ->map(function (OrganizerMember $membership) {
+                return $membership->organizer;
+            })
             ->filter()
-            ->filter(fn (Organizer $organizer) => in_array($organizer->status, $accessibleStatuses, true))
+            ->filter(function (Organizer $organizer) use ($accessibleStatuses) {
+                return in_array($organizer->status, $accessibleStatuses, true);
+            })
             ->values();
     }
 
@@ -71,9 +82,7 @@ class ActiveOrganizerService implements ActiveOrganizerServiceInterface
     {
         $membership = $this->membershipValidator->validateMembership($user, $organizerId);
 
-        $organizer = Organizer::query()
-            ->withoutGlobalScope(OrganizerScope::class)
-            ->findOrFail($membership->organizer_id);
+        $organizer = Organizer::query()->findOrFail($membership->organizer_id);
 
         $this->membershipValidator->validateOrganizerIsAccessible($organizer);
 
