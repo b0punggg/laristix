@@ -3,11 +3,12 @@
 namespace App\Modules\Payment\Models;
 
 use App\Core\Support\Traits\HasOrganizer;
+use App\Core\Tenancy\Contracts\TenantAware;
 use App\Modules\Order\Models\Order;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PaymentLog extends Model
+class PaymentLog extends Model implements TenantAware
 {
     use HasOrganizer;
 
@@ -29,15 +30,12 @@ class PaymentLog extends Model
         'created_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'payload' => 'array',
-            'processed' => 'boolean',
-            'processed_at' => 'datetime',
-            'created_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'payload' => 'array',
+        'processed' => 'boolean',
+        'processed_at' => 'datetime',
+        'created_at' => 'datetime',
+    ];
 
     public function payment(): BelongsTo
     {

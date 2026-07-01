@@ -3,43 +3,42 @@
 namespace App\Modules\Order\Models;
 
 use App\Core\Support\Traits\HasOrganizer;
+use App\Core\Support\Traits\HasUuid;
 use App\Core\Tenancy\Contracts\TenantAware;
 use App\Modules\Event\Models\Event;
 use App\Modules\Ticketing\Models\TicketType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class OrderItem extends Model implements TenantAware
+class Ticket extends Model implements TenantAware
 {
     use HasOrganizer;
+    use HasUuid;
 
     protected $fillable = [
-        'order_id',
+        'registration_id',
         'organizer_id',
         'event_id',
         'ticket_type_id',
-        'ticket_type_name',
-        'unit_price',
-        'quantity',
-        'subtotal',
-        'package_type_snapshot',
-        'min_registrations_per_unit_snapshot',
-        'max_registrations_per_unit_snapshot',
-        'package_config_snapshot',
+        'ticket_code',
+        'qr_token',
+        'qr_token_hash',
+        'status',
+        'issued_at',
+        'used_at',
+        'cancelled_at',
+        'pdf_url',
     ];
 
     protected $casts = [
-        'unit_price' => 'decimal:2',
-        'quantity' => 'integer',
-        'subtotal' => 'decimal:2',
-        'min_registrations_per_unit_snapshot' => 'integer',
-        'max_registrations_per_unit_snapshot' => 'integer',
-        'package_config_snapshot' => 'array',
+        'issued_at' => 'datetime',
+        'used_at' => 'datetime',
+        'cancelled_at' => 'datetime',
     ];
 
-    public function order(): BelongsTo
+    public function registration(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Registration::class);
     }
 
     public function event(): BelongsTo

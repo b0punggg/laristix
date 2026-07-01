@@ -4,22 +4,17 @@ namespace App\Modules\Order\Models;
 
 use App\Core\Support\Traits\HasOrganizer;
 use App\Core\Support\Traits\HasUuid;
+use App\Core\Tenancy\Contracts\TenantAware;
 use App\Modules\Auth\Models\User;
 use App\Modules\Event\Models\Event;
-use App\Modules\Organizer\Models\Organizer;
-use App\Modules\Participant\Models\Registration;
-use App\Modules\Participant\Models\RegistrationGroup;
+use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Payment\Models\Payment;
-use App\Modules\Referral\Models\Referral;
-use App\Modules\Referral\Models\ReferralCode;
-use App\Modules\Ticketing\Models\Coupon;
-use App\Modules\Ticketing\Models\PromoCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Order extends Model
+class Order extends Model implements TenantAware
 {
     use HasOrganizer;
     use HasUuid;
@@ -43,11 +38,6 @@ class Order extends Model
         'fee_bearer',
         'total_amount',
         'organizer_net_amount',
-        'promo_code_id',
-        'promo_code_snapshot',
-        'coupon_id',
-        'coupon_snapshot',
-        'referral_code_id',
         'idempotency_key',
         'expires_at',
         'paid_at',
@@ -58,28 +48,20 @@ class Order extends Model
         'metadata',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'subtotal' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
-            'platform_fee_pct_rate' => 'decimal:2',
-            'platform_fee_flat' => 'decimal:2',
-            'platform_fee_total' => 'decimal:2',
-            'total_amount' => 'decimal:2',
-            'organizer_net_amount' => 'decimal:2',
-            'expires_at' => 'datetime',
-            'paid_at' => 'datetime',
-            'completed_at' => 'datetime',
-            'cancelled_at' => 'datetime',
-            'metadata' => 'array',
-        ];
-    }
-
-    public function organizer(): BelongsTo
-    {
-        return $this->belongsTo(Organizer::class);
-    }
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'platform_fee_pct_rate' => 'decimal:2',
+        'platform_fee_flat' => 'decimal:2',
+        'platform_fee_total' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'organizer_net_amount' => 'decimal:2',
+        'expires_at' => 'datetime',
+        'paid_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'metadata' => 'array',
+    ];
 
     public function event(): BelongsTo
     {
@@ -89,21 +71,6 @@ class Order extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function promoCode(): BelongsTo
-    {
-        return $this->belongsTo(PromoCode::class);
-    }
-
-    public function coupon(): BelongsTo
-    {
-        return $this->belongsTo(Coupon::class);
-    }
-
-    public function referralCode(): BelongsTo
-    {
-        return $this->belongsTo(ReferralCode::class);
     }
 
     public function items(): HasMany
@@ -116,28 +83,28 @@ class Order extends Model
         return $this->hasMany(Registration::class);
     }
 
-    public function registrationGroups(): HasMany
+    public function payment(): HasOne
     {
-        return $this->hasMany(RegistrationGroup::class);
+        return $this->hasOne(Payment::class);
     }
 
-    public function payments(): HasMany
+    public function isAwaitingPayment(): bool
     {
-        return $this->hasMany(Payment::class);
+        return $this->status === OrderStatus::AWAITING_PAYMENT;
     }
 
-    public function promoCodeUsage(): HasOne
+    public function isCompleted(): bool
     {
-        return $this->hasOne(PromoCodeUsage::class);
+        return $this->status === OrderStatus::COMPLETED;
     }
 
-    public function couponUsage(): HasOne
+    public function isPaid(): bool
     {
-        return $this->hasOne(CouponUsage::class);
+        return in_array($this->status, [OrderStatus::PAID, OrderStatus::COMPLETED], true);
     }
 
-    public function referral(): HasOne
+    public function requiresPayment(): bool
     {
-        return $this->hasOne(Referral::class);
+        return (float) $this->total_amount > 0;
     }
 }

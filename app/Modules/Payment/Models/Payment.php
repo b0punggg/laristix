@@ -4,19 +4,18 @@ namespace App\Modules\Payment\Models;
 
 use App\Core\Support\Traits\HasOrganizer;
 use App\Core\Support\Traits\HasUuid;
-use App\Modules\Auth\Models\User;
+use App\Core\Tenancy\Contracts\TenantAware;
 use App\Modules\Order\Models\Order;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Payment extends Model
+class Payment extends Model implements TenantAware
 {
     use HasOrganizer;
     use HasUuid;
 
     protected $fillable = [
-        'uuid',
         'order_id',
         'organizer_id',
         'gateway',
@@ -30,15 +29,12 @@ class Payment extends Model
         'expired_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'amount' => 'decimal:2',
-            'gateway_response' => 'array',
-            'paid_at' => 'datetime',
-            'expired_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'gateway_response' => 'array',
+        'paid_at' => 'datetime',
+        'expired_at' => 'datetime',
+    ];
 
     public function order(): BelongsTo
     {
@@ -48,10 +44,5 @@ class Payment extends Model
     public function logs(): HasMany
     {
         return $this->hasMany(PaymentLog::class);
-    }
-
-    public function refunds(): HasMany
-    {
-        return $this->hasMany(Refund::class);
     }
 }
