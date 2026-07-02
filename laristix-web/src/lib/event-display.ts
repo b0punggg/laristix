@@ -5,7 +5,7 @@ export function formatVenueLabel(venue: CheckoutOrderEventVenue | null | undefin
     return null;
   }
 
-  const parts = [venue.name, venue.city].filter(Boolean);
+  const parts = [venue.name, venue.city, venue.province].filter(Boolean);
 
   return parts.length > 0 ? parts.join(", ") : null;
 }

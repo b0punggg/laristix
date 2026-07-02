@@ -18,7 +18,8 @@ class PublicOrderController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        $perPage = (int) config('order_module.pagination.my_orders_per_page', 15);
+        $default = (int) config('order_module.pagination.my_orders_per_page', 15);
+        $perPage = min(max((int) request()->integer('per_page', $default), 1), 100);
 
         $orders = $this->checkoutService->listForUser(request()->user()->id, $perPage);
 

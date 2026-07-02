@@ -13,6 +13,7 @@ export type PaymentStatusLabel = "pending" | "paid" | "failed" | "expired" | "re
 export interface CheckoutOrderEventVenue {
   name: string;
   city: string | null;
+  province: string | null;
   address: string | null;
 }
 
@@ -25,6 +26,7 @@ export interface CheckoutOrderEvent {
   uuid: string;
   title: string;
   slug: string;
+  banner_url?: string | null;
   start_at?: string;
   end_at?: string;
   timezone?: string;
@@ -60,6 +62,8 @@ export interface CheckoutRegistration {
   attendee_name: string | null;
   attendee_email: string | null;
   status: string;
+  ticket_type_id?: number;
+  ticket_type_name?: string | null;
   ticket?: {
     uuid: string;
     ticket_code: string;

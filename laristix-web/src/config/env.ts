@@ -78,6 +78,7 @@ export const routes = {
     `/events/${uuid}/checkout?ticket=${ticketTypeId}`,
   checkoutFinish: (orderUuid: string) => `/checkout/${orderUuid}/finish`,
   myTickets: "/my/tickets",
+  myTransactions: "/my/transactions",
   login: "/login",
   loginWithRedirect: (redirect: string) =>
     `/login?redirect=${encodeURIComponent(redirect)}`,

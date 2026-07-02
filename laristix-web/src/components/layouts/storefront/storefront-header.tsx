@@ -100,7 +100,7 @@ export function StorefrontHeader() {
           </button>
 
           <Link
-            href={user ? routes.myTickets : routes.loginWithRedirect(routes.myTickets)}
+            href={user ? routes.myTransactions : routes.loginWithRedirect(routes.myTransactions)}
             className="flex items-center gap-2 transition-colors hover:text-[#1e4fd6]"
           >
             <FileText className="size-5 text-gray-500" />
@@ -124,6 +124,12 @@ export function StorefrontHeader() {
               </summary>
               <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border bg-white py-1 shadow-lg">
                 <p className="border-b px-4 py-2 text-xs text-gray-500">{user.name}</p>
+                <Link
+                  href={routes.myTransactions}
+                  className="block px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Transaksi
+                </Link>
                 <Link
                   href={routes.myTickets}
                   className="block px-4 py-2 text-sm hover:bg-gray-50"

@@ -18,6 +18,8 @@ class RegistrationResource extends JsonResource
             'attendee_name' => $this->attendee_name,
             'attendee_email' => $this->attendee_email,
             'status' => $this->status,
+            'ticket_type_id' => $this->ticket_type_id,
+            'ticket_type_name' => $this->whenLoaded('orderItem', fn () => $this->orderItem?->ticket_type_name),
             'ticket' => $this->whenLoaded('ticket', fn () => [
                 'uuid' => $this->ticket->uuid,
                 'ticket_code' => $this->ticket->ticket_code,

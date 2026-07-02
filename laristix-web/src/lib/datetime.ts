@@ -68,3 +68,28 @@ export function formatEventDateShort(startAt: string, timezone?: string): string
     timeZone: timezone || undefined,
   }).format(new Date(startAt));
 }
+
+export function formatTicketEventSchedule(
+  startAt: string,
+  endAt: string,
+  timezone?: string,
+): string {
+  const dateFmt = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: timezone || undefined,
+  });
+  const timeFmt = new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: timezone || undefined,
+  });
+
+  const date = dateFmt.format(new Date(startAt));
+  const startTime = timeFmt.format(new Date(startAt));
+  const endTime = timeFmt.format(new Date(endAt));
+
+  return `${date} • ${startTime} - ${endTime}`;
+}

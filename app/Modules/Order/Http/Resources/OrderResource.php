@@ -36,6 +36,7 @@ class OrderResource extends JsonResource
                     'uuid' => $event->uuid,
                     'title' => $event->title,
                     'slug' => $event->slug,
+                    'banner_url' => $event->banner_url,
                     'start_at' => $event->start_at?->toIso8601String(),
                     'end_at' => $event->end_at?->toIso8601String(),
                     'timezone' => $event->timezone,
@@ -43,6 +44,7 @@ class OrderResource extends JsonResource
                         ? [
                             'name' => $event->venue->name,
                             'city' => $event->venue->city,
+                            'province' => $event->venue->province,
                             'address' => $event->venue->address,
                         ]
                         : null,
