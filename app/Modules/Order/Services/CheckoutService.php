@@ -2,6 +2,7 @@
 
 namespace App\Modules\Order\Services;
 
+use App\Modules\Admin\Contracts\PlatformSettingServiceInterface;
 use App\Modules\Event\Enums\EventStatus;
 use App\Modules\Event\Models\Event;
 use App\Modules\Order\Contracts\CheckoutServiceInterface;
@@ -28,6 +29,7 @@ class CheckoutService implements CheckoutServiceInterface
         private readonly OrderRepositoryInterface $orders,
         private readonly OrderFulfillmentServiceInterface $fulfillment,
         private readonly MidtransSnapServiceInterface $snapService,
+        private readonly PlatformSettingServiceInterface $platformSettings,
     ) {}
 
     public function checkout(CreateCheckoutDto $dto): array
@@ -222,21 +224,53 @@ class CheckoutService implements CheckoutServiceInterface
             ->orderByDesc('effective_from')
             ->first();
 
-        if ($config === null) {
-            return [
-                'platform_fee_pct_rate' => 0,
-                'platform_fee_flat' => 0,
-                'platform_fee_total' => 0,
-                'fee_bearer' => 'attendee',
-                'total_amount' => $subtotal,
-                'organizer_net_amount' => $subtotal,
-            ];
+        if ($config !== null) {
+            return $this->buildPricing(
+                $subtotal,
+                (float) $config->percentage_rate,
+                (float) $config->flat_amount,
+                $config->fee_bearer
+            );
         }
 
-        $pctRate = (float) $config->percentage_rate;
-        $flat = (float) $config->flat_amount;
+        $default = $this->platformSettings->getValue('default_platform_fee');
+
+        if ($default !== null) {
+            return $this->buildPricing(
+                $subtotal,
+                (float) ($default['percentage_rate'] ?? 0),
+                (float) ($default['flat_amount'] ?? 0),
+                (string) ($default['fee_bearer'] ?? 'attendee')
+            );
+        }
+
+        return [
+            'platform_fee_pct_rate' => 0,
+            'platform_fee_flat' => 0,
+            'platform_fee_total' => 0,
+            'fee_bearer' => 'attendee',
+            'total_amount' => $subtotal,
+            'organizer_net_amount' => $subtotal,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   platform_fee_pct_rate: float,
+     *   platform_fee_flat: float,
+     *   platform_fee_total: float,
+     *   fee_bearer: string,
+     *   total_amount: float,
+     *   organizer_net_amount: float
+     * }
+     */
+    private function buildPricing(
+        float $subtotal,
+        float $pctRate,
+        float $flat,
+        string $feeBearer
+    ): array {
         $feeTotal = round($subtotal * $pctRate / 100 + $flat, 2);
-        $feeBearer = $config->fee_bearer;
         $totalAmount = $feeBearer === 'attendee' ? $subtotal + $feeTotal : $subtotal;
         $organizerNet = $feeBearer === 'organizer' ? $subtotal - $feeTotal : $subtotal;
 

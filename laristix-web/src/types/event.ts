@@ -76,6 +76,7 @@ export interface EventListFilters {
   status?: EventStatus;
   search?: string;
   per_page?: number;
+  page?: number;
 }
 
 export interface PublicEventListFilters {

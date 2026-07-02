@@ -1,4 +1,4 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
 import { env } from "@/config/env";
 import { useOrganizerStore } from "@/stores/organizer-store";
 
@@ -83,8 +83,7 @@ export function getApiErrorMessage(error: unknown, fallback = "Something went wr
     return "Sesi kedaluwarsa. Muat ulang halaman lalu coba lagi.";
   }
 
-  const axiosError = error as AxiosError<{ message?: string; errors?: Record<string, string[]> }>;
-  const data = axiosError.response.data;
+  const data = error.response.data as { message?: string; errors?: Record<string, string[]> } | undefined;
 
   if (typeof data === "object" && data !== null) {
     if (data.errors) {

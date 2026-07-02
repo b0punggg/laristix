@@ -6,6 +6,8 @@ use App\Modules\Auth\Models\User;
 use App\Modules\CheckIn\Contracts\CheckInGateRepositoryInterface;
 use App\Modules\CheckIn\Contracts\CheckInRepositoryInterface;
 use App\Modules\CheckIn\Contracts\CheckInServiceInterface;
+use App\Modules\Admin\Contracts\ActivityLogServiceInterface;
+use App\Modules\Admin\Contracts\DailyStatsRecorderServiceInterface;
 use App\Modules\CheckIn\Enums\CheckInMethod;
 use App\Modules\CheckIn\Exceptions\CheckInAccessDeniedException;
 use App\Modules\CheckIn\Exceptions\CheckInException;
@@ -38,6 +40,8 @@ class CheckInService implements CheckInServiceInterface
         private readonly CheckInRepositoryInterface $checkIns,
         private readonly CheckInGateRepositoryInterface $gates,
         private readonly OrganizerMemberRepositoryInterface $members,
+        private readonly DailyStatsRecorderServiceInterface $statsRecorder,
+        private readonly ActivityLogServiceInterface $activityLogs,
     ) {}
 
     public function verify(Event $event, User $user, string $qrTokenOrCode): array
@@ -210,7 +214,24 @@ class CheckInService implements CheckInServiceInterface
             $registration->fill(['status' => RegistrationStatus::CHECKED_IN]);
             $registration->save();
 
-            return $checkIn->load(['ticket.ticketType', 'registration', 'gate', 'scanner:id,name,email']);
+            $checkIn = $checkIn->load(['ticket.ticketType', 'registration', 'gate', 'scanner:id,name,email']);
+
+            $this->statsRecorder->recordCheckIn($checkIn);
+
+            $this->activityLogs->record(
+                action: 'ticket.checked_in',
+                subjectType: Ticket::class,
+                subjectId: $lockedTicket->id,
+                user: $scanner,
+                organizerId: $event->organizer_id,
+                properties: [
+                    'event_id' => $event->id,
+                    'method' => $method,
+                    'ticket_code' => $lockedTicket->ticket_code,
+                ],
+            );
+
+            return $checkIn;
         });
     }
 

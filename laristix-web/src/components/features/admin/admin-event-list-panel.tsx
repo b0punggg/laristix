@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Calendar, Search } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar, ExternalLink, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ListPagination } from "@/components/common/list-pagination";
 import { useAdminEventsQuery } from "@/hooks/use-events";
 import { formatEventDateRange } from "@/lib/datetime";
+import { routes } from "@/config/env";
 import type { AdminEventListFilters, EventStatus } from "@/types/event";
 import { EventStatusBadge } from "@/components/features/events/event-status-badge";
 
@@ -19,21 +22,31 @@ const statusTabs: Array<{ label: string; value?: EventStatus }> = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
+const PER_PAGE = 15;
+
 export function AdminEventListPanel() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<EventStatus | undefined>(undefined);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [status, search]);
 
   const filters = useMemo<AdminEventListFilters>(
     () => ({
       status,
       search: search.trim() || undefined,
+      page,
+      per_page: PER_PAGE,
     }),
-    [status, search],
+    [status, search, page],
   );
 
   const { data, isLoading, isError, refetch } = useAdminEventsQuery(filters);
   const events = data?.data ?? [];
-  const total = data?.meta.total ?? 0;
+  const meta = data?.meta;
+  const total = meta?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -117,7 +130,7 @@ export function AdminEventListPanel() {
                   </div>
                   <EventStatusBadge status={event.status} />
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-3">
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span>/{event.slug}</span>
                     {event.organizer?.slug ? <span>@{event.organizer.slug}</span> : null}
@@ -132,10 +145,19 @@ export function AdminEventListPanel() {
                       </span>
                     ) : null}
                   </div>
+                  {event.visibility === "public" && event.status !== "draft" ? (
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={routes.publicEvent(event.uuid)} target="_blank">
+                        <ExternalLink className="mr-2 size-4" />
+                        View public page
+                      </Link>
+                    </Button>
+                  ) : null}
                 </CardContent>
               </Card>
             ))}
           </div>
+          {meta ? <ListPagination meta={meta} onPageChange={setPage} /> : null}
         </div>
       ) : null}
     </div>

@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Organizer\Http\Controllers\V1\AdminOrganizerController;
+use App\Modules\Organizer\Http\Controllers\V1\AdminOrganizerFeeConfigController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerMemberController;
 use Illuminate\Support\Facades\Route;
@@ -10,10 +12,28 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('organizers', [AdminOrganizerController::class, 'index'])
+            ->name('organizers.index');
         Route::get('organizers/pending', [OrganizerController::class, 'indexPending'])
             ->name('organizers.pending');
+        Route::get('organizers/{uuid}', [AdminOrganizerController::class, 'show'])
+            ->name('organizers.show');
+        Route::get('organizers/{uuid}/fee-configs', [AdminOrganizerFeeConfigController::class, 'index'])
+            ->name('organizers.fee-configs.index');
+        Route::post('organizers/{uuid}/fee-configs', [AdminOrganizerFeeConfigController::class, 'store'])
+            ->name('organizers.fee-configs.store');
+        Route::patch('organizers/{uuid}/fee-configs/{feeConfigId}', [AdminOrganizerFeeConfigController::class, 'update'])
+            ->name('organizers.fee-configs.update');
+        Route::delete('organizers/{uuid}/fee-configs/{feeConfigId}', [AdminOrganizerFeeConfigController::class, 'destroy'])
+            ->name('organizers.fee-configs.destroy');
         Route::post('organizers/{uuid}/approve', [OrganizerController::class, 'approve'])
             ->name('organizers.approve');
+        Route::post('organizers/{uuid}/reject', [AdminOrganizerController::class, 'reject'])
+            ->name('organizers.reject');
+        Route::patch('organizers/{uuid}/suspend', [AdminOrganizerController::class, 'suspend'])
+            ->name('organizers.suspend');
+        Route::patch('organizers/{uuid}/activate', [AdminOrganizerController::class, 'activate'])
+            ->name('organizers.activate');
     });
 
     Route::middleware(['resolve.organizer', 'organizer.context'])->group(function () {

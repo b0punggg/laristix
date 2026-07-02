@@ -9,12 +9,19 @@ use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\Registration;
 use App\Modules\Order\Models\Ticket;
 use App\Modules\Order\Notifications\TicketsIssuedNotification;
+use App\Modules\Admin\Contracts\ActivityLogServiceInterface;
+use App\Modules\Admin\Contracts\DailyStatsRecorderServiceInterface;
 use App\Modules\Ticketing\Models\TicketType;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class OrderFulfillmentService implements OrderFulfillmentServiceInterface
 {
+    public function __construct(
+        private readonly DailyStatsRecorderServiceInterface $statsRecorder,
+        private readonly ActivityLogServiceInterface $activityLogs,
+    ) {}
+
     public function fulfill(Order $order): Order
     {
         $order->loadMissing(['items.ticketType', 'registrations']);
@@ -53,6 +60,21 @@ class OrderFulfillmentService implements OrderFulfillmentServiceInterface
         $order->save();
 
         $order = $order->fresh(['items', 'registrations.ticket', 'payment', 'event']);
+
+        $this->statsRecorder->recordOrderCompleted($order);
+
+        $this->activityLogs->record(
+            action: 'order.completed',
+            subjectType: Order::class,
+            subjectId: $order->id,
+            user: $order->user,
+            organizerId: $order->organizer_id,
+            properties: [
+                'order_number' => $order->order_number,
+                'total_amount' => (float) $order->total_amount,
+                'event_id' => $order->event_id,
+            ],
+        );
 
         $this->sendTicketsEmailIfNeeded($order);
 

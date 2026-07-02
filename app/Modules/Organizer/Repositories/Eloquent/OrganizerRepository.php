@@ -2,9 +2,11 @@
 
 namespace App\Modules\Organizer\Repositories\Eloquent;
 
+use App\Modules\Organizer\Enums\OrganizerMemberRole;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
 use App\Modules\Organizer\Repositories\Contracts\OrganizerRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class OrganizerRepository implements OrganizerRepositoryInterface
@@ -59,5 +61,51 @@ class OrganizerRepository implements OrganizerRepositoryInterface
             ->where('status', 'pending')
             ->orderBy('created_at')
             ->get();
+    }
+
+    public function paginateForPlatform(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $query = Organizer::query()
+            ->withCount('events')
+            ->with($this->adminMemberRelations())
+            ->orderByDesc('created_at');
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($builder) use ($search) {
+                $builder->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    public function findByUuidForAdmin(string $uuid): ?Organizer
+    {
+        return Organizer::query()
+            ->withCount('events')
+            ->with(array_merge($this->adminMemberRelations(), ['approvedBy:id,name,email']))
+            ->where('uuid', $uuid)
+            ->first();
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    private function adminMemberRelations(): array
+    {
+        return [
+            'members' => function ($query) {
+                $query->where('role', OrganizerMemberRole::OWNER)
+                    ->where('status', 'active')
+                    ->with('user:id,name,email');
+            },
+        ];
     }
 }

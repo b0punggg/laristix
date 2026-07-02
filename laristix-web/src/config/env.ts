@@ -53,6 +53,13 @@ export const apiPaths = {
   },
   organizers: {
     create: "/api/v1/organizers",
+    adminList: "/api/v1/admin/organizers",
+    adminPending: "/api/v1/admin/organizers/pending",
+    adminShow: (uuid: string) => `/api/v1/admin/organizers/${uuid}`,
+    adminApprove: (uuid: string) => `/api/v1/admin/organizers/${uuid}/approve`,
+    adminReject: (uuid: string) => `/api/v1/admin/organizers/${uuid}/reject`,
+    adminSuspend: (uuid: string) => `/api/v1/admin/organizers/${uuid}/suspend`,
+    adminActivate: (uuid: string) => `/api/v1/admin/organizers/${uuid}/activate`,
   },
   checkout: {
     create: (eventUuid: string) => `/api/v1/public/events/${eventUuid}/checkout`,
@@ -68,6 +75,17 @@ export const apiPaths = {
     list: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins`,
     stats: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/stats`,
     ticketQr: (ticketUuid: string) => `/api/v1/tickets/${ticketUuid}/qr`,
+  },
+  admin: {
+    settings: "/api/v1/admin/settings",
+    setting: (key: string) => `/api/v1/admin/settings/${key}`,
+    dashboardSummary: "/api/v1/admin/dashboard/summary",
+    analyticsTrends: "/api/v1/admin/analytics/trends",
+    activityLogs: "/api/v1/admin/activity-logs",
+    auditLogs: "/api/v1/admin/audit-logs",
+    organizerFeeConfigs: (uuid: string) => `/api/v1/admin/organizers/${uuid}/fee-configs`,
+    organizerFeeConfig: (uuid: string, id: number) =>
+      `/api/v1/admin/organizers/${uuid}/fee-configs/${id}`,
   },
 } as const;
 
@@ -100,6 +118,11 @@ export const routes = {
     `/events/${eventUuid}/tickets/${ticketId}/edit`,
   adminDashboard: "/admin/dashboard",
   adminEvents: "/admin/events",
+  adminOrganizers: "/admin/organizers",
+  adminOrganizerDetail: (uuid: string) => `/admin/organizers/${uuid}`,
+  adminSettings: "/admin/settings",
+  adminAnalytics: "/admin/analytics",
+  adminLogs: "/admin/logs",
   scanner: "/scan",
   organizerEventAttendance: (uuid: string) => `/events/${uuid}/attendance`,
 } as const;

@@ -3,6 +3,7 @@
 namespace App\Modules\Organizer\Repositories\Contracts;
 
 use App\Modules\Organizer\Models\Organizer;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface OrganizerRepositoryInterface
@@ -26,4 +27,8 @@ interface OrganizerRepositoryInterface
      * @return Collection<int, Organizer>
      */
     public function listPending(): Collection;
+
+    public function paginateForPlatform(array $filters = [], int $perPage = 15): LengthAwarePaginator;
+
+    public function findByUuidForAdmin(string $uuid): ?Organizer;
 }

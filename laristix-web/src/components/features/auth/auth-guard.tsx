@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { routes } from "@/config/env";
 import { useAuthSessionQuery } from "@/hooks/use-auth";
@@ -14,7 +14,15 @@ interface AuthGuardProps {
   preserveReturnUrl?: boolean;
 }
 
-export function AuthGuard({
+function AuthGuardFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+      Loading...
+    </div>
+  );
+}
+
+function AuthGuardInner({
   children,
   requireEmailVerified = true,
   requireOrganizer = false,
@@ -74,11 +82,7 @@ export function AuthGuard({
   ]);
 
   if (!isHydrated || !isFetched || isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        Loading...
-      </div>
-    );
+    return <AuthGuardFallback />;
   }
 
   if (isError || !currentUser) {
@@ -98,4 +102,12 @@ export function AuthGuard({
   }
 
   return <>{children}</>;
+}
+
+export function AuthGuard(props: AuthGuardProps) {
+  return (
+    <Suspense fallback={<AuthGuardFallback />}>
+      <AuthGuardInner {...props} />
+    </Suspense>
+  );
 }

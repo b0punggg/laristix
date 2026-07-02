@@ -31,6 +31,7 @@ export function TransactionCard({ order }: TransactionCardProps) {
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
         <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg bg-muted sm:h-24 sm:w-40">
           {bannerUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- banner URLs are user-supplied external links
             <img src={bannerUrl} alt={eventTitle} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-primary/5 text-primary">

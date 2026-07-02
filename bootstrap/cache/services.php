@@ -41,8 +41,9 @@
     37 => 'App\\Modules\\Order\\Providers\\OrderServiceProvider',
     38 => 'App\\Modules\\Payment\\Providers\\PaymentServiceProvider',
     39 => 'App\\Modules\\CheckIn\\Providers\\CheckInServiceProvider',
-    40 => 'App\\Providers\\EventServiceProvider',
-    41 => 'App\\Providers\\RouteServiceProvider',
+    40 => 'App\\Modules\\Admin\\Providers\\AdminServiceProvider',
+    41 => 'App\\Providers\\EventServiceProvider',
+    42 => 'App\\Providers\\RouteServiceProvider',
   ),
   'eager' => 
   array (
@@ -72,8 +73,9 @@
     23 => 'App\\Modules\\Order\\Providers\\OrderServiceProvider',
     24 => 'App\\Modules\\Payment\\Providers\\PaymentServiceProvider',
     25 => 'App\\Modules\\CheckIn\\Providers\\CheckInServiceProvider',
-    26 => 'App\\Providers\\EventServiceProvider',
-    27 => 'App\\Providers\\RouteServiceProvider',
+    26 => 'App\\Modules\\Admin\\Providers\\AdminServiceProvider',
+    27 => 'App\\Providers\\EventServiceProvider',
+    28 => 'App\\Providers\\RouteServiceProvider',
   ),
   'deferred' => 
   array (

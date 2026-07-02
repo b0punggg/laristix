@@ -14,4 +14,8 @@ return [
         'update' => '20,1',
     ],
 
+    'pagination' => [
+        'admin_per_page' => 15,
+    ],
+
 ];

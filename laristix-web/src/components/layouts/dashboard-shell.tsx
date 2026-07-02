@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { routes } from "@/config/env";
 import { useLogoutMutation } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
+import { AdminNav } from "@/components/layouts/admin-nav";
 import { cn } from "@/lib/utils";
 
 const organizerNavItems = [
@@ -19,18 +20,21 @@ const organizerNavItems = [
 export const adminNavItems = [
   { href: routes.adminDashboard, label: "Dashboard" },
   { href: routes.adminEvents, label: "Events" },
+  { href: routes.adminOrganizers, label: "Organizers" },
 ];
 
 interface DashboardShellProps {
   children: React.ReactNode;
   title: string;
   navItems?: Array<{ href: string; label: string }>;
+  useAdminNav?: boolean;
 }
 
 export function DashboardShell({
   children,
   title,
   navItems = organizerNavItems,
+  useAdminNav = false,
 }: DashboardShellProps) {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
@@ -40,22 +44,26 @@ export function DashboardShell({
     <div className="flex min-h-screen">
       <aside className="hidden w-64 border-r bg-muted/30 p-4 md:block">
         <AppLogo />
-        <nav className="mt-8 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "block rounded-md px-3 py-2 text-sm",
-                pathname === item.href || pathname.startsWith(`${item.href}/`)
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {useAdminNav ? (
+          <AdminNav />
+        ) : (
+          <nav className="mt-8 space-y-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "block rounded-md px-3 py-2 text-sm",
+                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted",
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        )}
       </aside>
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b px-4 py-3">
