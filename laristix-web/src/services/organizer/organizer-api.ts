@@ -4,10 +4,35 @@ import type { ApiResponse, CreateOrganizerPayload, Organizer } from "@/types/aut
 import type {
   AdminOrganizer,
   AdminOrganizerListFilters,
+  OrganizerDashboardSummary,
+  OrganizerDashboardTrends,
+  OrganizerDashboardInsights,
   PaginatedOrganizerResponse,
 } from "@/types/organizer";
 
 export const organizerApi = {
+  async dashboardSummary() {
+    const { data } = await apiClient.get<ApiResponse<OrganizerDashboardSummary>>(
+      apiPaths.organizers.dashboardSummary,
+    );
+    return data.data;
+  },
+
+  async dashboardTrends(days = 30) {
+    const { data } = await apiClient.get<ApiResponse<OrganizerDashboardTrends>>(
+      apiPaths.organizers.dashboardTrends,
+      { params: { days } },
+    );
+    return data.data;
+  },
+
+  async dashboardInsights() {
+    const { data } = await apiClient.get<ApiResponse<OrganizerDashboardInsights>>(
+      apiPaths.organizers.dashboardInsights,
+    );
+    return data.data;
+  },
+
   async create(payload: CreateOrganizerPayload) {
     await ensureCsrfCookie();
     const { data } = await apiClient.post<ApiResponse<Organizer>>(

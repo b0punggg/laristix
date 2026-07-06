@@ -6,7 +6,9 @@ const organizerRoles = ["organizer", "staff"];
 export default function OrganizerLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard requireOrganizer allowedRoles={organizerRoles}>
-      <DashboardShell title="Organizer">{children}</DashboardShell>
+      <DashboardShell title="Organizer" useOrganizerNav>
+        {children}
+      </DashboardShell>
     </AuthGuard>
   );
 }

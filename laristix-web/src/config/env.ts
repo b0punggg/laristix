@@ -53,6 +53,9 @@ export const apiPaths = {
   },
   organizers: {
     create: "/api/v1/organizers",
+    dashboardSummary: "/api/v1/organizers/current/dashboard/summary",
+    dashboardTrends: "/api/v1/organizers/current/dashboard/trends",
+    dashboardInsights: "/api/v1/organizers/current/dashboard/insights",
     adminList: "/api/v1/admin/organizers",
     adminPending: "/api/v1/admin/organizers/pending",
     adminShow: (uuid: string) => `/api/v1/admin/organizers/${uuid}`,
@@ -109,6 +112,7 @@ export const routes = {
   selectOrganizer: "/select-organizer",
   createOrganizer: "/create-organizer",
   organizerDashboard: "/dashboard",
+  organizerAnalytics: "/analytics",
   organizerEvents: "/events",
   organizerEventNew: "/events/new",
   organizerEventEdit: (uuid: string) => `/events/${uuid}/edit`,

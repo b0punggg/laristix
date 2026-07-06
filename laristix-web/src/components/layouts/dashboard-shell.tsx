@@ -8,14 +8,9 @@ import { routes } from "@/config/env";
 import { useLogoutMutation } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
 import { AdminNav } from "@/components/layouts/admin-nav";
+import { OrganizerMobileNav } from "@/components/layouts/organizer-mobile-nav";
+import { OrganizerNav } from "@/components/layouts/organizer-nav";
 import { cn } from "@/lib/utils";
-
-const organizerNavItems = [
-  { href: routes.organizerDashboard, label: "Dashboard" },
-  { href: routes.organizerEvents, label: "Events" },
-  { href: routes.scanner, label: "Scanner" },
-  { href: routes.selectOrganizer, label: "Switch organizer" },
-];
 
 export const adminNavItems = [
   { href: routes.adminDashboard, label: "Dashboard" },
@@ -26,62 +21,56 @@ export const adminNavItems = [
 interface DashboardShellProps {
   children: React.ReactNode;
   title: string;
-  navItems?: Array<{ href: string; label: string }>;
   useAdminNav?: boolean;
+  useOrganizerNav?: boolean;
 }
 
 export function DashboardShell({
   children,
   title,
-  navItems = organizerNavItems,
   useAdminNav = false,
+  useOrganizerNav = false,
 }: DashboardShellProps) {
-  const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const logout = useLogoutMutation();
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-64 border-r bg-muted/30 p-4 md:block">
+      <aside className="hidden w-64 shrink-0 border-r bg-muted/30 p-4 md:block">
         <AppLogo />
-        {useAdminNav ? (
-          <AdminNav />
-        ) : (
-          <nav className="mt-8 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "block rounded-md px-3 py-2 text-sm",
-                  pathname === item.href || pathname.startsWith(`${item.href}/`)
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        )}
+        {useAdminNav ? <AdminNav /> : null}
+        {useOrganizerNav ? <OrganizerNav /> : null}
       </aside>
-      <div className="flex flex-1 flex-col">
+
+      <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b px-4 py-3">
-          <div>
-            <h1 className="text-lg font-semibold">{title}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold">{title}</h1>
             {user?.active_organizer ? (
-              <p className="text-sm text-muted-foreground">{user.active_organizer.name}</p>
+              <p className="truncate text-sm text-muted-foreground">{user.active_organizer.name}</p>
             ) : null}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">{user?.email}</span>
-            <Button variant="outline" size="sm" onClick={() => logout.mutate()} disabled={logout.isPending}>
-              Sign out
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <span className="hidden max-w-[12rem] truncate text-sm text-muted-foreground lg:inline">
+              {user?.email}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logout.mutate()}
+              disabled={logout.isPending}
+            >
+              Keluar
             </Button>
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+
+        <main className={cn("flex-1 p-4 sm:p-6", useOrganizerNav && "pb-24 md:pb-6")}>
+          {children}
+        </main>
       </div>
+
+      {useOrganizerNav ? <OrganizerMobileNav /> : null}
     </div>
   );
 }

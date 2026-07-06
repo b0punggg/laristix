@@ -3,6 +3,7 @@
 use App\Modules\Organizer\Http\Controllers\V1\AdminOrganizerController;
 use App\Modules\Organizer\Http\Controllers\V1\AdminOrganizerFeeConfigController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerController;
+use App\Modules\Organizer\Http\Controllers\V1\OrganizerDashboardController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerMemberController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,6 +38,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware(['resolve.organizer', 'organizer.context'])->group(function () {
+        Route::get('organizers/current/dashboard/summary', [OrganizerDashboardController::class, 'summary'])
+            ->name('organizers.current.dashboard.summary');
+        Route::get('organizers/current/dashboard/trends', [OrganizerDashboardController::class, 'trends'])
+            ->name('organizers.current.dashboard.trends');
+        Route::get('organizers/current/dashboard/insights', [OrganizerDashboardController::class, 'insights'])
+            ->name('organizers.current.dashboard.insights');
+
         Route::get('organizers/current', [OrganizerController::class, 'showCurrent'])
             ->name('organizers.current.show');
         Route::patch('organizers/current', [OrganizerController::class, 'updateCurrent'])
