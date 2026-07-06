@@ -10,6 +10,7 @@ import type {
   ResetPasswordPayload,
   SwitchOrganizerPayload,
 } from "@/types/auth";
+import type { OrganizerInvitation } from "@/types/organizer";
 
 export const authApi = {
   async register(payload: RegisterPayload) {
@@ -101,5 +102,28 @@ export const authApi = {
       payload,
     );
     return data.data;
+  },
+
+  async organizerInvitations() {
+    const { data } = await apiClient.get<ApiResponse<OrganizerInvitation[]>>(
+      apiPaths.auth.organizerInvitations,
+    );
+    return data.data;
+  },
+
+  async acceptOrganizerInvitation(memberId: number) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<ApiResponse<AuthenticatedUser>>(
+      apiPaths.auth.acceptOrganizerInvitation(memberId),
+    );
+    return data;
+  },
+
+  async declineOrganizerInvitation(memberId: number) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<{ message: string }>(
+      apiPaths.auth.declineOrganizerInvitation(memberId),
+    );
+    return data;
   },
 };

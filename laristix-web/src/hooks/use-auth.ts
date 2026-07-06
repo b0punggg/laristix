@@ -9,6 +9,7 @@ import { resolveAuthRedirectPath } from "@/lib/auth-redirect";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { authApi } from "@/services/auth/auth-api";
 import { organizerApi } from "@/services/organizer/organizer-api";
+import { organizerInvitationKeys } from "@/hooks/use-organizer-invitations";
 import { useAuthStore } from "@/stores/auth-store";
 import { useOrganizerStore } from "@/stores/organizer-store";
 import type {
@@ -91,13 +92,26 @@ export function useLoginMutation(redirectTo?: string | null) {
 
   return useMutation({
     mutationFn: (payload: LoginPayload) => authApi.login(payload),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const user = response.data;
       setUser(user);
       syncOrganizerFromUser(user);
       queryClient.setQueryData(authKeys.me, user);
       queryClient.setQueryData(authKeys.session, user);
       toast.success(response.message ?? "Login successful.");
+
+      try {
+        const invitations = await authApi.organizerInvitations();
+        queryClient.setQueryData(organizerInvitationKeys.list, invitations);
+
+        if (invitations.length > 0) {
+          router.replace(routes.selectOrganizer);
+          return;
+        }
+      } catch {
+        // Non-blocking: fall through to default redirect.
+      }
+
       redirectAfterAuth(user.primary_role, router, redirectTo);
     },
     onError: (error) => {

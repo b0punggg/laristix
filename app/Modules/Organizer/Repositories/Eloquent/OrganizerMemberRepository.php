@@ -67,4 +67,24 @@ class OrganizerMemberRepository implements OrganizerMemberRepositoryInterface
             ->orderBy('created_at')
             ->get();
     }
+
+    public function listPendingForUser(int $userId): Collection
+    {
+        return OrganizerMember::query()
+            ->with(['organizer', 'invitedBy'])
+            ->where('user_id', $userId)
+            ->where('status', 'pending')
+            ->orderByDesc('invited_at')
+            ->get();
+    }
+
+    public function findPendingForUser(int $userId, int $memberId): ?OrganizerMember
+    {
+        return OrganizerMember::query()
+            ->with(['organizer', 'invitedBy'])
+            ->where('user_id', $userId)
+            ->where('id', $memberId)
+            ->where('status', 'pending')
+            ->first();
+    }
 }

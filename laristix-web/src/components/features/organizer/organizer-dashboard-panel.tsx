@@ -21,7 +21,9 @@ import { ChartSkeleton, SimpleBarChart } from "@/components/features/admin/simpl
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrganizerDashboardInsightsSection } from "@/components/features/organizer/organizer-dashboard-insights";
 import { OrganizerEmptyOnboarding } from "@/components/features/organizer/organizer-empty-onboarding";
+import { OrganizerInvitationsList } from "@/components/features/organizer/organizer-invitations-list";
 import { OrganizerPageHeader } from "@/components/features/organizer/organizer-page-header";
+import { ScannerDashboardPanel } from "@/components/features/organizer/scanner-dashboard-panel";
 import {
   useOrganizerDashboardInsightsQuery,
   useOrganizerDashboardSummaryQuery,
@@ -29,13 +31,21 @@ import {
 } from "@/hooks/use-organizer-dashboard";
 import { routes } from "@/config/env";
 import { formatIdr } from "@/lib/format";
+import { canManageMembers, isScannerRole } from "@/lib/permissions";
 import { exportOrganizerSummaryCsv } from "@/lib/organizer-analytics-export";
 import { toOrganizerChartSeries } from "@/lib/organizer-chart";
+import { useAuthStore } from "@/stores/auth-store";
 
 export function OrganizerDashboardPanel() {
-  const summaryQuery = useOrganizerDashboardSummaryQuery();
-  const trendsQuery = useOrganizerDashboardTrendsQuery(14);
-  const insightsQuery = useOrganizerDashboardInsightsQuery();
+  const user = useAuthStore((s) => s.user);
+  const isScanner = isScannerRole(user);
+  const summaryQuery = useOrganizerDashboardSummaryQuery(!isScanner);
+  const trendsQuery = useOrganizerDashboardTrendsQuery(14, !isScanner);
+  const insightsQuery = useOrganizerDashboardInsightsQuery(!isScanner);
+
+  if (isScanner) {
+    return <ScannerDashboardPanel />;
+  }
 
   const totals = summaryQuery.data?.totals;
   const today = summaryQuery.data?.today;
@@ -84,6 +94,11 @@ export function OrganizerDashboardPanel() {
                 Analitik lengkap
               </Link>
             </Button>
+            {canManageMembers(user) ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={routes.organizerTeam}>Kelola tim</Link>
+              </Button>
+            ) : null}
             <RefreshButton
               onRefresh={refreshAll}
               isFetching={isRefreshing}
@@ -92,6 +107,8 @@ export function OrganizerDashboardPanel() {
           </div>
         }
       />
+
+      <OrganizerInvitationsList />
 
       {hasNoEvents ? <OrganizerEmptyOnboarding /> : null}
 

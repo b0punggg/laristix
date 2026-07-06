@@ -26,4 +26,13 @@ interface OrganizerMemberServiceInterface
     ): OrganizerMember;
 
     public function remove(Organizer $organizer, User $actor, OrganizerMember $member): void;
+
+    /**
+     * @return Collection<int, OrganizerMember>
+     */
+    public function listPendingInvitations(User $user): Collection;
+
+    public function acceptInvitation(User $user, int $memberId): OrganizerMember;
+
+    public function declineInvitation(User $user, int $memberId): void;
 }

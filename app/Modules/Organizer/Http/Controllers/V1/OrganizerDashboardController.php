@@ -55,6 +55,17 @@ class OrganizerDashboardController extends Controller
         ]);
     }
 
+    public function scannerSummary(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $organizer = $this->requireCurrentOrganizer();
+
+        return response()->json([
+            'data' => $this->analytics->scannerSummary($organizer, $user),
+        ]);
+    }
+
     private function requireCurrentOrganizer()
     {
         $organizer = $this->organizerContext->organizer();

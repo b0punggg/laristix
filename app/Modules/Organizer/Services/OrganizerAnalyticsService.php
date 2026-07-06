@@ -14,6 +14,7 @@ use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
 use App\Modules\Order\Models\Registration;
 use App\Modules\Organizer\Contracts\OrganizerAnalyticsServiceInterface;
+use App\Modules\Organizer\Enums\OrganizerMemberRole;
 use App\Modules\Organizer\Exceptions\OrganizerAccessDeniedException;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Repositories\Contracts\OrganizerMemberRepositoryInterface;
@@ -32,6 +33,7 @@ class OrganizerAnalyticsService implements OrganizerAnalyticsServiceInterface
     public function summary(Organizer $organizer, User $user): array
     {
         $this->assertMemberOrSuperAdmin($organizer, $user);
+        $this->assertNotScanner($organizer, $user);
 
         $today = Carbon::today()->toDateString();
 
@@ -92,6 +94,7 @@ class OrganizerAnalyticsService implements OrganizerAnalyticsServiceInterface
     public function trends(Organizer $organizer, User $user, int $days = 30): array
     {
         $this->assertMemberOrSuperAdmin($organizer, $user);
+        $this->assertNotScanner($organizer, $user);
 
         $days = max(7, min($days, 90));
         $startDate = Carbon::today()->subDays($days - 1);
@@ -140,6 +143,7 @@ class OrganizerAnalyticsService implements OrganizerAnalyticsServiceInterface
     public function insights(Organizer $organizer, User $user): array
     {
         $this->assertMemberOrSuperAdmin($organizer, $user);
+        $this->assertNotScanner($organizer, $user);
 
         $today = Carbon::today()->toDateString();
         $eventIdsWithGates = CheckInGate::query()->pluck('event_id');
@@ -249,6 +253,63 @@ class OrganizerAnalyticsService implements OrganizerAnalyticsServiceInterface
         ];
     }
 
+    public function scannerSummary(Organizer $organizer, User $user): array
+    {
+        $this->assertScanner($organizer, $user);
+
+        $today = Carbon::today()->toDateString();
+
+        $todayScans = CheckIn::query()
+            ->where('organizer_id', $organizer->id)
+            ->where('scanned_by', $user->id)
+            ->whereDate('checked_in_at', $today)
+            ->count();
+
+        $lastScan = CheckIn::query()
+            ->where('organizer_id', $organizer->id)
+            ->where('scanned_by', $user->id)
+            ->orderByDesc('checked_in_at')
+            ->first();
+
+        $scansByEvent = CheckIn::query()
+            ->where('organizer_id', $organizer->id)
+            ->where('scanned_by', $user->id)
+            ->whereDate('checked_in_at', $today)
+            ->selectRaw('event_id, COUNT(*) as scans_count')
+            ->groupBy('event_id')
+            ->get();
+
+        $eventsById = Event::query()
+            ->whereIn('id', $scansByEvent->pluck('event_id'))
+            ->get()
+            ->keyBy('id');
+
+        $eventsToday = $scansByEvent
+            ->map(function ($row) use ($eventsById) {
+                $event = $eventsById->get($row->event_id);
+
+                if ($event === null) {
+                    return null;
+                }
+
+                return [
+                    'event' => $this->eventInsight($event),
+                    'scans_today' => (int) $row->scans_count,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return [
+            'today' => [
+                'scans' => $todayScans,
+                'last_scan_at' => $lastScan?->checked_in_at?->toIso8601String(),
+            ],
+            'events_today' => $eventsToday,
+        ];
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -314,6 +375,32 @@ class OrganizerAnalyticsService implements OrganizerAnalyticsServiceInterface
         }
 
         if ($this->members->findActiveMembership($user->id, $organizer->id) === null) {
+            throw OrganizerAccessDeniedException::make();
+        }
+    }
+
+    private function assertNotScanner(Organizer $organizer, User $user): void
+    {
+        if ($user->isSuperAdmin()) {
+            return;
+        }
+
+        $membership = $this->members->findActiveMembership($user->id, $organizer->id);
+
+        if ($membership !== null && $membership->role === OrganizerMemberRole::SCANNER) {
+            throw OrganizerAccessDeniedException::make('Scanner role cannot access this resource.');
+        }
+    }
+
+    private function assertScanner(Organizer $organizer, User $user): void
+    {
+        if ($user->isSuperAdmin()) {
+            return;
+        }
+
+        $membership = $this->members->findActiveMembership($user->id, $organizer->id);
+
+        if ($membership === null || $membership->role !== OrganizerMemberRole::SCANNER) {
             throw OrganizerAccessDeniedException::make();
         }
     }

@@ -3,6 +3,7 @@
 use App\Modules\Auth\Http\Controllers\V1\AuthController;
 use App\Modules\Auth\Http\Controllers\V1\EmailVerificationController;
 use App\Modules\Auth\Http\Controllers\V1\MeController;
+use App\Modules\Auth\Http\Controllers\V1\OrganizerInvitationController;
 use App\Modules\Auth\Http\Controllers\V1\PasswordResetController;
 use App\Modules\Auth\Http\Controllers\V1\PersonalAccessTokenController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,13 @@ Route::prefix('auth')->name('auth.')->group(function () {
         Route::post('organizer/switch', [MeController::class, 'switchOrganizer'])
             ->middleware('throttle:'.config('auth_module.rate_limits.switch_organizer'))
             ->name('organizer.switch');
+
+        Route::get('organizer-invitations', [OrganizerInvitationController::class, 'index'])
+            ->name('organizer-invitations.index');
+        Route::post('organizer-invitations/{memberId}/accept', [OrganizerInvitationController::class, 'accept'])
+            ->name('organizer-invitations.accept');
+        Route::post('organizer-invitations/{memberId}/decline', [OrganizerInvitationController::class, 'decline'])
+            ->name('organizer-invitations.decline');
 
         Route::post('tokens', [PersonalAccessTokenController::class, 'store'])->name('tokens.store');
         Route::delete('tokens/current', [PersonalAccessTokenController::class, 'destroy'])->name('tokens.destroy');

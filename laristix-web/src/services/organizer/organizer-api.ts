@@ -4,10 +4,14 @@ import type { ApiResponse, CreateOrganizerPayload, Organizer } from "@/types/aut
 import type {
   AdminOrganizer,
   AdminOrganizerListFilters,
+  InviteOrganizerMemberPayload,
   OrganizerDashboardSummary,
   OrganizerDashboardTrends,
   OrganizerDashboardInsights,
+  OrganizerMember,
+  OrganizerScannerDashboardSummary,
   PaginatedOrganizerResponse,
+  UpdateOrganizerMemberPayload,
 } from "@/types/organizer";
 
 export const organizerApi = {
@@ -31,6 +35,46 @@ export const organizerApi = {
       apiPaths.organizers.dashboardInsights,
     );
     return data.data;
+  },
+
+  async dashboardScannerSummary() {
+    const { data } = await apiClient.get<ApiResponse<OrganizerScannerDashboardSummary>>(
+      apiPaths.organizers.dashboardScannerSummary,
+    );
+    return data.data;
+  },
+
+  async listMembers() {
+    const { data } = await apiClient.get<ApiResponse<OrganizerMember[]>>(
+      apiPaths.organizers.members,
+    );
+    return data.data;
+  },
+
+  async inviteMember(payload: InviteOrganizerMemberPayload) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<ApiResponse<OrganizerMember>>(
+      apiPaths.organizers.members,
+      payload,
+    );
+    return data;
+  },
+
+  async updateMember(memberId: number, payload: UpdateOrganizerMemberPayload) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.patch<ApiResponse<OrganizerMember>>(
+      apiPaths.organizers.member(memberId),
+      payload,
+    );
+    return data;
+  },
+
+  async removeMember(memberId: number) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.delete<{ message: string }>(
+      apiPaths.organizers.member(memberId),
+    );
+    return data;
   },
 
   async create(payload: CreateOrganizerPayload) {

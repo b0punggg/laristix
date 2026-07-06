@@ -25,4 +25,11 @@ interface OrganizerMemberRepositoryInterface
      * @return Collection<int, OrganizerMember>
      */
     public function listForOrganizer(int $organizerId): Collection;
+
+    /**
+     * @return Collection<int, OrganizerMember>
+     */
+    public function listPendingForUser(int $userId): Collection;
+
+    public function findPendingForUser(int $userId, int $memberId): ?OrganizerMember;
 }

@@ -44,6 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('organizers.current.dashboard.trends');
         Route::get('organizers/current/dashboard/insights', [OrganizerDashboardController::class, 'insights'])
             ->name('organizers.current.dashboard.insights');
+        Route::get('organizers/current/dashboard/scanner-summary', [OrganizerDashboardController::class, 'scannerSummary'])
+            ->name('organizers.current.dashboard.scanner-summary');
 
         Route::get('organizers/current', [OrganizerController::class, 'showCurrent'])
             ->name('organizers.current.show');

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Organizer\Services;
 
+use App\Core\Tenancy\Contracts\OrganizerMembershipValidatorInterface;
 use App\Modules\Auth\Contracts\RoleServiceInterface;
 use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Repositories\Contracts\UserRepositoryInterface;
@@ -11,6 +12,7 @@ use App\Modules\Organizer\Enums\OrganizerMemberRole;
 use App\Modules\Organizer\Exceptions\OrganizerAccessDeniedException;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
+use App\Modules\Organizer\Notifications\OrganizerMemberInvitationNotification;
 use App\Modules\Organizer\Repositories\Contracts\OrganizerMemberRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -26,14 +28,19 @@ class OrganizerMemberService implements OrganizerMemberServiceInterface
     /** @var RoleServiceInterface */
     private $roleService;
 
+    /** @var OrganizerMembershipValidatorInterface */
+    private $membershipValidator;
+
     public function __construct(
         OrganizerMemberRepositoryInterface $members,
         UserRepositoryInterface $users,
-        RoleServiceInterface $roleService
+        RoleServiceInterface $roleService,
+        OrganizerMembershipValidatorInterface $membershipValidator
     ) {
         $this->members = $members;
         $this->users = $users;
         $this->roleService = $roleService;
+        $this->membershipValidator = $membershipValidator;
     }
 
     public function list(Organizer $organizer, User $user): Collection
@@ -61,7 +68,7 @@ class OrganizerMemberService implements OrganizerMemberServiceInterface
             throw OrganizerAccessDeniedException::make('User is already a member or has a pending invitation.');
         }
 
-        return $this->members->create([
+        $member = $this->members->create([
             'organizer_id' => $organizer->id,
             'user_id' => $invitee->id,
             'role' => $dto->role,
@@ -69,6 +76,52 @@ class OrganizerMemberService implements OrganizerMemberServiceInterface
             'invited_at' => now(),
             'status' => 'pending',
         ]);
+
+        $invitee->notify(new OrganizerMemberInvitationNotification($organizer, $inviter, $dto->role));
+
+        return $member->load(['user', 'invitedBy']);
+    }
+
+    public function listPendingInvitations(User $user): Collection
+    {
+        return $this->members->listPendingForUser($user->id);
+    }
+
+    public function acceptInvitation(User $user, int $memberId): OrganizerMember
+    {
+        $member = $this->members->findPendingForUser($user->id, $memberId);
+
+        if ($member === null) {
+            throw OrganizerAccessDeniedException::make('Invalid or expired invitation.');
+        }
+
+        $organizer = $member->organizer ?? Organizer::query()->findOrFail($member->organizer_id);
+
+        $this->membershipValidator->validateOrganizerIsAccessible($organizer);
+
+        return DB::transaction(function () use ($member, $organizer) {
+            $updated = $this->members->update($member, [
+                'status' => 'active',
+                'accepted_at' => now(),
+            ]);
+
+            if ($updated->user !== null) {
+                $this->roleService->syncUserRoles($updated->user, $organizer->id);
+            }
+
+            return $updated->load(['organizer', 'user', 'invitedBy']);
+        });
+    }
+
+    public function declineInvitation(User $user, int $memberId): void
+    {
+        $member = $this->members->findPendingForUser($user->id, $memberId);
+
+        if ($member === null) {
+            throw OrganizerAccessDeniedException::make('Invalid or expired invitation.');
+        }
+
+        $this->members->update($member, ['status' => 'removed']);
     }
 
     public function update(

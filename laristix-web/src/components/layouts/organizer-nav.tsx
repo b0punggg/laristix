@@ -2,27 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ArrowLeftRight,
-  BarChart3,
-  Calendar,
-  LayoutDashboard,
-  ScanLine,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { routes } from "@/config/env";
+import { getOrganizerNavItems } from "@/lib/organizer-nav-items";
 import { cn } from "@/lib/utils";
-
-const navItems: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: routes.organizerDashboard, label: "Dashboard", icon: LayoutDashboard },
-  { href: routes.organizerAnalytics, label: "Analitik", icon: BarChart3 },
-  { href: routes.organizerEvents, label: "Event", icon: Calendar },
-  { href: routes.scanner, label: "Scanner", icon: ScanLine },
-  { href: routes.selectOrganizer, label: "Ganti organizer", icon: ArrowLeftRight },
-];
+import { useAuthStore } from "@/stores/auth-store";
 
 export function OrganizerNav() {
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
+  const navItems = getOrganizerNavItems(user);
 
   return (
     <nav className="mt-8 space-y-1">

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { OrganizerInvitationsList } from "@/components/features/organizer/organizer-invitations-list";
+import { organizerMemberRoleLabel } from "@/lib/organizer-member-labels";
 import { routes } from "@/config/env";
 import { useOrganizersQuery, useSwitchOrganizerMutation } from "@/hooks/use-auth";
 
@@ -11,47 +13,67 @@ export function OrganizerPicker() {
   const switchOrganizer = useSwitchOrganizerMutation();
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading organizers...</p>;
+    return <p className="text-sm text-muted-foreground">Memuat organizer...</p>;
   }
 
-  if (isError || !organizers?.length) {
-    return (
-      <Card>
-        <CardContent className="space-y-4 pt-6 text-center">
-          <p className="text-sm text-muted-foreground">No organizers found for your account.</p>
-          <Button asChild className="w-full">
-            <Link href={routes.createOrganizer}>Create organizer</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+  const hasOrganizers = (organizers?.length ?? 0) > 0;
 
   return (
-    <div className="space-y-3">
-      {organizers.map((organizer) => (
-        <Card key={organizer.id}>
-          <CardContent className="flex items-center justify-between gap-4 pt-6">
-            <div>
-              <p className="font-medium">{organizer.name}</p>
+    <div className="space-y-6">
+      <OrganizerInvitationsList />
+
+      {!hasOrganizers ? (
+        isError ? (
+          <Card>
+            <CardContent className="space-y-4 pt-6 text-center">
+              <p className="text-sm text-muted-foreground">Gagal memuat daftar organizer.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="space-y-4 pt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                {organizer.membership?.role ?? "member"} · {organizer.slug}
-                {organizer.status === "pending" ? " · pending approval" : ""}
+                Belum ada organizer aktif. Terima undangan di atas atau buat organizer baru.
               </p>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => switchOrganizer.mutate(organizer.id)}
-              disabled={switchOrganizer.isPending}
-            >
-              Select
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-      <Button variant="outline" className="w-full" asChild>
-        <Link href={routes.createOrganizer}>Create another organizer</Link>
-      </Button>
+              <Button asChild className="w-full">
+                <Link href={routes.createOrganizer}>Buat organizer</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Organizer Anda</p>
+          {organizers?.map((organizer) => (
+            <Card key={organizer.id}>
+              <CardContent className="flex items-center justify-between gap-4 pt-6">
+                <div>
+                  <p className="font-medium">{organizer.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {organizer.membership?.role
+                      ? organizerMemberRoleLabel(
+                          organizer.membership.role as "owner" | "admin" | "staff" | "scanner",
+                        )
+                      : "anggota"}{" "}
+                    · {organizer.slug}
+                    {organizer.status === "pending" ? " · menunggu persetujuan" : ""}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => switchOrganizer.mutate(organizer.id)}
+                  disabled={switchOrganizer.isPending}
+                >
+                  Pilih
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+          <Button variant="outline" className="w-full" asChild>
+            <Link href={routes.createOrganizer}>Buat organizer lain</Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

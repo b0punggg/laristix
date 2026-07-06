@@ -2,31 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ArrowLeftRight,
-  BarChart3,
-  Calendar,
-  LayoutDashboard,
-  ScanLine,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { routes } from "@/config/env";
+import { getOrganizerMobileNavItems } from "@/lib/organizer-nav-items";
 import { cn } from "@/lib/utils";
-
-const navItems: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: routes.organizerDashboard, label: "Home", icon: LayoutDashboard },
-  { href: routes.organizerAnalytics, label: "Analitik", icon: BarChart3 },
-  { href: routes.organizerEvents, label: "Event", icon: Calendar },
-  { href: routes.scanner, label: "Scan", icon: ScanLine },
-  { href: routes.selectOrganizer, label: "Ganti", icon: ArrowLeftRight },
-];
+import { useAuthStore } from "@/stores/auth-store";
 
 export function OrganizerMobileNav() {
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
+  const navItems = getOrganizerMobileNavItems(user);
+  const gridCols = navItems.length === 3 ? "grid-cols-3" : "grid-cols-5";
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur md:hidden">
-      <div className="grid grid-cols-5">
+      <div className={cn("grid", gridCols)}>
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);

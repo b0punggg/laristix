@@ -120,3 +120,63 @@ export interface OrganizerDashboardInsights {
   attention_items: OrganizerAttentionItem[];
   top_events_by_revenue: OrganizerTopEventByRevenue[];
 }
+
+export interface OrganizerScannerDashboardSummary {
+  today: {
+    scans: number;
+    last_scan_at: string | null;
+  };
+  events_today: Array<{
+    event: OrganizerEventInsight;
+    scans_today: number;
+  }>;
+}
+
+export type OrganizerMemberRole = "owner" | "admin" | "staff" | "scanner";
+export type OrganizerMemberStatus = "pending" | "active" | "removed";
+
+export interface OrganizerMemberUser {
+  id: number;
+  uuid: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+export interface OrganizerMember {
+  id: number;
+  organizer_id: number;
+  role: OrganizerMemberRole;
+  status: OrganizerMemberStatus;
+  invited_at: string | null;
+  accepted_at: string | null;
+  user?: OrganizerMemberUser;
+  invited_by?: { id: number; name: string } | null;
+  created_at?: string;
+}
+
+export interface OrganizerInvitation {
+  id: number;
+  role: OrganizerMemberRole;
+  status: OrganizerMemberStatus;
+  invited_at: string | null;
+  organizer: {
+    id: number;
+    uuid: string;
+    name: string;
+    slug: string;
+    logo_url: string | null;
+    status: string;
+  } | null;
+  invited_by?: { id: number; name: string } | null;
+}
+
+export interface InviteOrganizerMemberPayload {
+  email: string;
+  role: Exclude<OrganizerMemberRole, "owner">;
+}
+
+export interface UpdateOrganizerMemberPayload {
+  role?: OrganizerMemberRole;
+  status?: OrganizerMemberStatus;
+}

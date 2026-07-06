@@ -21,4 +21,9 @@ interface OrganizerAnalyticsServiceInterface
      * @return array<string, mixed>
      */
     public function insights(Organizer $organizer, User $user): array;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function scannerSummary(Organizer $organizer, User $user): array;
 }
