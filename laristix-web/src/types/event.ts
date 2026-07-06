@@ -24,6 +24,12 @@ export interface EventCategory {
   slug: string;
   icon: string | null;
   is_global: boolean;
+  events_count?: number;
+}
+
+export interface PublicCity {
+  city: string;
+  events_count: number;
 }
 
 export interface EventOrganizerSummary {
@@ -32,6 +38,20 @@ export interface EventOrganizerSummary {
   name: string;
   slug: string;
   logo_url: string | null;
+}
+
+export interface FeaturedOrganizer {
+  id: number;
+  uuid: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  published_events_count: number;
+}
+
+export interface PublicPlatformStats {
+  published_events_count: number;
+  organizer_count: number;
 }
 
 export interface Event {
@@ -50,6 +70,8 @@ export interface Event {
   timezone: string;
   capacity: number | null;
   is_free: boolean;
+  min_ticket_price?: number;
+  tickets_remaining?: number;
   settings: Record<string, unknown> | null;
   published_at: string | null;
   venue?: EventVenue | null;
@@ -82,6 +104,10 @@ export interface EventListFilters {
 export interface PublicEventListFilters {
   search?: string;
   category_id?: number;
+  city?: string;
+  is_free?: boolean;
+  upcoming_days?: number;
+  sort?: "start_at" | "published_at" | "title";
   per_page?: number;
   page?: number;
 }

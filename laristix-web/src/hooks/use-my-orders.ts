@@ -8,9 +8,10 @@ export const myOrdersKeys = {
   list: (page: number, perPage: number) => ["my-orders", "list", page, perPage] as const,
 };
 
-export function useMyOrdersQuery(page = 1, perPage = 15) {
+export function useMyOrdersQuery(page = 1, perPage = 15, enabled = true) {
   return useQuery({
     queryKey: myOrdersKeys.list(page, perPage),
     queryFn: () => myOrdersApi.list(page, perPage),
+    enabled,
   });
 }

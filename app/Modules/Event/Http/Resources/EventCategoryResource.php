@@ -19,6 +19,10 @@ class EventCategoryResource extends JsonResource
             'slug' => $this->slug,
             'icon' => $this->icon,
             'is_global' => $this->isGlobal(),
+            'events_count' => $this->when(
+                isset($this->events_count),
+                (int) $this->events_count
+            ),
         ];
     }
 }

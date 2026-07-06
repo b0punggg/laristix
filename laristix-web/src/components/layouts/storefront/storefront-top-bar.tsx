@@ -8,17 +8,21 @@ const topLinks = [
 
 export function StorefrontTopBar() {
   return (
-    <div className="bg-[#1e4fd6] text-white">
+    <div className="bg-brand text-brand-foreground">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-xs sm:text-sm">
         <Link
           href={routes.createOrganizer}
-          className="font-medium transition-opacity hover:opacity-90"
+          className="storefront-focus-ring rounded-sm font-medium transition-opacity hover:opacity-90"
         >
           + Daftarkan Eventmu Sekarang
         </Link>
-        <nav className="hidden items-center gap-5 sm:flex">
+        <nav className="hidden items-center gap-5 sm:flex" aria-label="Tautan atas">
           {topLinks.map((link) => (
-            <Link key={link.href} href={link.href} className="transition-opacity hover:opacity-90">
+            <Link
+              key={link.href}
+              href={link.href}
+              className="storefront-focus-ring rounded-sm transition-opacity hover:opacity-90"
+            >
               {link.label}
             </Link>
           ))}

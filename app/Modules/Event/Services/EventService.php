@@ -152,9 +152,13 @@ class EventService implements EventServiceInterface
 
     public function listPublic(array $filters = []): LengthAwarePaginator
     {
+        $perPage = isset($filters['per_page'])
+            ? max(1, min((int) $filters['per_page'], 48))
+            : (int) config('event_module.pagination.public_per_page', 12);
+
         return $this->events->paginatePublic(
-            $filters,
-            (int) config('event_module.pagination.public_per_page', 12)
+            \Illuminate\Support\Arr::except($filters, ['per_page']),
+            $perPage
         );
     }
 
@@ -167,6 +171,29 @@ class EventService implements EventServiceInterface
         }
 
         return $event;
+    }
+
+    public function listPublicCategories()
+    {
+        return $this->categories->listPublicWithEventCounts();
+    }
+
+    public function listPublicCities()
+    {
+        return $this->events->listPublicCities();
+    }
+
+    public function publicPlatformStats(): array
+    {
+        return [
+            'published_events_count' => $this->events->countPublicPublished(),
+            'organizer_count' => $this->events->countPublicOrganizers(),
+        ];
+    }
+
+    public function listFeaturedOrganizers(int $limit = 8)
+    {
+        return $this->events->listFeaturedOrganizers($limit);
     }
 
     private function assertPublishable(Event $event): void

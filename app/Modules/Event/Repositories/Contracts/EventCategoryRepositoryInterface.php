@@ -13,4 +13,9 @@ interface EventCategoryRepositoryInterface
     public function listAvailableForOrganizer(?int $organizerId): Collection;
 
     public function findForOrganizer(?int $organizerId, int $categoryId): ?EventCategory;
+
+    /**
+     * @return Collection<int, EventCategory>
+     */
+    public function listPublicWithEventCounts(): Collection;
 }

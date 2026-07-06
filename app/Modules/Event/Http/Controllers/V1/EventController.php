@@ -16,7 +16,16 @@ class EventController extends Controller
 
     public function indexPublic(Request $request): JsonResponse
     {
-        $paginator = $this->eventService->listPublic($request->only(['search', 'category_id']));
+        $paginator = $this->eventService->listPublic($request->only([
+            'search',
+            'category_id',
+            'city',
+            'is_free',
+            'upcoming_days',
+            'sort',
+            'per_page',
+            'page',
+        ]));
 
         return EventResource::collection($paginator)->response();
     }

@@ -48,13 +48,13 @@ export function StorefrontFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {footerColumns.map((column) => (
             <div key={column.title}>
-              <h3 className="mb-4 text-sm font-bold text-gray-900">{column.title}</h3>
+              <h3 className="mb-4 text-sm font-bold text-foreground">{column.title}</h3>
               <ul className="space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-gray-600 transition-colors hover:text-[#1e4fd6]"
+                      className="text-sm text-muted-foreground transition-colors hover:text-brand"
                     >
                       {link.label}
                     </Link>
@@ -65,7 +65,7 @@ export function StorefrontFooter() {
           ))}
 
           <div>
-            <h3 className="mb-4 text-sm font-bold text-gray-900">Ikuti Kami</h3>
+            <h3 className="mb-4 text-sm font-bold text-foreground">Ikuti Kami</h3>
             <div className="grid grid-cols-2 gap-2">
               {socialLinks.map((social) => (
                 <Link

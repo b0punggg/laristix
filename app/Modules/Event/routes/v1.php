@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Event\Http\Controllers\V1\AdminEventController;
+use App\Modules\Event\Http\Controllers\V1\PublicDiscoveryController;
 use App\Modules\Event\Http\Controllers\V1\EventCategoryController;
 use App\Modules\Event\Http\Controllers\V1\EventController;
 use App\Modules\Event\Http\Controllers\V1\EventManagementController;
@@ -10,7 +11,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('public')->name('public.')->group(function () {
     Route::get('events', [EventController::class, 'indexPublic'])->name('events.index');
     Route::get('events/{uuid}', [EventController::class, 'showPublic'])->name('events.show');
-    Route::get('event-categories', [EventCategoryController::class, 'index'])->name('event-categories.index');
+    Route::get('event-categories', [PublicDiscoveryController::class, 'categories'])->name('event-categories.index');
+    Route::get('cities', [PublicDiscoveryController::class, 'cities'])->name('cities.index');
+    Route::get('stats', [PublicDiscoveryController::class, 'stats'])->name('stats');
+    Route::get('featured-organizers', [PublicDiscoveryController::class, 'featuredOrganizers'])->name('featured-organizers');
 });
 
 Route::middleware('auth:sanctum')->prefix('admin')->name('admin.')->group(function () {

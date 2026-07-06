@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { eventApi } from "@/services/event/event-api";
 import { publicTicketApi } from "@/services/ticket/ticket-api";
 import type { PublicEventListFilters } from "@/types/event";
@@ -13,9 +13,21 @@ export const publicEventKeys = {
 };
 
 export function usePublicEventsQuery(filters: PublicEventListFilters = {}) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: publicEventKeys.list(filters),
-    queryFn: () => eventApi.listPublic(filters),
+    queryFn: ({ pageParam = 1 }) => eventApi.listPublic({ ...filters, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.current_page < lastPage.meta.last_page
+        ? lastPage.meta.current_page + 1
+        : undefined,
+  });
+}
+
+export function usePublicEventsPageQuery(filters: PublicEventListFilters = {}) {
+  return useQuery({
+    queryKey: publicEventKeys.list({ ...filters, page: filters.page ?? 1 }),
+    queryFn: () => eventApi.listPublic({ ...filters, page: filters.page ?? 1 }),
   });
 }
 

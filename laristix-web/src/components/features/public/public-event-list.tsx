@@ -2,83 +2,100 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { usePublicDiscoveryNavigation } from "@/hooks/use-public-discovery-navigation";
 import { usePublicEventsQuery } from "@/hooks/use-public-events";
-import type { PublicEventListFilters } from "@/types/event";
+import {
+  discoveryFiltersToEventList,
+  getSectionFilterLabel,
+  hasActiveDiscoveryFilters,
+  parsePublicDiscoveryFilters,
+} from "@/lib/public-discovery-filters";
+import { PublicActiveFiltersBar } from "./public-active-filters-bar";
+import { PublicDiscoveryErrorState, PublicEmptyEventsState } from "./public-discovery-states";
 import { PublicEventCard } from "./public-event-card";
+import { PublicEventGridSkeleton } from "./public-event-card-skeleton";
 
 interface PublicEventListProps {
+  title?: string;
   showHeading?: boolean;
-  hideSearch?: boolean;
 }
 
-export function PublicEventList({ showHeading = true, hideSearch = false }: PublicEventListProps) {
+export function PublicEventList({ title = "Event", showHeading = true }: PublicEventListProps) {
   const searchParams = useSearchParams();
-  const search = searchParams.get("q")?.trim() ?? "";
-
-  const filters = useMemo<PublicEventListFilters>(
-    () => ({
-      search: search || undefined,
-      per_page: 12,
-    }),
-    [search],
+  const { clearFilters } = usePublicDiscoveryNavigation();
+  const discovery = useMemo(
+    () => parsePublicDiscoveryFilters(searchParams),
+    [searchParams],
   );
 
-  const { data, isLoading, isError, refetch } = usePublicEventsQuery(filters);
-  const events = data?.data ?? [];
-  const total = data?.meta.total ?? 0;
+  const filters = useMemo(
+    () => discoveryFiltersToEventList(discovery, { per_page: 12 }),
+    [discovery],
+  );
+
+  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    usePublicEventsQuery(filters);
+
+  const events = useMemo(() => data?.pages.flatMap((page) => page.data) ?? [], [data]);
+  const total = data?.pages[0]?.meta.total ?? 0;
+  const sectionLabel = getSectionFilterLabel(discovery);
+  const hasFilters = hasActiveDiscoveryFilters(discovery);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 pb-10">
-      {showHeading ? (
-        <h2 className="text-2xl font-bold text-gray-900">Event</h2>
-      ) : null}
+    <div className="storefront-section mx-auto max-w-7xl space-y-5 px-4">
+      {showHeading ? <h2 className="storefront-section-title">{title}</h2> : null}
 
-      {!hideSearch && search ? (
+      <PublicActiveFiltersBar />
+
+      {discovery.q && !isLoading ? (
         <p className="text-sm text-muted-foreground">
-          Hasil pencarian untuk &ldquo;{search}&rdquo;
+          Hasil pencarian untuk &ldquo;{discovery.q}&rdquo;
         </p>
       ) : null}
 
-      {isLoading ? (
-        <p className="text-muted-foreground">Memuat event...</p>
+      {sectionLabel && !isLoading ? (
+        <p className="text-sm text-muted-foreground">Menampilkan: {sectionLabel}</p>
       ) : null}
 
-      {isError ? (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
-          <p className="font-medium">Gagal memuat event.</p>
-          <button
-            type="button"
-            className="mt-2 text-primary underline-offset-4 hover:underline"
-            onClick={() => refetch()}
-          >
-            Coba lagi
-          </button>
-        </div>
-      ) : null}
+      {isLoading ? <PublicEventGridSkeleton /> : null}
+
+      {isError ? <PublicDiscoveryErrorState onRetry={() => refetch()} /> : null}
 
       {!isLoading && !isError && events.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-10 text-center">
-          <p className="font-medium">
-            {search ? "Tidak ada event yang cocok dengan pencarian Anda." : "Belum ada event yang dipublikasikan"}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {search
-              ? "Coba kata kunci lain atau hapus filter pencarian."
-              : "Event dengan status published akan muncul di sini."}
-          </p>
-        </div>
+        <PublicEmptyEventsState hasFilters={hasFilters} onClearFilters={clearFilters} />
       ) : null}
 
       {!isLoading && !isError && events.length > 0 ? (
         <>
           <p className="text-sm text-muted-foreground">
-            {total} event ditemukan
+            Menampilkan {events.length} dari {total} event
           </p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {events.map((event) => (
-              <PublicEventCard key={event.uuid} event={event} />
+            {events.map((event, index) => (
+              <PublicEventCard key={event.uuid} event={event} animationIndex={index % 8} />
             ))}
           </div>
+          {hasNextPage ? (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Memuat...
+                  </>
+                ) : (
+                  "Muat lebih banyak"
+                )}
+              </Button>
+            </div>
+          ) : null}
         </>
       ) : null}
     </div>

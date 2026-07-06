@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { StorefrontFooter } from "./storefront-footer";
 import { StorefrontHeader } from "./storefront-header";
+import { StorefrontMobileNav } from "./storefront-mobile-nav";
 import { StorefrontTopBar } from "./storefront-top-bar";
+import { cn } from "@/lib/utils";
 
 interface StorefrontShellProps {
   children: React.ReactNode;
@@ -18,8 +20,13 @@ export function StorefrontShell({ children }: StorefrontShellProps) {
       <Suspense fallback={<HeaderFallback />}>
         <StorefrontHeader />
       </Suspense>
-      <main className="flex-1">{children}</main>
-      <StorefrontFooter />
+      <main className={cn("flex-1 pb-20 md:pb-0")}>{children}</main>
+      <div className="hidden md:block">
+        <StorefrontFooter />
+      </div>
+      <Suspense fallback={null}>
+        <StorefrontMobileNav />
+      </Suspense>
     </div>
   );
 }

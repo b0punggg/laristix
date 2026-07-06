@@ -36,4 +36,18 @@ interface EventRepositoryInterface
     public function paginatePublic(array $filters = [], int $perPage = 12): LengthAwarePaginator;
 
     public function findPublicByUuid(string $uuid): ?Event;
+
+    /**
+     * @return Collection<int, array{city: string, events_count: int}>
+     */
+    public function listPublicCities(): Collection;
+
+    public function countPublicPublished(): int;
+
+    public function countPublicOrganizers(): int;
+
+    /**
+     * @return Collection<int, \App\Modules\Organizer\Models\Organizer>
+     */
+    public function listFeaturedOrganizers(int $limit = 8): Collection;
 }

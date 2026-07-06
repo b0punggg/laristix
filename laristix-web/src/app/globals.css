@@ -24,6 +24,12 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    --brand: 224 77% 48%;
+    --brand-hover: 224 76% 42%;
+    --brand-foreground: 0 0% 100%;
+    --brand-muted: 224 80% 96%;
+    --brand-deep: 224 70% 35%;
+    --brand-light: 224 85% 58%;
   }
 
   .dark {
@@ -46,6 +52,12 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --brand: 224 77% 58%;
+    --brand-hover: 224 77% 52%;
+    --brand-foreground: 0 0% 100%;
+    --brand-muted: 224 40% 18%;
+    --brand-deep: 224 60% 28%;
+    --brand-light: 224 80% 65%;
   }
 
   * {
@@ -54,5 +66,49 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .storefront-section {
+    @apply py-12 md:py-16;
+  }
+
+  .storefront-section-title {
+    @apply text-2xl font-bold tracking-tight text-foreground;
+  }
+
+  .storefront-section-subtitle {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .storefront-brand-gradient {
+    @apply bg-gradient-to-br from-brand-deep via-brand to-brand-light;
+  }
+
+  .storefront-focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2;
+  }
+
+  .storefront-card-enter {
+    animation: storefront-fade-up 0.45s ease-out both;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+@keyframes storefront-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

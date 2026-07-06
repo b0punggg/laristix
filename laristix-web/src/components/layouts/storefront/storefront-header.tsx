@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, FileText, Search, Ticket, UserCircle } from "lucide-react";
 import { AppLogo } from "@/components/common/app-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { roleRoutes, routes } from "@/config/env";
 import { useLogoutMutation, useMeQuery } from "@/hooks/use-auth";
+import { buildHomeUrl, parsePublicDiscoveryFilters } from "@/lib/public-discovery-filters";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function StorefrontHeader() {
@@ -25,28 +26,32 @@ export function StorefrontHeader() {
   };
 
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const discoveryFilters = useMemo(
+    () => parsePublicDiscoveryFilters(searchParams),
+    [searchParams],
+  );
 
   useEffect(() => {
     setQuery(searchParams.get("q") ?? "");
   }, [searchParams]);
 
+  useEffect(() => {
+    if (searchParams.get("focus") === "search") {
+      searchInputRef.current?.focus();
+    }
+  }, [searchParams]);
+
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = query.trim();
-    const params = new URLSearchParams();
 
-    if (trimmed) {
-      params.set("q", trimmed);
-    }
-
-    const suffix = params.toString() ? `?${params.toString()}` : "";
-
-    if (pathname === routes.home) {
-      router.replace(`${routes.home}${suffix}`);
-      return;
-    }
-
-    router.push(`${routes.home}${suffix}`);
+    router.replace(
+      buildHomeUrl({
+        ...discoveryFilters,
+        q: trimmed || undefined,
+      }),
+    );
   };
 
   const dashboardRoute = user ? (roleRoutes[user.primary_role] ?? routes.home) : routes.login;
@@ -74,6 +79,7 @@ export function StorefrontHeader() {
         <form onSubmit={handleSearch} className="flex flex-1 items-center gap-0">
           <div className="relative flex flex-1">
             <Input
+              ref={searchInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari berdasarkan artis, acara, atau nama tempat"
@@ -82,7 +88,7 @@ export function StorefrontHeader() {
           </div>
           <Button
             type="submit"
-            className="h-11 rounded-l-none bg-[#1e4fd6] px-5 hover:bg-[#1a45be]"
+            className="h-11 rounded-l-none bg-brand px-5 hover:bg-brand-hover"
           >
             <Search className="size-5" />
             <span className="sr-only">Cari</span>
@@ -92,7 +98,7 @@ export function StorefrontHeader() {
         <nav className="hidden items-center gap-5 text-sm font-medium text-gray-700 lg:flex">
           <button
             type="button"
-            className="flex items-center gap-1.5 transition-colors hover:text-[#1e4fd6]"
+            className="flex items-center gap-1.5 transition-colors hover:text-brand"
           >
             <span className="text-base leading-none">🇮🇩</span>
             <span>ID</span>
@@ -101,7 +107,7 @@ export function StorefrontHeader() {
 
           <Link
             href={user ? routes.myTransactions : routes.loginWithRedirect(routes.myTransactions)}
-            className="flex items-center gap-2 transition-colors hover:text-[#1e4fd6]"
+            className="flex items-center gap-2 transition-colors hover:text-brand"
           >
             <FileText className="size-5 text-gray-500" />
             <span>Transaksi</span>
@@ -109,7 +115,7 @@ export function StorefrontHeader() {
 
           <Link
             href={user ? routes.myTickets : routes.loginWithRedirect(routes.myTickets)}
-            className="flex items-center gap-2 transition-colors hover:text-[#1e4fd6]"
+            className="flex items-center gap-2 transition-colors hover:text-brand"
           >
             <Ticket className="size-5 text-gray-500" />
             <span>Tiket</span>
@@ -117,7 +123,7 @@ export function StorefrontHeader() {
 
           {user ? (
             <details className="relative group">
-              <summary className="flex cursor-pointer list-none items-center gap-2 transition-colors hover:text-[#1e4fd6] [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center gap-2 transition-colors hover:text-brand [&::-webkit-details-marker]:hidden">
                 <UserCircle className="size-5 text-gray-500" />
                 <span className="max-w-[120px] truncate">Profil</span>
                 <ChevronDown className="size-4 text-gray-400" />
@@ -155,7 +161,7 @@ export function StorefrontHeader() {
           ) : (
             <Link
               href={routes.login}
-              className="flex items-center gap-2 transition-colors hover:text-[#1e4fd6]"
+              className="flex items-center gap-2 transition-colors hover:text-brand"
             >
               <UserCircle className="size-5 text-gray-500" />
               <span>Masuk</span>

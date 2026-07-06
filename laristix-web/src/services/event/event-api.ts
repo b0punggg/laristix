@@ -9,7 +9,9 @@ import type {
   EventCategory,
   EventListFilters,
   EventVenue,
+  FeaturedOrganizer,
   PaginatedResponse,
+  PublicCity,
   PublicEventListFilters,
   UpdateEventPayload,
 } from "@/types/event";
@@ -88,6 +90,32 @@ export const eventApi = {
       params: filters,
     });
     return data;
+  },
+
+  async listPublicCategories() {
+    const { data } = await apiClient.get<ApiResponse<EventCategory[]>>(
+      apiPaths.events.publicCategories,
+    );
+    return data.data;
+  },
+
+  async listPublicCities() {
+    const { data } = await apiClient.get<ApiResponse<PublicCity[]>>(apiPaths.events.publicCities);
+    return data.data;
+  },
+
+  async getPublicStats() {
+    const { data } = await apiClient.get<
+      ApiResponse<{ published_events_count: number; organizer_count: number }>
+    >(apiPaths.events.publicStats);
+    return data.data;
+  },
+
+  async listFeaturedOrganizers() {
+    const { data } = await apiClient.get<ApiResponse<FeaturedOrganizer[]>>(
+      apiPaths.events.publicFeaturedOrganizers,
+    );
+    return data.data;
   },
 
   async showPublic(uuid: string) {

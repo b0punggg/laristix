@@ -14,7 +14,7 @@ export function AppLogo({ variant = "default", className }: AppLogoProps) {
       className={cn(
         "font-bold tracking-tight",
         variant === "storefront"
-          ? "text-2xl text-[#1e4fd6] sm:text-3xl"
+          ? "text-2xl text-brand sm:text-3xl"
           : "text-xl",
         className,
       )}

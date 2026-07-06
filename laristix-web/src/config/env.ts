@@ -39,6 +39,10 @@ export const apiPaths = {
     adminList: "/api/v1/admin/events",
     publicList: "/api/v1/public/events",
     publicShow: (uuid: string) => `/api/v1/public/events/${uuid}`,
+    publicCategories: "/api/v1/public/event-categories",
+    publicCities: "/api/v1/public/cities",
+    publicStats: "/api/v1/public/stats",
+    publicFeaturedOrganizers: "/api/v1/public/featured-organizers",
   },
   venues: {
     list: "/api/v1/venues",

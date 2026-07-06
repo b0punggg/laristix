@@ -28,6 +28,19 @@ class EventResource extends JsonResource
             'timezone' => $this->timezone,
             'capacity' => $this->capacity,
             'is_free' => $this->is_free,
+            'min_ticket_price' => $this->when(
+                $this->min_ticket_price !== null,
+                fn () => (float) $this->min_ticket_price
+            ),
+            'tickets_remaining' => $this->when(
+                $this->tickets_quantity !== null,
+                fn () => max(
+                    0,
+                    (int) $this->tickets_quantity
+                    - (int) ($this->tickets_sold ?? 0)
+                    - (int) ($this->tickets_reserved ?? 0)
+                )
+            ),
             'settings' => $this->settings,
             'published_at' => $this->published_at?->toIso8601String(),
             'venue' => new VenueResource($this->whenLoaded('venue')),

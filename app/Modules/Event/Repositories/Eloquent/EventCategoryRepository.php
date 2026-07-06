@@ -2,6 +2,8 @@
 
 namespace App\Modules\Event\Repositories\Eloquent;
 
+use App\Modules\Event\Enums\EventStatus;
+use App\Modules\Event\Enums\EventVisibility;
 use App\Modules\Event\Models\EventCategory;
 use App\Modules\Event\Repositories\Contracts\EventCategoryRepositoryInterface;
 use Illuminate\Support\Collection;
@@ -36,5 +38,21 @@ class EventCategoryRepository implements EventCategoryRepositoryInterface
                 }
             })
             ->first();
+    }
+
+    public function listPublicWithEventCounts(): Collection
+    {
+        return EventCategory::query()
+            ->whereNull('organizer_id')
+            ->where('is_active', true)
+            ->withCount(['events' => function ($query) {
+                $query->withoutGlobalScopes()
+                    ->whereIn('status', EventStatus::publicVisible())
+                    ->where('visibility', EventVisibility::PUBLIC)
+                    ->whereHas('organizer', fn ($organizerQuery) => $organizerQuery->where('status', 'active'));
+            }])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
     }
 }
