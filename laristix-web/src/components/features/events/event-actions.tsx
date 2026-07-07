@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Rocket, RotateCcw, Ticket, Trash2, Users } from "lucide-react";
+import { Archive, Pencil, Rocket, RotateCcw, Ticket, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/config/env";
 import {
@@ -12,13 +12,21 @@ import {
 import type { Event } from "@/types/event";
 import { DeleteEventDialog } from "./delete-event-dialog";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface EventActionsProps {
   event: Event;
   layout?: "row" | "stack";
+  variant?: "default" | "premium";
+  hideNavLinks?: boolean;
 }
 
-export function EventActions({ event, layout = "row" }: EventActionsProps) {
+export function EventActions({
+  event,
+  layout = "row",
+  variant = "default",
+  hideNavLinks = false,
+}: EventActionsProps) {
   const publish = usePublishEventMutation();
   const draft = useDraftEventMutation();
   const remove = useDeleteEventMutation();
@@ -26,35 +34,39 @@ export function EventActions({ event, layout = "row" }: EventActionsProps) {
 
   const flags = event.management;
   const isBusy = publish.isPending || draft.isPending || remove.isPending;
-
-  const containerClass = layout === "stack" ? "flex flex-col gap-2" : "flex flex-wrap gap-2";
+  const isPremiumStack = layout === "stack" && variant === "premium";
+  const buttonClass = isPremiumStack ? "w-full justify-start" : undefined;
 
   return (
     <>
-      <div className={containerClass}>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={routes.organizerEventTickets(event.uuid)}>
-            <Ticket className="size-4" />
-            Tickets
-          </Link>
-        </Button>
+      <div className={layout === "stack" ? "flex flex-col gap-2.5" : "flex flex-wrap gap-2"}>
+        {!hideNavLinks ? (
+          <>
+            <Button variant="outline" size="sm" asChild className={buttonClass}>
+              <Link href={routes.organizerEventTickets(event.uuid)}>
+                <Ticket className="size-4" />
+                Kelola tiket
+              </Link>
+            </Button>
 
-        {event.status === "published" ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link href={routes.organizerEventAttendance(event.uuid)}>
-              <Users className="size-4" />
-              Kehadiran
-            </Link>
-          </Button>
-        ) : null}
+            {event.status === "published" || event.status === "live" ? (
+              <Button variant="outline" size="sm" asChild className={buttonClass}>
+                <Link href={routes.organizerEventAttendance(event.uuid)}>
+                  <Users className="size-4" />
+                  Kehadiran
+                </Link>
+              </Button>
+            ) : null}
 
-        {flags?.can_edit ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link href={routes.organizerEventEdit(event.uuid)}>
-              <Pencil className="size-4" />
-              Edit
-            </Link>
-          </Button>
+            {flags?.can_edit ? (
+              <Button variant="outline" size="sm" asChild className={buttonClass}>
+                <Link href={routes.organizerEventEdit(event.uuid)}>
+                  <Pencil className="size-4" />
+                  Edit event
+                </Link>
+              </Button>
+            ) : null}
+          </>
         ) : null}
 
         {flags?.can_publish ? (
@@ -62,9 +74,10 @@ export function EventActions({ event, layout = "row" }: EventActionsProps) {
             size="sm"
             onClick={() => publish.mutate(event.uuid)}
             disabled={isBusy}
+            className={cn(buttonClass, isPremiumStack && "bg-brand hover:bg-brand-hover")}
           >
             <Rocket className="size-4" />
-            {publish.isPending ? "Publishing..." : "Publish"}
+            {publish.isPending ? "Mempublikasikan..." : "Publikasikan"}
           </Button>
         ) : null}
 
@@ -74,10 +87,18 @@ export function EventActions({ event, layout = "row" }: EventActionsProps) {
             size="sm"
             onClick={() => draft.mutate(event.uuid)}
             disabled={isBusy}
+            className={buttonClass}
           >
             <RotateCcw className="size-4" />
-            {draft.isPending ? "Reverting..." : "Revert to draft"}
+            {draft.isPending ? "Mengembalikan..." : "Kembalikan ke draft"}
           </Button>
+        ) : null}
+
+        {event.status === "completed" || event.status === "cancelled" ? (
+          <p className="rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <Archive className="mr-1.5 inline size-3.5 align-text-bottom" aria-hidden />
+            Event ini sudah {event.status === "completed" ? "selesai" : "dibatalkan"}.
+          </p>
         ) : null}
 
         {flags?.can_delete ? (
@@ -86,9 +107,10 @@ export function EventActions({ event, layout = "row" }: EventActionsProps) {
             size="sm"
             onClick={() => setDeleteOpen(true)}
             disabled={isBusy}
+            className={buttonClass}
           >
             <Trash2 className="size-4" />
-            Delete
+            Hapus event
           </Button>
         ) : null}
       </div>

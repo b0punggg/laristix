@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/ui/form-field";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  FormSaveIndicator,
+  FormSectionCard,
+  FormTabButton,
+} from "@/components/features/events/event-management-ui";
 import { routes } from "@/config/env";
 import { useEventQuery } from "@/hooks/use-events";
 import {
@@ -24,8 +29,10 @@ import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/datetime";
 import { canManageEvents } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/auth-store";
 import type { TicketKind, TicketType } from "@/types/ticket";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import { TicketActions } from "./ticket-actions";
 import { TicketKindBadge } from "./ticket-kind-badge";
+import { TicketSalesPeriodEditor } from "./ticket-sales-period-editor";
 import { TicketStatusBadge } from "./ticket-status-badge";
 
 const schema = z
@@ -34,7 +41,7 @@ const schema = z
     name: z.string().max(255).optional(),
     description: z.string().optional(),
     price: z.string().optional(),
-    quantity: z.string().min(1, "Quota is required."),
+    quantity: z.string().min(1, "Kuota wajib diisi."),
     min_per_order: z.string().optional(),
     max_per_order: z.string().optional(),
     sales_start_at: z.string().optional(),
@@ -48,7 +55,7 @@ const schema = z
       if (!data.price || Number.isNaN(price) || price <= 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Price must be greater than 0 for paid and VIP tickets.",
+          message: "Harga harus lebih dari 0 untuk tiket berbayar dan VIP.",
           path: ["price"],
         });
       }
@@ -58,7 +65,7 @@ const schema = z
       if (new Date(data.sales_end_at) <= new Date(data.sales_start_at)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Sales end must be after sales start.",
+          message: "Akhir penjualan harus setelah mulai penjualan.",
           path: ["sales_end_at"],
         });
       }
@@ -66,11 +73,12 @@ const schema = z
   });
 
 type TicketFormValues = z.infer<typeof schema>;
+type TicketTab = "details" | "pricing" | "sales" | "status";
 
 const kindOptions: Array<{ value: TicketKind; label: string; hint: string }> = [
-  { value: "free", label: "Free Ticket", hint: "No charge — price is always 0." },
-  { value: "paid", label: "Paid Ticket", hint: "Standard paid admission." },
-  { value: "vip", label: "VIP Ticket", hint: "Premium tier with higher price." },
+  { value: "free", label: "Gratis", hint: "Tanpa biaya — harga selalu 0." },
+  { value: "paid", label: "Berbayar", hint: "Tiket standar berbayar." },
+  { value: "vip", label: "VIP", hint: "Tier premium dengan harga lebih tinggi." },
 ];
 
 function ticketToFormValues(ticket: TicketType): TicketFormValues {
@@ -105,13 +113,10 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
   const createMutation = useCreateTicketMutation(eventUuid);
   const updateMutation = useUpdateTicketMutation(eventUuid, ticketId ?? 0);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<TicketFormValues>({
+  const [tab, setTab] = useState<TicketTab>("details");
+  const [justSaved, setJustSaved] = useState(false);
+
+  const form = useForm<TicketFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       kind: "paid",
@@ -127,7 +132,17 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
     },
   });
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors, isDirty, isSubmitSuccessful },
+  } = form;
+
   const selectedKind = useWatch({ control, name: "kind" });
+  const salesStart = useWatch({ control, name: "sales_start_at" });
+  const salesEnd = useWatch({ control, name: "sales_end_at" });
 
   useEffect(() => {
     if (!isEdit && !canManageEvents(user)) {
@@ -141,11 +156,19 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
     }
   }, [ticketQuery.data, reset]);
 
+  useEffect(() => {
+    if (isSubmitSuccessful || updateMutation.isSuccess) {
+      setJustSaved(true);
+      const timer = window.setTimeout(() => setJustSaved(false), 3000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [isSubmitSuccessful, updateMutation.isSuccess]);
+
   const onSubmit = (values: TicketFormValues) => {
-    const salesStart = values.sales_start_at
+    const salesStartAt = values.sales_start_at
       ? fromDatetimeLocalValue(values.sales_start_at)
       : null;
-    const salesEnd = values.sales_end_at ? fromDatetimeLocalValue(values.sales_end_at) : null;
+    const salesEndAt = values.sales_end_at ? fromDatetimeLocalValue(values.sales_end_at) : null;
     const effectiveKind = isEdit ? ticket?.kind : values.kind;
     const isFreeKind = effectiveKind === "free";
 
@@ -157,8 +180,8 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
         quantity: Number(values.quantity),
         min_per_order: Number(values.min_per_order || 1),
         max_per_order: Number(values.max_per_order || 10),
-        sales_start_at: salesStart,
-        sales_end_at: salesEnd,
+        sales_start_at: salesStartAt,
+        sales_end_at: salesEndAt,
         visibility: values.visibility,
         status: values.status,
       });
@@ -173,8 +196,8 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
       quantity: Number(values.quantity),
       min_per_order: Number(values.min_per_order || 1),
       max_per_order: Number(values.max_per_order || 10),
-      sales_start_at: salesStart,
-      sales_end_at: salesEnd,
+      sales_start_at: salesStartAt,
+      sales_end_at: salesEndAt,
       visibility: values.visibility,
     });
   };
@@ -182,42 +205,68 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
   const isPending = createMutation.isPending || updateMutation.isPending;
   const event = eventQuery.data;
   const ticket = ticketQuery.data;
+  const showPrice = isEdit ? ticket?.kind !== "free" : selectedKind !== "free";
+
+  const salesRegister = register as unknown as UseFormRegister<{
+    sales_start_at?: string;
+    sales_end_at?: string;
+  }>;
+  const salesErrors = errors as FieldErrors<{
+    sales_start_at?: string;
+    sales_end_at?: string;
+  }>;
 
   if (isEdit && ticketQuery.isLoading) {
-    return <p className="text-muted-foreground">Loading ticket...</p>;
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+    );
   }
 
   if (isEdit && ticketQuery.isError) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Ticket not found.
-        </CardContent>
-      </Card>
+      <FormSectionCard title="Tiket tidak ditemukan">
+        <p className="text-sm text-muted-foreground">Tiket tidak ditemukan atau Anda tidak memiliki akses.</p>
+      </FormSectionCard>
     );
   }
 
+  const tabs: Array<{ id: TicketTab; label: string }> = [
+    { id: "details", label: "Detail" },
+    { id: "pricing", label: "Harga & kuota" },
+    { id: "sales", label: "Periode penjualan" },
+    ...(isEdit ? [{ id: "status" as const, label: "Status" }] : []),
+  ];
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button variant="ghost" size="sm" asChild>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <Button variant="ghost" size="sm" asChild className="-ml-2">
           <Link href={routes.organizerEventTickets(eventUuid)}>
             <ArrowLeft className="size-4" />
-            Back to tickets
+            Kembali ke tiket
           </Link>
         </Button>
-        {event ? (
-          <span className="text-sm text-muted-foreground">{event.title}</span>
+        {isEdit ? (
+          <FormSaveIndicator isDirty={isDirty} isSaving={isPending} lastSaved={justSaved && !isDirty} />
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            {isEdit ? "Edit ticket" : "Create ticket"}
-          </h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {isEdit ? "Edit tiket" : "Buat tiket baru"}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Set ticket kind, quota, price, and sales period.
+            {event ? (
+              <>
+                Event: <span className="font-medium text-foreground">{event.title}</span>
+              </>
+            ) : (
+              "Atur jenis tiket, kuota, harga, dan periode penjualan."
+            )}
           </p>
         </div>
         {ticket ? (
@@ -228,146 +277,156 @@ export function TicketForm({ eventUuid, mode, ticketId }: TicketFormProps) {
         ) : null}
       </div>
 
-      {ticket ? (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TicketActions eventUuid={eventUuid} ticket={ticket} />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <Card>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardHeader>
-            <CardTitle className="text-lg">Ticket details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {!isEdit ? (
-              <div className="space-y-2">
-                <Label htmlFor="kind">Ticket kind *</Label>
-                <Select id="kind" {...register("kind")}>
-                  {kindOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  {kindOptions.find((o) => o.value === selectedKind)?.hint}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <Label>Ticket kind</Label>
-                {ticket ? <TicketKindBadge kind={ticket.kind} /> : null}
-                <p className="text-xs text-muted-foreground">Kind cannot be changed after creation.</p>
-              </div>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  {...register("name")}
-                  placeholder={
-                    selectedKind === "free"
-                      ? "Free Ticket"
-                      : selectedKind === "vip"
-                        ? "VIP Ticket"
-                        : "Paid Ticket"
-                  }
-                />
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" rows={3} {...register("description")} />
-              </div>
-
-              {(isEdit ? ticket?.kind !== "free" : selectedKind !== "free") ? (
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price (IDR) *</Label>
-                  <Input id="price" type="number" min={1} step={1000} {...register("price")} />
-                  {errors.price ? (
-                    <p className="text-sm text-destructive">{errors.price.message}</p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quota *</Label>
-                <Input id="quantity" type="number" min={1} {...register("quantity")} />
-                {errors.quantity ? (
-                  <p className="text-sm text-destructive">{errors.quantity.message}</p>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="visibility">Visibility</Label>
-                <Select id="visibility" {...register("visibility")}>
-                  <option value="public">Public</option>
-                  <option value="hidden">Hidden</option>
-                  <option value="invite_only">Invite only</option>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="min_per_order">Min per order</Label>
-                <Input id="min_per_order" type="number" min={1} {...register("min_per_order")} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="max_per_order">Max per order</Label>
-                <Input id="max_per_order" type="number" min={1} {...register("max_per_order")} />
-              </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="space-y-6">
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-thin">
+              {tabs.map((item) => (
+                <FormTabButton key={item.id} active={tab === item.id} onClick={() => setTab(item.id)}>
+                  {item.label}
+                </FormTabButton>
+              ))}
             </div>
 
-            <div className="border-t pt-6">
-              <h3 className="mb-4 text-sm font-medium">Sales period</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="sales_start_at">Sales start</Label>
-                  <Input id="sales_start_at" type="datetime-local" {...register("sales_start_at")} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sales_end_at">Sales end</Label>
-                  <Input id="sales_end_at" type="datetime-local" {...register("sales_end_at")} />
-                  {errors.sales_end_at ? (
-                    <p className="text-sm text-destructive">{errors.sales_end_at.message}</p>
-                  ) : null}
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Leave empty for no time restriction on that side.
-              </p>
-            </div>
+            {tab === "details" ? (
+              <FormSectionCard title="Detail tiket" description="Informasi yang ditampilkan ke peserta.">
+                <div className="space-y-5">
+                  {!isEdit ? (
+                    <FormField id="kind" label="Jenis tiket" required>
+                      <Select id="kind" className="h-11" {...register("kind")}>
+                        {kindOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </Select>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {kindOptions.find((o) => o.value === selectedKind)?.hint}
+                      </p>
+                    </FormField>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Jenis tiket</p>
+                      {ticket ? <TicketKindBadge kind={ticket.kind} /> : null}
+                      <p className="text-xs text-muted-foreground">Jenis tidak dapat diubah setelah dibuat.</p>
+                    </div>
+                  )}
 
-            {isEdit ? (
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select id="status" {...register("status")}>
-                  <option value="active">Active</option>
-                  <option value="hidden">Hidden</option>
-                  <option value="archived">Archived</option>
-                  <option value="sold_out">Sold out</option>
-                </Select>
-              </div>
+                  <FormField id="name" label="Nama">
+                    <Input
+                      id="name"
+                      className="h-11"
+                      placeholder={
+                        selectedKind === "free"
+                          ? "Tiket Gratis"
+                          : selectedKind === "vip"
+                            ? "Tiket VIP"
+                            : "Tiket Reguler"
+                      }
+                      {...register("name")}
+                    />
+                  </FormField>
+
+                  <FormField id="description" label="Deskripsi">
+                    <Textarea id="description" rows={4} placeholder="Manfaat atau ketentuan tiket..." {...register("description")} />
+                  </FormField>
+
+                  <FormField id="visibility" label="Visibilitas">
+                    <Select id="visibility" className="h-11" {...register("visibility")}>
+                      <option value="public">Public</option>
+                      <option value="hidden">Hidden</option>
+                      <option value="invite_only">Invite only</option>
+                    </Select>
+                  </FormField>
+                </div>
+              </FormSectionCard>
             ) : null}
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
-            <Button variant="outline" type="button" asChild>
-              <Link href={routes.organizerEventTickets(eventUuid)}>Cancel</Link>
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : isEdit ? "Save changes" : "Create ticket"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+
+            {tab === "pricing" ? (
+              <FormSectionCard title="Harga & kuota" description="Tentukan harga dan batas pembelian.">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  {showPrice ? (
+                    <FormField id="price" label="Harga (IDR)" required error={errors.price?.message}>
+                      <Input id="price" type="number" min={1} step={1000} className="h-11" {...register("price")} />
+                    </FormField>
+                  ) : null}
+
+                  <FormField
+                    id="quantity"
+                    label="Kuota"
+                    required
+                    error={errors.quantity?.message}
+                    className={showPrice ? undefined : "sm:col-span-2"}
+                  >
+                    <Input id="quantity" type="number" min={1} className="h-11" {...register("quantity")} />
+                  </FormField>
+
+                  <FormField id="min_per_order" label="Min per order">
+                    <Input id="min_per_order" type="number" min={1} className="h-11" {...register("min_per_order")} />
+                  </FormField>
+
+                  <FormField id="max_per_order" label="Max per order">
+                    <Input id="max_per_order" type="number" min={1} className="h-11" {...register("max_per_order")} />
+                  </FormField>
+                </div>
+              </FormSectionCard>
+            ) : null}
+
+            {tab === "sales" ? (
+              <FormSectionCard title="Periode penjualan" description="Batasi kapan tiket dapat dibeli.">
+                <TicketSalesPeriodEditor
+                  register={salesRegister}
+                  errors={salesErrors}
+                  startValue={salesStart}
+                  endValue={salesEnd}
+                />
+              </FormSectionCard>
+            ) : null}
+
+            {tab === "status" && isEdit ? (
+              <FormSectionCard
+                title="Status tiket"
+                description="Arsipkan tiket yang tidak lagi dijual tanpa menghapus data."
+              >
+                <FormField id="status" label="Status" helpText="Pilih 'Archived' untuk mengarsipkan tiket.">
+                  <Select id="status" className="h-11" {...register("status")}>
+                    <option value="active">Active</option>
+                    <option value="hidden">Hidden</option>
+                    <option value="archived">Archived</option>
+                    <option value="sold_out">Sold out</option>
+                  </Select>
+                </FormField>
+              </FormSectionCard>
+            ) : null}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" type="button" asChild>
+                <Link href={routes.organizerEventTickets(eventUuid)}>Batal</Link>
+              </Button>
+              <Button type="submit" disabled={isPending} className="bg-brand hover:bg-brand-hover">
+                {isPending ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : isEdit ? (
+                  "Simpan perubahan"
+                ) : (
+                  "Buat tiket"
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {ticket ? (
+            <aside className="lg:sticky lg:top-24 lg:self-start">
+              <FormSectionCard title="Aksi">
+                <TicketActions eventUuid={eventUuid} ticket={ticket} layout="stack" />
+              </FormSectionCard>
+            </aside>
+          ) : null}
+        </div>
+      </form>
     </div>
   );
 }
