@@ -1,16 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowRight,
   Bell,
   Building2,
+  CalendarRange,
+  CreditCard,
+  LayoutDashboard,
   KeyRound,
   Laptop,
   Mail,
   MonitorSmartphone,
   MoonStar,
+  ShoppingBag,
   ShieldCheck,
   Smartphone,
+  Ticket,
   User2,
   Users,
 } from "lucide-react";
@@ -22,8 +29,11 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/ui/form-field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FormSectionCard, FormTabButton } from "@/components/features/events/event-management-ui";
+import { routes } from "@/config/env";
 import { useMeQuery, useOrganizersQuery } from "@/hooks/use-auth";
+import { canUseCreatorMode } from "@/lib/profile-mode";
 import { useAuthStore } from "@/stores/auth-store";
+import { useProfileModeStore } from "@/stores/profile-mode-store";
 import { cn } from "@/lib/utils";
 
 type ProfileSectionId =
@@ -35,7 +45,7 @@ type ProfileSectionId =
   | "devices"
   | "sessions";
 
-const sectionMeta: Array<{
+const customerSectionMeta: Array<{
   id: ProfileSectionId;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -44,7 +54,20 @@ const sectionMeta: Array<{
   { id: "security", label: "Security", icon: ShieldCheck },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "accounts", label: "Connected Accounts", icon: Users },
+  { id: "devices", label: "Devices", icon: MonitorSmartphone },
+  { id: "sessions", label: "Sessions", icon: Laptop },
+];
+
+const creatorSectionMeta: Array<{
+  id: ProfileSectionId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { id: "personal", label: "Personal Information", icon: User2 },
   { id: "membership", label: "Organizer Membership", icon: Building2 },
+  { id: "notifications", label: "Workspace Notifications", icon: Bell },
+  { id: "accounts", label: "Connected Accounts", icon: Users },
+  { id: "security", label: "Security", icon: ShieldCheck },
   { id: "devices", label: "Devices", icon: MonitorSmartphone },
   { id: "sessions", label: "Sessions", icon: Laptop },
 ];
@@ -78,6 +101,8 @@ export function ProfilePanel() {
   const meQuery = useMeQuery(hydrated && storedUser !== null);
   const organizersQuery = useOrganizersQuery(hydrated && storedUser !== null);
   const user = meQuery.data ?? storedUser;
+  const profileMode = useProfileModeStore((s) => s.profileMode);
+  const setProfileMode = useProfileModeStore((s) => s.setProfileMode);
   const [activeSection, setActiveSection] = useState<ProfileSectionId>("personal");
   const [deviceInfo, setDeviceInfo] = useState<{
     browser: string;
@@ -120,9 +145,23 @@ export function ProfilePanel() {
   }
 
   const memberships = organizersQuery.data ?? [];
+  const userCanUseCreatorMode = canUseCreatorMode(user);
+  const sectionMeta = profileMode === "creator" ? creatorSectionMeta : customerSectionMeta;
   const currentSessionLabel = deviceInfo
     ? `${deviceInfo.browser} • ${deviceInfo.platform}`
     : "Current session";
+
+  useEffect(() => {
+    if (!userCanUseCreatorMode && profileMode === "creator") {
+      setProfileMode("customer");
+    }
+  }, [userCanUseCreatorMode, profileMode, setProfileMode]);
+
+  useEffect(() => {
+    if (!sectionMeta.some((section) => section.id === activeSection)) {
+      setActiveSection("personal");
+    }
+  }, [activeSection, sectionMeta]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
@@ -147,6 +186,9 @@ export function ProfilePanel() {
                 <Badge variant={user.email_verified ? "success" : "warning"} className="rounded-full">
                   {user.email_verified ? "Email Verified" : "Email Unverified"}
                 </Badge>
+                <Badge variant={profileMode === "creator" ? "brand" : "secondary"} className="rounded-full">
+                  {profileMode === "creator" ? "Creator Mode" : "Customer Mode"}
+                </Badge>
                 <Badge variant="outline" className="rounded-full capitalize">
                   {user.primary_role.replace("_", " ")}
                 </Badge>
@@ -161,8 +203,8 @@ export function ProfilePanel() {
 
           <div className="grid gap-3 sm:grid-cols-3 lg:w-[360px] lg:grid-cols-1">
             <div className="rounded-2xl bg-background/80 p-4 ring-1 ring-border/70">
-              <p className="text-xs text-muted-foreground">Role</p>
-              <p className="mt-1 text-lg font-semibold capitalize">{user.primary_role.replace("_", " ")}</p>
+              <p className="text-xs text-muted-foreground">Mode</p>
+              <p className="mt-1 text-lg font-semibold">{profileMode === "creator" ? "Creator" : "Customer"}</p>
             </div>
             <div className="rounded-2xl bg-background/80 p-4 ring-1 ring-border/70">
               <p className="text-xs text-muted-foreground">Memberships</p>
@@ -212,6 +254,40 @@ export function ProfilePanel() {
                 </FormTabButton>
               ))}
             </div>
+
+            <div className="mt-4 space-y-2 rounded-2xl border border-border/70 bg-muted/20 p-3">
+              {profileMode === "customer" ? (
+                <>
+                  <Button asChild variant="outline" className="w-full justify-between">
+                    <Link href={routes.myTickets}>
+                      My Tickets
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-between">
+                    <Link href={routes.myTransactions}>
+                      Transactions
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="outline" className="w-full justify-between">
+                    <Link href={routes.organizerDashboard}>
+                      Dashboard
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-between">
+                    <Link href={routes.organizerEvents}>
+                      Events
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
           </FormSectionCard>
         </aside>
 
@@ -249,6 +325,80 @@ export function ProfilePanel() {
                     <FormField id="profile-uuid" label="User ID">
                       <Input id="profile-uuid" value={user.uuid} readOnly className="h-11 bg-muted/30" />
                     </FormField>
+                  </div>
+                </FormSectionCard>
+              ) : null}
+
+              {activeSection === "personal" && profileMode === "customer" ? (
+                <FormSectionCard
+                  title="Customer Overview"
+                  description="Ringkasan cepat untuk aktivitas pelanggan dalam akun yang sama."
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                        <Ticket className="size-5" />
+                      </div>
+                      <p className="mt-4 font-semibold">My Tickets</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Lihat e-ticket, QR code, dan riwayat event.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                        <CreditCard className="size-5" />
+                      </div>
+                      <p className="mt-4 font-semibold">Transactions</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Pantau pembayaran, invoice, dan refund.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                        <ShoppingBag className="size-5" />
+                      </div>
+                      <p className="mt-4 font-semibold">Discovery</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Jelajahi event baru dari akun yang sama.
+                      </p>
+                    </div>
+                  </div>
+                </FormSectionCard>
+              ) : null}
+
+              {activeSection === "personal" && profileMode === "creator" ? (
+                <FormSectionCard
+                  title="Creator Overview"
+                  description="Mode creator memakai akun yang sama, tetapi dengan konteks workspace organizer."
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                        <LayoutDashboard className="size-5" />
+                      </div>
+                      <p className="mt-4 font-semibold">Organizer Dashboard</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Akses insight, revenue, dan aktivitas organizer.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                        <CalendarRange className="size-5" />
+                      </div>
+                      <p className="mt-4 font-semibold">Event Management</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Kelola event, tiket, orders, dan scanner.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                        <Building2 className="size-5" />
+                      </div>
+                      <p className="mt-4 font-semibold">Active Organizer</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {user.active_organizer?.name ?? "Belum ada organizer aktif."}
+                      </p>
+                    </div>
                   </div>
                 </FormSectionCard>
               ) : null}
@@ -333,29 +483,55 @@ export function ProfilePanel() {
           {activeSection === "notifications" && (
             <FormSectionCard
               title="Notifications"
-              description="Preferensi notifikasi ditampilkan sebagai UI settings."
+              description={
+                profileMode === "creator"
+                  ? "Preferensi notifikasi untuk workspace creator dan organizer."
+                  : "Preferensi notifikasi untuk aktivitas pelanggan."
+              }
             >
               <div className="space-y-3">
-                {[
-                  {
-                    id: "notif-email",
-                    title: "Email updates",
-                    description: "Update pembayaran, tiket, dan perubahan event.",
-                    checked: true,
-                  },
-                  {
-                    id: "notif-marketing",
-                    title: "Promotions",
-                    description: "Promo, referral, dan rekomendasi event.",
-                    checked: false,
-                  },
-                  {
-                    id: "notif-organizer",
-                    title: "Organizer workspace",
-                    description: "Aktivitas membership dan organizer invitations.",
-                    checked: true,
-                  },
-                ].map((item) => (
+                {(profileMode === "creator"
+                  ? [
+                      {
+                        id: "notif-organizer",
+                        title: "Organizer workspace",
+                        description: "Aktivitas membership, approval, dan workspace alerts.",
+                        checked: true,
+                      },
+                      {
+                        id: "notif-sales",
+                        title: "Sales & orders",
+                        description: "Order baru, pembayaran, dan check-in updates.",
+                        checked: true,
+                      },
+                      {
+                        id: "notif-marketing-creator",
+                        title: "Product updates",
+                        description: "Fitur baru untuk creator dan admin tools.",
+                        checked: false,
+                      },
+                    ]
+                  : [
+                      {
+                        id: "notif-email",
+                        title: "Email updates",
+                        description: "Update pembayaran, tiket, dan perubahan event.",
+                        checked: true,
+                      },
+                      {
+                        id: "notif-marketing",
+                        title: "Promotions",
+                        description: "Promo, referral, dan rekomendasi event.",
+                        checked: false,
+                      },
+                      {
+                        id: "notif-event-reminder",
+                        title: "Event reminders",
+                        description: "Pengingat menjelang event dan update jadwal.",
+                        checked: true,
+                      },
+                    ]
+                ).map((item) => (
                   <label
                     key={item.id}
                     className="flex items-start gap-3 rounded-2xl border border-border/70 bg-muted/20 p-4"
@@ -410,7 +586,7 @@ export function ProfilePanel() {
           {activeSection === "membership" && (
             <FormSectionCard
               title="Organizer Membership"
-              description="Ringkasan organizer yang terhubung ke akun Anda."
+              description="Ringkasan akses creator event yang tetap melekat pada akun yang sama."
             >
               <div className="space-y-4">
                 {memberships.length === 0 ? (

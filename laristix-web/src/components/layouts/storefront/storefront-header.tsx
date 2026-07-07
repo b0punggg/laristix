@@ -3,14 +3,25 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, FileText, Search, Ticket, UserCircle } from "lucide-react";
+import {
+  ChevronDown,
+  FileText,
+  LayoutDashboard,
+  Plus,
+  Search,
+  Ticket,
+  UserCircle,
+  Users,
+} from "lucide-react";
 import { AppLogo } from "@/components/common/app-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { roleRoutes, routes } from "@/config/env";
-import { useLogoutMutation, useMeQuery } from "@/hooks/use-auth";
+import { useLogoutMutation, useMeQuery, useOrganizersQuery } from "@/hooks/use-auth";
 import { buildHomeUrl, parsePublicDiscoveryFilters } from "@/lib/public-discovery-filters";
+import { canUseCreatorMode, getCreatorOnboardingRoute } from "@/lib/profile-mode";
 import { useAuthStore } from "@/stores/auth-store";
+import { useProfileModeStore } from "@/stores/profile-mode-store";
 
 export function StorefrontHeader() {
   const router = useRouter();
@@ -18,7 +29,10 @@ export function StorefrontHeader() {
   const searchParams = useSearchParams();
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const user = useAuthStore((s) => s.user);
+  const profileMode = useProfileModeStore((s) => s.profileMode);
+  const setProfileMode = useProfileModeStore((s) => s.setProfileMode);
   useMeQuery(isHydrated && user !== null);
+  const organizersQuery = useOrganizersQuery(isHydrated && user !== null);
   const logoutMutation = useLogoutMutation(routes.home);
 
   const handleLogout = () => {
@@ -55,6 +69,22 @@ export function StorefrontHeader() {
   };
 
   const dashboardRoute = user ? (roleRoutes[user.primary_role] ?? routes.home) : routes.login;
+  const userCanUseCreatorMode = user ? canUseCreatorMode(user) : false;
+  const hasOrganizers = (organizersQuery.data?.length ?? 0) > 0;
+  const creatorOnboardingRoute = getCreatorOnboardingRoute(hasOrganizers);
+  const profileShortcutRoute =
+    user && profileMode === "creator" && userCanUseCreatorMode ? dashboardRoute : routes.profile;
+
+  const handleCreatorModeClick = () => {
+    if (!user) return;
+
+    if (userCanUseCreatorMode) {
+      setProfileMode("creator");
+      return;
+    }
+
+    router.push(creatorOnboardingRoute);
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80">
@@ -64,7 +94,7 @@ export function StorefrontHeader() {
           <div className="flex items-center gap-2 lg:hidden">
             {user ? (
               <Button variant="ghost" size="sm" asChild>
-                <Link href={dashboardRoute}>
+                <Link href={profileShortcutRoute}>
                   <UserCircle className="size-5" />
                 </Link>
               </Button>
@@ -128,8 +158,52 @@ export function StorefrontHeader() {
                 <span className="max-w-[120px] truncate">Profil</span>
                 <ChevronDown className="size-4 text-gray-400" />
               </summary>
-              <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border bg-white py-1 shadow-lg">
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border bg-white py-1 shadow-lg">
                 <p className="border-b px-4 py-2 text-xs text-gray-500">{user.name}</p>
+                <div className="border-b px-3 py-2">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                    Switch Mode
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProfileMode("customer")}
+                      className={`rounded-md px-3 py-2 text-xs font-medium transition-colors ${
+                        profileMode === "customer"
+                          ? "bg-brand text-brand-foreground"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        <UserCircle className="size-3.5" />
+                        Pelanggan
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreatorModeClick}
+                      className={`rounded-md px-3 py-2 text-xs font-medium transition-colors ${
+                        profileMode === "creator" && userCanUseCreatorMode
+                          ? "bg-brand text-brand-foreground"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        <Users className="size-3.5" />
+                        Creator
+                      </span>
+                    </button>
+                  </div>
+                  {!userCanUseCreatorMode ? (
+                    <Link
+                      href={creatorOnboardingRoute}
+                      className="mt-2 flex items-center justify-center gap-1.5 rounded-md border border-brand/20 bg-brand-muted/40 px-3 py-2 text-xs font-medium text-brand transition-colors hover:bg-brand-muted"
+                    >
+                      <Plus className="size-3.5" />
+                      Jadi Creator
+                    </Link>
+                  ) : null}
+                </div>
                 <Link
                   href={routes.profile}
                   className="block px-4 py-2 text-sm hover:bg-gray-50"
@@ -148,12 +222,17 @@ export function StorefrontHeader() {
                 >
                   Tiket saya
                 </Link>
-                <Link
-                  href={dashboardRoute}
-                  className="block px-4 py-2 text-sm hover:bg-gray-50"
-                >
-                  Dashboard
-                </Link>
+                {profileMode === "creator" && userCanUseCreatorMode ? (
+                  <Link
+                    href={dashboardRoute}
+                    className="block px-4 py-2 text-sm hover:bg-gray-50"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LayoutDashboard className="size-4 text-gray-500" />
+                      Dashboard
+                    </span>
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
