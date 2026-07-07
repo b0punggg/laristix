@@ -145,34 +145,44 @@ export function QrCameraScanner({ onScan, paused = false, className }: QrCameraS
 
   return (
     <div className={className}>
-      <div className="relative min-h-[280px] overflow-hidden rounded-lg border bg-black">
+      <div className="relative min-h-[420px] overflow-hidden rounded-3xl border border-border/80 bg-black shadow-sm md:min-h-[520px]">
         <div
           id={containerId}
-          className="min-h-[280px] w-full [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover"
+          className="min-h-[420px] w-full [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover md:min-h-[520px]"
         />
 
+        <div className="pointer-events-none absolute inset-0 z-[5]">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/35" />
+          <div className="absolute left-1/2 top-1/2 h-[58vw] w-[58vw] max-h-[320px] max-w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border-4 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]" />
+        </div>
+
         {!isActive ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-muted/90 p-6 text-center">
-            <Camera className="size-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-muted/90 p-6 text-center">
+            <Camera className="size-12 text-muted-foreground" />
+            <p className="max-w-sm text-sm text-muted-foreground">
               Aktifkan kamera untuk memindai QR code tiket secara langsung.
             </p>
-            <Button type="button" onClick={startScanner} disabled={isStarting}>
+            <Button
+              type="button"
+              onClick={startScanner}
+              disabled={isStarting}
+              className="h-12 bg-brand px-6 text-base hover:bg-brand-hover"
+            >
               {isStarting ? "Menyalakan kamera..." : "Mulai scan kamera"}
             </Button>
           </div>
         ) : null}
 
         {isStarting ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 text-sm text-white">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 text-sm font-medium text-white">
             Menyalakan kamera...
           </div>
         ) : null}
       </div>
 
       {isActive ? (
-        <div className="mt-3 flex justify-end">
-          <Button type="button" variant="outline" size="sm" onClick={stopScanner}>
+        <div className="mt-4 flex justify-end">
+          <Button type="button" variant="outline" onClick={stopScanner} className="h-12 px-5 text-base">
             <CameraOff className="mr-2 size-4" />
             Matikan kamera
           </Button>
@@ -182,7 +192,7 @@ export function QrCameraScanner({ onScan, paused = false, className }: QrCameraS
       {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
 
       {paused && isActive ? (
-        <p className="mt-2 text-sm text-amber-600">Memproses check-in...</p>
+        <p className="mt-3 text-sm font-medium text-amber-600">Memproses check-in...</p>
       ) : null}
     </div>
   );
