@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Text } from "@/design-system/primitives/text";
 import { routes } from "@/config/env";
 import { useMyOrdersQuery } from "@/hooks/use-my-orders";
 import { formatEventDateShort } from "@/lib/datetime";
@@ -19,7 +20,7 @@ function ContinueOrderCard({ order }: { order: CheckoutOrder }) {
   return (
     <Link
       href={routes.publicEvent(event.uuid)}
-      className="group flex w-[280px] shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm transition hover:shadow-md md:w-auto"
+      className="ds-focus-ring group flex w-[280px] shrink-0 overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md md:w-auto"
     >
       <div className="relative aspect-square w-24 shrink-0 bg-muted sm:w-28">
         {event.banner_url ? (
@@ -61,11 +62,13 @@ export function PublicHomeContinueSection() {
   }
 
   return (
-    <section className="storefront-section mx-auto max-w-7xl space-y-5 px-4">
+    <section className="space-y-6 py-8 md:py-12">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="storefront-section-title">Lanjutkan</h2>
-          <p className="storefront-section-subtitle">Event dan transaksi terbaru Anda</p>
+          <Text variant="h2">Lanjutkan</Text>
+          <Text variant="caption" className="mt-1">
+            Event dan transaksi terbaru Anda
+          </Text>
         </div>
         <Link
           href={routes.myTickets}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Toaster as Sonner } from "sonner";
+import * as React from "react";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 

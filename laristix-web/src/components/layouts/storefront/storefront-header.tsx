@@ -57,7 +57,7 @@ export function StorefrontHeader() {
   const dashboardRoute = user ? (roleRoutes[user.primary_role] ?? routes.home) : routes.login;
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white shadow-sm">
+    <header className="sticky top-0 z-50 border-b bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:gap-6">
         <div className="flex items-center justify-between gap-4 lg:shrink-0">
           <AppLogo variant="storefront" />

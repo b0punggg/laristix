@@ -19,23 +19,25 @@ export function DiscoveryChip({ label, icon: Icon, active, badge, onClick }: Dis
       aria-label={`Filter ${label}`}
       aria-pressed={active ?? false}
       className={cn(
-        "storefront-focus-ring flex shrink-0 flex-col items-center gap-2 rounded-xl border px-4 py-3 transition-all duration-200",
+        "ds-focus-ring flex w-24 shrink-0 flex-col items-center gap-2.5 rounded-2xl border px-3 py-4 transition-all duration-300",
         active
-          ? "scale-105 border-brand bg-brand-muted text-brand shadow-sm"
-          : "border-border bg-background hover:border-brand/40 hover:bg-muted/50",
+          ? "scale-[1.02] border-brand bg-brand-muted text-brand shadow-md"
+          : "border-border bg-card text-foreground hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-sm",
       )}
     >
       <span
         className={cn(
-          "flex size-11 items-center justify-center rounded-full transition-colors",
-          active ? "bg-brand text-brand-foreground" : "bg-muted text-muted-foreground",
+          "flex size-12 items-center justify-center rounded-xl transition-all duration-300",
+          active
+            ? "bg-brand text-brand-foreground shadow-sm"
+            : "bg-muted text-muted-foreground group-hover:bg-brand-muted",
         )}
       >
         <Icon className="size-5" aria-hidden />
       </span>
-      <span className="max-w-[72px] truncate text-xs font-medium">{label}</span>
+      <span className="w-full truncate text-center text-xs font-semibold">{label}</span>
       {badge !== undefined && badge > 0 ? (
-        <span className="text-[10px] text-muted-foreground">{badge} event</span>
+        <span className="text-[10px] font-medium text-muted-foreground">{badge} event</span>
       ) : null}
     </button>
   );

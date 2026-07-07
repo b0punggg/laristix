@@ -43,16 +43,17 @@ export function OrganizerDashboardPanel() {
   const trendsQuery = useOrganizerDashboardTrendsQuery(14, !isScanner);
   const insightsQuery = useOrganizerDashboardInsightsQuery(!isScanner);
 
+  const trendSeries = useMemo(
+    () => toOrganizerChartSeries(trendsQuery.data?.series ?? []),
+    [trendsQuery.data?.series],
+  );
+
   if (isScanner) {
     return <ScannerDashboardPanel />;
   }
 
   const totals = summaryQuery.data?.totals;
   const today = summaryQuery.data?.today;
-  const trendSeries = useMemo(
-    () => toOrganizerChartSeries(trendsQuery.data?.series ?? []),
-    [trendsQuery.data?.series],
-  );
 
   const hasNoEvents = !summaryQuery.isLoading && totals?.events === 0;
 

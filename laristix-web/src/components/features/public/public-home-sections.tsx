@@ -5,22 +5,22 @@ import { buildHomeUrl } from "@/lib/public-discovery-filters";
 
 export function PublicHomeSections() {
   return (
-    <div className="storefront-section mx-auto max-w-7xl space-y-12 px-4">
+    <div className="space-y-16 py-12 md:py-16">
       <PublicEventSectionRow
-        title="Sedang hangat"
-        subtitle="Event populer yang segera dimulai"
-        viewAllHref={buildHomeUrl({ upcoming_days: 14 })}
-        filters={{ upcoming_days: 14, per_page: 8 }}
+        title="Event Unggulan"
+        subtitle="Pilihan terbaik yang sedang ditunggu-tunggu"
+        viewAllHref={buildHomeUrl({ upcoming_days: 30 })}
+        filters={{ upcoming_days: 30, per_page: 8, sort: "published_at" }}
       />
       <PublicEventSectionRow
-        title="Gratis"
-        subtitle="Acara tanpa biaya tiket"
-        viewAllHref={buildHomeUrl({ is_free: true })}
-        filters={{ is_free: true, per_page: 8 }}
+        title="Sedang Tren"
+        subtitle="Event paling banyak dicari minggu ini"
+        viewAllHref={buildHomeUrl({ upcoming_days: 14, sort: "published_at" })}
+        filters={{ upcoming_days: 14, per_page: 8, sort: "published_at" }}
       />
       <PublicEventSectionRow
-        title="Minggu ini"
-        subtitle="Jangan lewatkan event minggu ini"
+        title="Segera Dimulai"
+        subtitle="Jangan sampai kehabisan tiket"
         viewAllHref={buildHomeUrl({ upcoming_days: 7 })}
         filters={{ upcoming_days: 7, per_page: 8 }}
       />

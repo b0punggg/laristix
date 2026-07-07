@@ -16,6 +16,7 @@ import { PublicActiveFiltersBar } from "./public-active-filters-bar";
 import { PublicDiscoveryErrorState, PublicEmptyEventsState } from "./public-discovery-states";
 import { PublicEventCard } from "./public-event-card";
 import { PublicEventGridSkeleton } from "./public-event-card-skeleton";
+import { Text } from "@/design-system/primitives/text";
 
 interface PublicEventListProps {
   title?: string;
@@ -44,8 +45,8 @@ export function PublicEventList({ title = "Event", showHeading = true }: PublicE
   const hasFilters = hasActiveDiscoveryFilters(discovery);
 
   return (
-    <div className="storefront-section mx-auto max-w-7xl space-y-5 px-4">
-      {showHeading ? <h2 className="storefront-section-title">{title}</h2> : null}
+    <div className="space-y-6">
+      {showHeading ? <Text variant="h2">{title}</Text> : null}
 
       <PublicActiveFiltersBar />
 
@@ -72,7 +73,7 @@ export function PublicEventList({ title = "Event", showHeading = true }: PublicE
           <p className="text-sm text-muted-foreground">
             Menampilkan {events.length} dari {total} event
           </p>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {events.map((event, index) => (
               <PublicEventCard key={event.uuid} event={event} animationIndex={index % 8} />
             ))}

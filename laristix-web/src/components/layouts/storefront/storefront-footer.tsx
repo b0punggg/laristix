@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { AppLogo } from "@/components/common/app-logo";
+import { Container } from "@/design-system/primitives/layout";
+import { Text } from "@/design-system/primitives/text";
 import { routes } from "@/config/env";
 
 const footerColumns = [
@@ -11,41 +14,61 @@ const footerColumns = [
     ],
   },
   {
-    title: "Layanan Kami",
+    title: "Layanan",
     links: [
-      { label: "Ticket Management System", href: routes.createOrganizer },
-      { label: "Kelola Event", href: routes.createOrganizer },
-      { label: "Pembayaran Online", href: routes.home },
+      { label: "Jelajahi Event", href: routes.home },
+      { label: "Buat Event", href: routes.createOrganizer },
+      { label: "Tiket Saya", href: routes.myTickets },
     ],
   },
   {
     title: "Dukungan",
     links: [
       { label: "Customer Service", href: "#dukungan" },
+      { label: "FAQ", href: "#" },
       { label: "Partnership", href: routes.createOrganizer },
     ],
   },
   {
-    title: "Lainnya",
+    title: "Organizer",
     links: [
-      { label: "Cara Membeli Tiket", href: routes.home },
-      { label: "Daftar Event", href: routes.createOrganizer },
+      { label: "Daftar Organizer", href: routes.createOrganizer },
+      { label: "Dashboard", href: routes.login },
+      { label: "Panduan Event", href: routes.createOrganizer },
     ],
   },
 ] as const;
 
 const socialLinks = [
-  { label: "Instagram", href: "#", className: "bg-gradient-to-br from-pink-500 to-purple-600" },
-  { label: "Youtube", href: "#", className: "bg-red-600" },
-  { label: "X", href: "#", className: "bg-gray-900" },
-  { label: "Tiktok", href: "#", className: "bg-gray-900" },
+  { label: "Instagram", href: "#" },
+  { label: "YouTube", href: "#" },
+  { label: "X / Twitter", href: "#" },
+  { label: "TikTok", href: "#" },
 ] as const;
 
 export function StorefrontFooter() {
   return (
-    <footer id="dukungan" className="mt-auto border-t bg-[#f5f6f8]">
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+    <footer id="dukungan" className="mt-auto border-t bg-surface">
+      <Container className="py-12 md:py-16">
+        <div className="grid gap-10 lg:grid-cols-6">
+          <div className="lg:col-span-2">
+            <AppLogo variant="storefront" />
+            <Text variant="caption" className="mt-4 max-w-xs leading-relaxed">
+              Platform tiket event terpercaya di Indonesia. Temukan pengalaman terbaik dan kelola eventmu dengan mudah.
+            </Text>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {socialLinks.map((social) => (
+                <Link
+                  key={social.label}
+                  href={social.href}
+                  className="ds-focus-ring rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-brand/30 hover:text-brand"
+                >
+                  {social.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {footerColumns.map((column) => (
             <div key={column.title}>
               <h3 className="mb-4 text-sm font-bold text-foreground">{column.title}</h3>
@@ -63,27 +86,17 @@ export function StorefrontFooter() {
               </ul>
             </div>
           ))}
-
-          <div>
-            <h3 className="mb-4 text-sm font-bold text-foreground">Ikuti Kami</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {socialLinks.map((social) => (
-                <Link
-                  key={social.label}
-                  href={social.href}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 ${social.className}`}
-                >
-                  <span>{social.label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
 
-        <p className="mt-10 text-center text-sm text-gray-500">
-          Laristix © {new Date().getFullYear()}. All rights reserved.
-        </p>
-      </div>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 sm:flex-row">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Laristix. All rights reserved.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Pembayaran aman oleh Midtrans · QRIS · GoPay · ShopeePay
+          </p>
+        </div>
+      </Container>
     </footer>
   );
 }

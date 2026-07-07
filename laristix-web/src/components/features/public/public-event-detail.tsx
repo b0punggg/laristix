@@ -200,15 +200,17 @@ export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
                         </dd>
                       </div>
                     </dl>
-                    <Button className="w-full" disabled={!canSelect} asChild={canSelect}>
-                      {canSelect ? (
+                    {canSelect ? (
+                      <Button className="w-full" asChild>
                         <Link href={ticketActionHref}>
                           {currentUser ? "Pilih tiket" : "Masuk untuk beli tiket"}
                         </Link>
-                      ) : (
-                        <span>{availability}</span>
-                      )}
-                    </Button>
+                      </Button>
+                    ) : (
+                      <Button className="w-full" disabled>
+                        {availability}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );

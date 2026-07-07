@@ -4,60 +4,173 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    /* ── Brand (Laristix identity) ── */
     --brand: 224 77% 48%;
     --brand-hover: 224 76% 42%;
+    --brand-active: 224 70% 35%;
     --brand-foreground: 0 0% 100%;
     --brand-muted: 224 80% 96%;
     --brand-deep: 224 70% 35%;
     --brand-light: 224 85% 58%;
+
+    /* ── Semantic colors ── */
+    --primary: var(--brand);
+    --primary-hover: var(--brand-hover);
+    --primary-active: var(--brand-active);
+    --primary-foreground: var(--brand-foreground);
+
+    --secondary: 220 14% 96%;
+    --secondary-hover: 220 14% 92%;
+    --secondary-foreground: 224 47% 11%;
+
+    --success: 152 69% 38%;
+    --success-hover: 152 69% 32%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 152 60% 95%;
+
+    --warning: 38 92% 50%;
+    --warning-hover: 38 92% 44%;
+    --warning-foreground: 26 83% 14%;
+    --warning-muted: 48 96% 95%;
+
+    --danger: 0 84% 60%;
+    --danger-hover: 0 72% 51%;
+    --danger-foreground: 0 0% 100%;
+    --danger-muted: 0 86% 97%;
+
+    --info: 214 95% 52%;
+    --info-hover: 214 95% 46%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 214 100% 97%;
+
+    --background: 0 0% 100%;
+    --foreground: 224 47% 11%;
+    --surface: 220 20% 98%;
+    --surface-raised: 0 0% 100%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 224 80% 96%;
+    --accent-foreground: 224 70% 35%;
+
+    --border: 220 13% 91%;
+    --border-strong: 220 9% 80%;
+    --input: 220 13% 91%;
+    --ring: 224 77% 48%;
+
+    --text-primary: 224 47% 11%;
+    --text-secondary: 220 9% 46%;
+    --text-disabled: 220 9% 65%;
+    --disabled: 220 14% 96%;
+
+    --destructive: var(--danger);
+    --destructive-foreground: var(--danger-foreground);
+
+    /* ── Radius ── */
+    --radius-xs: 0.25rem;
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.25rem;
+    --radius-full: 9999px;
+    --radius: var(--radius-md);
+
+    /* ── Shadows ── */
+    --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+    --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.08), 0 4px 6px -4px rgb(15 23 42 / 0.06);
+    --shadow-xl: 0 20px 25px -5px rgb(15 23 42 / 0.1), 0 8px 10px -6px rgb(15 23 42 / 0.06);
+
+    /* ── Motion ── */
+    --duration-fast: 120ms;
+    --duration-normal: 200ms;
+    --duration-slow: 320ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
     --brand: 224 77% 58%;
     --brand-hover: 224 77% 52%;
+    --brand-active: 224 77% 46%;
     --brand-foreground: 0 0% 100%;
     --brand-muted: 224 40% 18%;
     --brand-deep: 224 60% 28%;
     --brand-light: 224 80% 65%;
+
+    --primary: var(--brand);
+    --primary-hover: var(--brand-hover);
+    --primary-active: var(--brand-active);
+    --primary-foreground: var(--brand-foreground);
+
+    --secondary: 224 25% 16%;
+    --secondary-hover: 224 25% 20%;
+    --secondary-foreground: 210 40% 98%;
+
+    --success: 152 55% 45%;
+    --success-hover: 152 55% 40%;
+    --success-foreground: 0 0% 100%;
+    --success-muted: 152 30% 14%;
+
+    --warning: 38 92% 55%;
+    --warning-hover: 38 92% 48%;
+    --warning-foreground: 26 83% 14%;
+    --warning-muted: 38 40% 14%;
+
+    --danger: 0 62% 50%;
+    --danger-hover: 0 62% 44%;
+    --danger-foreground: 0 0% 100%;
+    --danger-muted: 0 40% 14%;
+
+    --info: 214 90% 58%;
+    --info-hover: 214 90% 52%;
+    --info-foreground: 0 0% 100%;
+    --info-muted: 214 40% 14%;
+
+    --background: 224 47% 6%;
+    --foreground: 210 40% 98%;
+    --surface: 224 40% 9%;
+    --surface-raised: 224 35% 11%;
+
+    --card: 224 35% 11%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 35% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --muted: 224 25% 16%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 224 40% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    --border: 224 25% 18%;
+    --border-strong: 224 20% 28%;
+    --input: 224 25% 18%;
+    --ring: 224 77% 58%;
+
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20% 65%;
+    --text-disabled: 215 15% 45%;
+    --disabled: 224 25% 16%;
+
+    --destructive: var(--danger);
+    --destructive-foreground: var(--danger-foreground);
+
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.35);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.45);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5);
   }
 
   * {
@@ -65,21 +178,103 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
 @layer components {
+  /* ── Typography utilities ── */
+  .ds-display-xl {
+    @apply text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl;
+  }
+
+  .ds-display-lg {
+    @apply text-3xl font-bold tracking-tight text-foreground md:text-4xl;
+  }
+
+  .ds-heading-1 {
+    @apply text-2xl font-bold tracking-tight text-foreground md:text-3xl;
+  }
+
+  .ds-heading-2 {
+    @apply text-xl font-semibold tracking-tight text-foreground md:text-2xl;
+  }
+
+  .ds-heading-3 {
+    @apply text-lg font-semibold text-foreground md:text-xl;
+  }
+
+  .ds-heading-4 {
+    @apply text-base font-semibold text-foreground;
+  }
+
+  .ds-body-lg {
+    @apply text-base leading-relaxed text-foreground;
+  }
+
+  .ds-body-md {
+    @apply text-sm leading-relaxed text-foreground;
+  }
+
+  .ds-body-sm {
+    @apply text-xs leading-relaxed text-foreground;
+  }
+
+  .ds-caption {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .ds-overline {
+    @apply text-[11px] font-semibold uppercase tracking-widest text-muted-foreground;
+  }
+
+  .ds-button-text {
+    @apply text-sm font-medium;
+  }
+
+  /* ── Layout ── */
+  .ds-container {
+    @apply mx-auto w-full max-w-container px-4 sm:px-6 lg:px-8;
+  }
+
+  .ds-grid {
+    @apply grid grid-cols-4 gap-4 md:grid-cols-8 md:gap-6 lg:grid-cols-12;
+  }
+
+  /* ── Focus ── */
+  .ds-focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* ── Card interaction ── */
+  .ds-card-hover {
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  /* ── Animations ── */
+  .ds-animate-fade-in {
+    animation: ds-fade-in var(--duration-normal) var(--ease-out) both;
+  }
+
+  .ds-animate-slide-up {
+    animation: ds-slide-up var(--duration-slow) var(--ease-out) both;
+  }
+
+  .ds-animate-scale-in {
+    animation: ds-scale-in var(--duration-normal) var(--ease-out) both;
+  }
+
+  /* Legacy storefront aliases (backward compat) */
   .storefront-section {
     @apply py-12 md:py-16;
   }
 
   .storefront-section-title {
-    @apply text-2xl font-bold tracking-tight text-foreground;
+    @apply ds-heading-2;
   }
 
   .storefront-section-subtitle {
-    @apply mt-1 text-sm text-muted-foreground;
+    @apply ds-caption mt-1;
   }
 
   .storefront-brand-gradient {
@@ -87,17 +282,61 @@
   }
 
   .storefront-focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2;
+    @apply ds-focus-ring;
   }
 
   .storefront-card-enter {
-    animation: storefront-fade-up 0.45s ease-out both;
+    animation: ds-slide-up var(--duration-slow) var(--ease-out) both;
   }
 }
 
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@keyframes ds-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ds-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ds-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ds-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

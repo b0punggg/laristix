@@ -2,13 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Container } from "@/design-system/primitives/layout";
 import { PublicEventList } from "@/components/features/public/public-event-list";
 import { PublicHomeContinueSection } from "@/components/features/public/public-home-continue-section";
 import { PublicHomeDiscovery } from "@/components/features/public/public-home-discovery";
+import { PublicHomeFaqSection } from "@/components/features/public/public-home-faq";
+import { PublicHomeHowItWorksSection } from "@/components/features/public/public-home-how-it-works";
 import { PublicHomeLocalEventsSection } from "@/components/features/public/public-home-local-events-section";
+import { PublicHomeOrganizerCtaSection } from "@/components/features/public/public-home-organizer-cta";
+import { PublicHomeOrganizersSection } from "@/components/features/public/public-home-organizers-section";
 import { PublicHomeSections } from "@/components/features/public/public-home-sections";
+import { PublicHomeStatsSection } from "@/components/features/public/public-home-stats-section";
+import { PublicHomeTestimonialsSection } from "@/components/features/public/public-home-testimonials";
+import { PublicHomeWhySection } from "@/components/features/public/public-home-why-section";
 import { PublicStickyDiscoveryBar } from "@/components/features/public/public-sticky-discovery-bar";
-import { PublicTrustSection } from "@/components/features/public/public-trust-section";
 import { StorefrontHero } from "@/components/layouts/storefront/storefront-hero";
 import {
   hasActiveDiscoveryFilters,
@@ -46,18 +53,41 @@ export function PublicHomeContent() {
   return (
     <>
       {!hasFilters ? <StorefrontHero /> : null}
-      <PublicHomeDiscovery />
+
+      {!hasFilters ? null : <PublicHomeDiscovery />}
+
       <div ref={sentinelRef} className="h-px" aria-hidden />
       <PublicStickyDiscoveryBar visible={stickyVisible} />
+
       {hasFilters ? (
-        <PublicEventList />
+        <Container className="py-8">
+          <PublicEventList />
+        </Container>
       ) : (
         <>
-          <PublicHomeContinueSection />
+          <Container>
+            <PublicHomeContinueSection />
+          </Container>
+
           <PublicHomeSections />
-          <PublicHomeLocalEventsSection hidden={Boolean(filters.city)} />
-          <PublicTrustSection />
-          <PublicEventList title="Semua event" />
+          <PublicHomeDiscovery />
+
+          <Container>
+            <PublicHomeLocalEventsSection hidden={Boolean(filters.city)} />
+          </Container>
+
+          <PublicHomeStatsSection />
+          <PublicHomeOrganizersSection />
+          <PublicHomeWhySection />
+          <PublicHomeHowItWorksSection />
+          <PublicHomeTestimonialsSection />
+          <PublicHomeFaqSection />
+
+          <Container className="py-12 md:py-16">
+            <PublicEventList title="Jelajahi Semua Event" />
+          </Container>
+
+          <PublicHomeOrganizerCtaSection />
         </>
       )}
     </>

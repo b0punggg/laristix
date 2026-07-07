@@ -15,7 +15,7 @@ function HeaderFallback() {
 
 export function StorefrontShell({ children }: StorefrontShellProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-background">
       <StorefrontTopBar />
       <Suspense fallback={<HeaderFallback />}>
         <StorefrontHeader />
