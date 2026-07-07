@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Eye, Search } from "lucide-react";
+import { BadgeCheck, Building2, Eye, Search, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { ListPagination } from "@/components/common/list-pagination";
 import { EmptyState } from "@/components/common/empty-state";
 import { AdminOrganizerActions } from "@/components/features/admin/admin-organizer-actions";
 import { OrganizerStatusBadge } from "@/components/features/admin/organizer-status-badge";
+import { FormTabButton } from "@/components/features/events/event-management-ui";
 import { useAdminOrganizersQuery } from "@/hooks/use-admin-organizers";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatDateId } from "@/lib/format";
@@ -69,24 +70,38 @@ export function AdminOrganizersPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Organizers</h2>
-        <p className="text-sm text-muted-foreground">
-          Manage all organizers on the platform — approve, suspend, or review details.
-        </p>
-      </div>
+      <section className="rounded-3xl border border-border/80 bg-gradient-to-br from-brand-muted/70 via-background to-background p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Organizer Approval</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              Review pending organizers, approve trusted partners, and manage lifecycle status
+              from a modern admin surface.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl bg-background/80 p-4 ring-1 ring-border/70">
+              <p className="text-xs text-muted-foreground">Visible rows</p>
+              <p className="mt-1 text-2xl font-bold">{organizers.length}</p>
+            </div>
+            <div className="rounded-2xl bg-background/80 p-4 ring-1 ring-border/70">
+              <p className="text-xs text-muted-foreground">Total organizers</p>
+              <p className="mt-1 text-2xl font-bold">{total}</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {statusTabs.map((tab) => (
-            <Button
+            <FormTabButton
               key={tab.label}
-              variant={status === tab.value ? "default" : "outline"}
-              size="sm"
+              active={status === tab.value}
               onClick={() => setStatus(tab.value)}
             >
               {tab.label}
-            </Button>
+            </FormTabButton>
           ))}
         </div>
         <div className="relative w-full lg:max-w-sm">
@@ -141,7 +156,7 @@ export function AdminOrganizersPanel() {
           <p className="text-sm text-muted-foreground">{total} organizer(s)</p>
           <div className="grid gap-4">
             {organizers.map((organizer) => (
-              <Card key={organizer.uuid}>
+              <Card key={organizer.uuid} className="rounded-3xl border-border/80 shadow-sm">
                 <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
                   <div className="space-y-1">
                     <CardTitle className="text-lg">{organizer.name}</CardTitle>
@@ -168,6 +183,40 @@ export function AdminOrganizersPanel() {
                     {organizer.approved_at ? (
                       <span>Approved {formatDateId(organizer.approved_at)}</span>
                     ) : null}
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                      <p className="text-xs text-muted-foreground">Approval</p>
+                      <p className="mt-1 font-medium">
+                        {organizer.status === "pending" ? "Needs review" : "Reviewed"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                      <p className="text-xs text-muted-foreground">Owner</p>
+                      <p className="mt-1 font-medium">{organizer.owner?.name ?? "—"}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                      <p className="text-xs text-muted-foreground">Region</p>
+                      <p className="mt-1 font-medium">
+                        {organizer.country_code} · {organizer.currency}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-muted/20 p-3">
+                      <p className="text-xs text-muted-foreground">Risk signal</p>
+                      <p className="mt-1 inline-flex items-center gap-1.5 font-medium">
+                        {organizer.status === "pending" ? (
+                          <>
+                            <ShieldAlert className="size-4 text-amber-500" />
+                            Review required
+                          </>
+                        ) : (
+                          <>
+                            <BadgeCheck className="size-4 text-emerald-500" />
+                            Healthy
+                          </>
+                        )}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <AdminOrganizerActions organizer={organizer} />

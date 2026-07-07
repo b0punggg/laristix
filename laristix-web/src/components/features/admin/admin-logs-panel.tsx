@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Download, FileText, Loader2, ScrollText } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, FileText, Loader2, ScrollText, Shield, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { getApiErrorMessage } from "@/lib/api/client";
 import { adminApi } from "@/services/admin/admin-api";
 import type { ActivityLogEntry, AuditLogEntry, LogListFilters } from "@/types/admin";
 import { cn } from "@/lib/utils";
+import { FormSectionCard, FormTabButton } from "@/components/features/events/event-management-ui";
 
 const auditCategories = ["", "auth", "financial", "admin", "security", "system"] as const;
 
@@ -153,37 +154,56 @@ export function AdminLogsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Logs</h2>
-          <p className="text-sm text-muted-foreground">
-            Activity and audit trail for platform operations.
-          </p>
+      <section className="rounded-3xl border border-border/80 bg-gradient-to-br from-brand-muted/70 via-background to-background p-6 shadow-sm sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Audit Logs</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              Track platform activity, audit history, security-sensitive changes, and reporting exports.
+            </p>
+          </div>
+          <RefreshButton
+            onRefresh={() => activeQuery.refetch()}
+            isFetching={activeQuery.isFetching}
+            updatedAt={activeQuery.dataUpdatedAt}
+          />
         </div>
-        <RefreshButton
-          onRefresh={() => activeQuery.refetch()}
-          isFetching={activeQuery.isFetching}
-          updatedAt={activeQuery.dataUpdatedAt}
-        />
-      </div>
+      </section>
 
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={tab === "audit" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setTab("audit")}
-        >
+      <FormSectionCard
+        title="Log Categories"
+        description="High-signal lenses for audit, activity, security, and compliance review."
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { title: "Audit Logs", icon: ScrollText, body: "Configuration and state changes." },
+            { title: "Activity Logs", icon: FileText, body: "Operational user actions." },
+            { title: "Security", icon: Shield, body: "Sensitive and access-related events." },
+            { title: "Exports", icon: Sparkles, body: "Reporting and investigation workflows." },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.title} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                  <Icon className="size-5" />
+                </div>
+                <p className="mt-4 font-semibold">{item.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      </FormSectionCard>
+
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        <FormTabButton active={tab === "audit"} onClick={() => setTab("audit")}>
           <ScrollText className="mr-2 size-4" />
           Audit logs
-        </Button>
-        <Button
-          variant={tab === "activity" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setTab("activity")}
-        >
+        </FormTabButton>
+        <FormTabButton active={tab === "activity"} onClick={() => setTab("activity")}>
           <FileText className="mr-2 size-4" />
           Activity logs
-        </Button>
+        </FormTabButton>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -247,7 +267,7 @@ export function AdminLogsPanel() {
       ) : null}
 
       {activeQuery.isError ? (
-        <Card>
+        <Card className="rounded-3xl border-border/80 shadow-sm">
           <CardContent>
             <EmptyState
               icon={ScrollText}
@@ -263,7 +283,7 @@ export function AdminLogsPanel() {
       ) : null}
 
       {!activeQuery.isLoading && !activeQuery.isError && entries.length === 0 ? (
-        <Card>
+        <Card className="rounded-3xl border-border/80 shadow-sm">
           <CardContent>
             <EmptyState
               icon={tab === "audit" ? ScrollText : FileText}
@@ -280,7 +300,7 @@ export function AdminLogsPanel() {
             Showing {entries.length} of {meta?.total ?? entries.length} entries
           </p>
 
-          <div className="hidden overflow-x-auto rounded-lg border md:block">
+          <div className="hidden overflow-x-auto rounded-3xl border border-border/80 md:block">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                 <tr>
@@ -351,7 +371,7 @@ export function AdminLogsPanel() {
               const isAudit = "event" in entry;
 
               return (
-                <Card key={entry.id}>
+                <Card key={entry.id} className="rounded-3xl border-border/80 shadow-sm">
                   <CardContent className="space-y-2 pt-4 text-sm">
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-medium">{isAudit ? entry.event : entry.action}</p>

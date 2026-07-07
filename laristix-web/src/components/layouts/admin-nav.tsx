@@ -6,7 +6,11 @@ import {
   BarChart3,
   Building2,
   Calendar,
+  FileCode2,
   LayoutDashboard,
+  LockKeyhole,
+  Megaphone,
+  PieChart,
   ScrollText,
   Settings,
 } from "lucide-react";
@@ -23,9 +27,13 @@ const navItems: Array<{
 }> = [
   { href: routes.adminDashboard, label: "Dashboard", icon: LayoutDashboard },
   { href: routes.adminAnalytics, label: "Analytics", icon: BarChart3 },
+  { href: routes.adminAnalytics, label: "Revenue & Reports", icon: PieChart },
   { href: routes.adminEvents, label: "Events", icon: Calendar },
   { href: routes.adminOrganizers, label: "Organizers", icon: Building2, showPendingBadge: true },
+  { href: routes.adminSettings, label: "CMS", icon: FileCode2 },
+  { href: routes.adminSettings, label: "Notification Templates", icon: Megaphone },
   { href: routes.adminLogs, label: "Logs", icon: ScrollText },
+  { href: routes.adminSettings, label: "Permissions", icon: LockKeyhole },
   { href: routes.adminSettings, label: "Settings", icon: Settings },
 ];
 
@@ -35,7 +43,7 @@ export function AdminNav() {
   const pendingCount = pending.length;
 
   return (
-    <nav className="mt-8 space-y-1">
+    <nav className="mt-8 space-y-1.5">
       {navItems.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -47,8 +55,10 @@ export function AdminNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+              "flex items-center justify-between rounded-2xl px-3.5 py-3 text-sm transition-colors",
+              isActive
+                ? "bg-brand text-brand-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <span className="flex items-center gap-2">

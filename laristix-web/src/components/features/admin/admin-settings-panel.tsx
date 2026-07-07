@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Settings } from "lucide-react";
+import { FileCode2, KeyRound, Loader2, Megaphone, Settings, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormSectionCard } from "@/components/features/events/event-management-ui";
 import {
   usePlatformSettingsQuery,
   useUpdateDefaultFeeMutation,
@@ -84,14 +85,41 @@ export function AdminSettingsPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Platform settings</h2>
-        <p className="text-sm text-muted-foreground">
-          Configure global platform behavior and default fees.
-        </p>
-      </div>
+      <section className="rounded-3xl border border-border/80 bg-gradient-to-br from-brand-muted/70 via-background to-background p-6 shadow-sm sm:p-8">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Platform Settings</h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            Configure platform-wide defaults, admin controls, operational messages, and governance surfaces.
+          </p>
+        </div>
+      </section>
 
-      <Card>
+      <FormSectionCard
+        title="Admin Modules"
+        description="Supporting surfaces grouped into a premium configuration workspace."
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { title: "CMS", icon: FileCode2, body: "Homepage and content management surfaces." },
+            { title: "Notification Templates", icon: Megaphone, body: "Operational messaging and templates." },
+            { title: "Permission UI", icon: KeyRound, body: "Role governance and access control." },
+            { title: "Security", icon: Shield, body: "Maintenance, defaults, and admin safety rails." },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.title} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                  <Icon className="size-5" />
+                </div>
+                <p className="mt-4 font-semibold">{item.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      </FormSectionCard>
+
+      <Card className="rounded-3xl border-border/80 shadow-sm">
         <CardHeader className="flex flex-row items-center gap-2 pb-2">
           <Settings className="size-4 text-muted-foreground" />
           <CardTitle className="text-base">Maintenance mode</CardTitle>
@@ -140,7 +168,7 @@ export function AdminSettingsPanel() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-3xl border-border/80 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Default platform fee</CardTitle>
         </CardHeader>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BarChart3, DollarSign, ScanLine, Ticket, TrendingUp } from "lucide-react";
+import { BarChart3, DollarSign, FileSpreadsheet, ScanLine, Ticket, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { RefreshButton } from "@/components/common/refresh-button";
 import { AdminMetricCard, AdminMetricCardSkeleton } from "@/components/features/admin/admin-metric-card";
 import { ChartSkeleton, SimpleBarChart } from "@/components/features/admin/simple-bar-chart";
+import { FormSectionCard } from "@/components/features/events/event-management-ui";
 import {
   formatIdr,
   formatNumber,
@@ -49,38 +50,41 @@ export function AdminAnalyticsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Analytics</h2>
-          <p className="text-sm text-muted-foreground">
-            Platform-wide performance metrics and trends.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground" htmlFor="trend-days">
-              Period
-            </label>
-            <Select
-              id="trend-days"
-              value={String(days)}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="w-32"
-            >
-              <option value="7">7 days</option>
-              <option value="14">14 days</option>
-              <option value="30">30 days</option>
-              <option value="60">60 days</option>
-              <option value="90">90 days</option>
-            </Select>
+      <section className="rounded-3xl border border-border/80 bg-gradient-to-br from-brand-muted/70 via-background to-background p-6 shadow-sm sm:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Analytics & Revenue</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              Platform-wide performance metrics, revenue visibility, operational reports, and
+              executive insights for modern SaaS administration.
+            </p>
           </div>
-          <RefreshButton
-            onRefresh={refreshAll}
-            isFetching={isRefreshing}
-            updatedAt={lastUpdated}
-          />
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground" htmlFor="trend-days">
+                Period
+              </label>
+              <Select
+                id="trend-days"
+                value={String(days)}
+                onChange={(e) => setDays(Number(e.target.value))}
+                className="w-32"
+              >
+                <option value="7">7 days</option>
+                <option value="14">14 days</option>
+                <option value="30">30 days</option>
+                <option value="60">60 days</option>
+                <option value="90">90 days</option>
+              </Select>
+            </div>
+            <RefreshButton
+              onRefresh={refreshAll}
+              isFetching={isRefreshing}
+              updatedAt={lastUpdated}
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
       <div>
         <p className="mb-3 text-sm font-medium text-muted-foreground">All-time totals</p>
@@ -123,9 +127,34 @@ export function AdminAnalyticsPanel() {
         </div>
       </div>
 
+      <FormSectionCard
+        title="Business Lenses"
+        description="Shortcut views for reporting, analytics, users, and revenue conversations."
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { title: "Revenue", icon: DollarSign, body: "Gross revenue and fee performance." },
+            { title: "Reports", icon: FileSpreadsheet, body: "Operational reporting and export surfaces." },
+            { title: "Analytics", icon: BarChart3, body: "Trends, demand, and activity patterns." },
+            { title: "Users", icon: Users, body: "User and organizer behavior visibility." },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.title} className="rounded-2xl border border-border/70 bg-muted/20 p-4">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                  <Icon className="size-5" />
+                </div>
+                <p className="mt-4 font-semibold">{item.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      </FormSectionCard>
+
       {!trendsQuery.isLoading && !trendsQuery.isError && series.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Orders ({days}d)
@@ -135,7 +164,7 @@ export function AdminAnalyticsPanel() {
               <p className="text-xl font-bold">{formatNumber(periodTotals.orders)}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Revenue ({days}d)
@@ -145,7 +174,7 @@ export function AdminAnalyticsPanel() {
               <p className="text-xl font-bold">{formatIdr(periodTotals.revenue_gross)}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Fees ({days}d)
@@ -155,7 +184,7 @@ export function AdminAnalyticsPanel() {
               <p className="text-xl font-bold">{formatIdr(periodTotals.platform_fees)}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Check-ins ({days}d)
@@ -171,7 +200,7 @@ export function AdminAnalyticsPanel() {
       {trendsQuery.isLoading ? (
         <div className="grid gap-4 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index}>
+            <Card key={index} className="rounded-3xl border-border/80 shadow-sm">
               <CardContent className="pt-6">
                 <ChartSkeleton />
               </CardContent>
@@ -194,7 +223,7 @@ export function AdminAnalyticsPanel() {
         </Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-base">Orders</CardTitle>
             </CardHeader>
@@ -202,7 +231,7 @@ export function AdminAnalyticsPanel() {
               <SimpleBarChart data={series} valueKey="orders" label="Daily orders" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-base">Revenue</CardTitle>
             </CardHeader>
@@ -215,7 +244,7 @@ export function AdminAnalyticsPanel() {
               />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-base">Check-ins</CardTitle>
             </CardHeader>
@@ -223,7 +252,7 @@ export function AdminAnalyticsPanel() {
               <SimpleBarChart data={series} valueKey="check_ins" label="Daily check-ins" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="rounded-3xl border-border/80 shadow-sm">
             <CardHeader>
               <CardTitle className="text-base">Platform fees</CardTitle>
             </CardHeader>

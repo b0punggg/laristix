@@ -22,10 +22,14 @@ export function AdminMetricCard({
   isError,
 }: AdminMetricCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="size-4 text-muted-foreground" />
+    <Card className="overflow-hidden rounded-3xl border-border/80 shadow-sm">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
+        <div className="space-y-1">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        </div>
+        <div className="flex size-10 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+          <Icon className="size-4" />
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -37,8 +41,8 @@ export function AdminMetricCard({
           <p className="text-sm text-destructive">Failed to load</p>
         ) : (
           <>
-            <p className="text-2xl font-bold tracking-tight">{value}</p>
-            {subtitle ? <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p> : null}
+            <p className="text-3xl font-bold tracking-tight">{value}</p>
+            {subtitle ? <p className="mt-2 text-xs text-muted-foreground">{subtitle}</p> : null}
           </>
         )}
       </CardContent>
@@ -48,7 +52,7 @@ export function AdminMetricCard({
 
 export function AdminMetricCardSkeleton() {
   return (
-    <Card>
+    <Card className="rounded-3xl border-border/80 shadow-sm">
       <CardHeader className="pb-2">
         <Skeleton className="h-4 w-24" />
       </CardHeader>

@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import {
+  BellRing,
   Building2,
   Calendar,
+  FileCode2,
   DollarSign,
+  LockKeyhole,
+  Megaphone,
   ScanLine,
+  Settings,
   Ticket,
   TrendingUp,
 } from "lucide-react";
@@ -16,6 +21,7 @@ import { RefreshButton } from "@/components/common/refresh-button";
 import { AdminMetricCard } from "@/components/features/admin/admin-metric-card";
 import { ChartSkeleton, SimpleBarChart } from "@/components/features/admin/simple-bar-chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FormSectionCard } from "@/components/features/events/event-management-ui";
 import {
   formatIdr,
   useAdminAnalyticsTrendsQuery,
@@ -51,16 +57,27 @@ export function AdminDashboardPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <p className="max-w-2xl text-muted-foreground">
-          Platform overview — revenue, tickets, and activity across all organizers.
-        </p>
-        <RefreshButton
-          onRefresh={refreshAll}
-          isFetching={isRefreshing}
-          updatedAt={lastUpdated}
-        />
-      </div>
+      <section className="rounded-3xl border border-border/80 bg-gradient-to-br from-brand-muted/70 via-background to-background p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3">
+            <p className="inline-flex rounded-full bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground ring-1 ring-border/70">
+              Modern SaaS admin dashboard
+            </p>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Platform Dashboard</h2>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+                High-level visibility into organizers, revenue, ticket activity, approvals,
+                compliance, and platform operations.
+              </p>
+            </div>
+          </div>
+          <RefreshButton
+            onRefresh={refreshAll}
+            isFetching={isRefreshing}
+            updatedAt={lastUpdated}
+          />
+        </div>
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AdminMetricCard
@@ -98,7 +115,7 @@ export function AdminDashboardPanel() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="rounded-3xl border-border/80 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Events</CardTitle>
             <Calendar className="size-4 text-muted-foreground" />
@@ -116,7 +133,7 @@ export function AdminDashboardPanel() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-3xl border-border/80 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Pending organizers
@@ -141,7 +158,7 @@ export function AdminDashboardPanel() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-3xl border-border/80 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <div>
             <CardTitle className="text-base">14-day trends</CardTitle>
@@ -185,14 +202,66 @@ export function AdminDashboardPanel() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link href={routes.adminLogs}>View activity & audit logs</Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link href={routes.adminSettings}>Platform settings</Link>
-        </Button>
-      </div>
+      <FormSectionCard
+        title="Admin Workspaces"
+        description="Surface major platform admin areas in one premium overview."
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              title: "Reports",
+              description: "Revenue, check-ins, and platform trends.",
+              href: routes.adminAnalytics,
+              icon: TrendingUp,
+            },
+            {
+              title: "CMS",
+              description: "Content, homepage blocks, and platform copy.",
+              href: routes.adminSettings,
+              icon: FileCode2,
+            },
+            {
+              title: "Notification Templates",
+              description: "Email and operational messaging surfaces.",
+              href: routes.adminSettings,
+              icon: Megaphone,
+            },
+            {
+              title: "Permissions UI",
+              description: "Role-based controls and access governance.",
+              href: routes.adminSettings,
+              icon: LockKeyhole,
+            },
+            {
+              title: "Audit Logs",
+              description: "Track admin actions and system changes.",
+              href: routes.adminLogs,
+              icon: BellRing,
+            },
+            {
+              title: "Platform Settings",
+              description: "Maintenance mode, fee rules, and defaults.",
+              href: routes.adminSettings,
+              icon: Settings,
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.title}
+                href={item.href}
+                className="rounded-2xl border border-border/70 bg-muted/20 p-4 transition-colors hover:bg-muted/40"
+              >
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+                  <Icon className="size-5" />
+                </div>
+                <p className="mt-4 font-semibold">{item.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </FormSectionCard>
     </div>
   );
 }
