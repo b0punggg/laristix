@@ -5,7 +5,11 @@ import { AuthLayout } from "@/components/layouts/auth-layout";
 export default function ForgotPasswordPage() {
   return (
     <GuestGuard>
-      <AuthLayout title="Forgot password" description="We'll email you a reset link">
+      <AuthLayout
+        variant="security"
+        title="Forgot password"
+        description="We'll email you a reset link"
+      >
         <ForgotPasswordForm />
       </AuthLayout>
     </GuestGuard>

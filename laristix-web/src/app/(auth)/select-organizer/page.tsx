@@ -6,6 +6,8 @@ export default function SelectOrganizerPage() {
   return (
     <AuthGuard requireOrganizer={false}>
       <AuthLayout
+        variant="organizer"
+        wide
         title="Pilih organizer"
         description="Terima undangan tim atau pilih workspace organizer Anda"
       >

@@ -4,10 +4,10 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { AuthFormFooter, AuthSubmitButton } from "@/components/features/auth/auth-ui";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useResetPasswordMutation } from "@/hooks/use-auth";
 
 const schema = z
@@ -40,35 +40,47 @@ export function ResetPasswordForm() {
   });
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit((values) => reset.mutate(values))}>
-        <CardContent className="space-y-4 pt-6">
-          <input type="hidden" {...register("token")} />
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">New password</Label>
-            <Input id="password" type="password" {...register("password")} />
-            {errors.password ? (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password_confirmation">Confirm password</Label>
-            <Input id="password_confirmation" type="password" {...register("password_confirmation")} />
-            {errors.password_confirmation ? (
-              <p className="text-sm text-destructive">{errors.password_confirmation.message}</p>
-            ) : null}
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full" disabled={reset.isPending}>
-            {reset.isPending ? "Resetting..." : "Reset password"}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+    <form className="space-y-5" onSubmit={handleSubmit((values) => reset.mutate(values))}>
+      <input type="hidden" {...register("token")} />
+
+      <FormField id="email" label="Email" required error={errors.email?.message}>
+        <Input type="email" autoComplete="email" className="h-11" {...register("email")} />
+      </FormField>
+
+      <FormField
+        id="password"
+        label="New password"
+        required
+        helpText="Minimal 8 karakter."
+        error={errors.password?.message}
+      >
+        <PasswordInput
+          autoComplete="new-password"
+          placeholder="Password baru"
+          className="h-11"
+          {...register("password")}
+        />
+      </FormField>
+
+      <FormField
+        id="password_confirmation"
+        label="Confirm password"
+        required
+        error={errors.password_confirmation?.message}
+      >
+        <PasswordInput
+          autoComplete="new-password"
+          placeholder="Ulangi password baru"
+          className="h-11"
+          {...register("password_confirmation")}
+        />
+      </FormField>
+
+      <AuthFormFooter>
+        <AuthSubmitButton isLoading={reset.isPending} loadingLabel="Resetting...">
+          Reset password
+        </AuthSubmitButton>
+      </AuthFormFooter>
+    </form>
   );
 }

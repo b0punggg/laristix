@@ -351,3 +351,41 @@
     transform: translateY(0);
   }
 }
+
+/* Auth shell */
+.auth-bg-mesh {
+  background-image:
+    radial-gradient(at 20% 20%, hsl(var(--brand) / 0.08) 0, transparent 50%),
+    radial-gradient(at 80% 0%, hsl(220 80% 60% / 0.06) 0, transparent 45%),
+    radial-gradient(at 0% 80%, hsl(160 70% 45% / 0.05) 0, transparent 40%);
+}
+
+.auth-glass-card {
+  background: hsl(var(--card) / 0.78);
+  border-color: hsl(var(--border) / 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.auth-orb {
+  animation: auth-float 8s ease-in-out infinite;
+}
+
+.auth-orb-1 {
+  animation-delay: 0s;
+}
+
+.auth-orb-2 {
+  animation-delay: -4s;
+}
+
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-18px) scale(1.04);
+  }
+}

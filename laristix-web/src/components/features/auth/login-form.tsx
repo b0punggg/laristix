@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { AuthFormFooter, AuthSubmitButton } from "@/components/features/auth/auth-ui";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { routes } from "@/config/env";
 import { useLoginMutation } from "@/hooks/use-auth";
 
@@ -27,6 +28,7 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -34,56 +36,66 @@ export function LoginForm() {
   });
 
   return (
-    <Card>
-      <form
-        onSubmit={handleSubmit((values) => login.mutate(values))}
-      >
-        <CardContent className="space-y-4 pt-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            {errors.email ? (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register("password")}
-            />
-            {errors.password ? (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            ) : null}
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="rounded border" {...register("remember")} />
-            Remember me
-          </label>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? "Signing in..." : "Sign in"}
-          </Button>
-          <div className="flex w-full justify-between text-sm">
-            <Link href={routes.forgotPassword} className="text-primary hover:underline">
-              Forgot password?
-            </Link>
-            <Link
-              href={
-                redirectTo
-                  ? `${routes.register}?redirect=${encodeURIComponent(redirectTo)}`
-                  : routes.register
-              }
-              className="text-primary hover:underline"
-            >
-              Create account
-            </Link>
-          </div>
-        </CardFooter>
-      </form>
-    </Card>
+    <form className="space-y-5" onSubmit={handleSubmit((values) => login.mutate(values))}>
+      <FormField id="email" label="Email" required error={errors.email?.message}>
+        <Input
+          type="email"
+          autoComplete="email"
+          placeholder="nama@email.com"
+          className="h-11"
+          {...register("email")}
+        />
+      </FormField>
+
+      <FormField id="password" label="Password" required error={errors.password?.message}>
+        <PasswordInput
+          autoComplete="current-password"
+          placeholder="Masukkan password"
+          className="h-11"
+          {...register("password")}
+        />
+      </FormField>
+
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground">
+          <Controller
+            name="remember"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+              />
+            )}
+          />
+          Remember me
+        </label>
+        <Link
+          href={routes.forgotPassword}
+          className="text-sm font-medium text-brand hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </div>
+
+      <AuthFormFooter>
+        <AuthSubmitButton isLoading={login.isPending} loadingLabel="Signing in...">
+          Sign in
+        </AuthSubmitButton>
+        <p className="text-center text-sm text-muted-foreground">
+          Belum punya akun?{" "}
+          <Link
+            href={
+              redirectTo
+                ? `${routes.register}?redirect=${encodeURIComponent(redirectTo)}`
+                : routes.register
+            }
+            className="font-medium text-brand hover:underline"
+          >
+            Create account
+          </Link>
+        </p>
+      </AuthFormFooter>
+    </form>
   );
 }

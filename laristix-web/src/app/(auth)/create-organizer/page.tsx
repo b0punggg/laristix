@@ -6,6 +6,7 @@ export default function CreateOrganizerPage() {
   return (
     <AuthGuard requireOrganizer={false} preserveReturnUrl>
       <AuthLayout
+        variant="organizer"
         title="Create organizer"
         description="Set up your event organizer workspace on Laristix"
       >

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { AuthStatusPanel } from "@/components/features/auth/auth-ui";
 import { routes } from "@/config/env";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { authApi } from "@/services/auth/auth-api";
@@ -51,21 +51,20 @@ export function VerifyEmailConfirmPanel() {
   }, [router, searchParams]);
 
   return (
-    <Card>
-      <CardContent className="space-y-4 pt-6">
-        <p
-          className={
-            status === "error" ? "text-sm text-destructive" : "text-sm text-muted-foreground"
-          }
-        >
-          {message}
-        </p>
-        {status === "error" ? (
+    <AuthStatusPanel
+      status={status}
+      loadingMessage={message}
+      successTitle="Email terverifikasi"
+      successMessage={message}
+      errorMessage={message}
+    >
+      {status === "error" ? (
+        <div className="flex justify-center">
           <Button asChild variant="outline">
             <Link href={routes.login}>Back to sign in</Link>
           </Button>
-        ) : null}
-      </CardContent>
-    </Card>
+        </div>
+      ) : null}
+    </AuthStatusPanel>
   );
 }

@@ -1,13 +1,18 @@
+import { Suspense } from "react";
 import { GuestGuard } from "@/components/features/auth/guest-guard";
 import { AuthLayout } from "@/components/layouts/auth-layout";
 import { LoginForm } from "@/components/features/auth/login-form";
-import { Suspense } from "react";
+import { AuthLoadingState } from "@/components/features/auth/auth-ui";
 
 export default function LoginPage() {
   return (
     <GuestGuard>
-      <AuthLayout title="Sign in" description="Access your Laristix account">
-        <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
+      <AuthLayout
+        variant="login"
+        title="Sign in"
+        description="Access your Laristix account"
+      >
+        <Suspense fallback={<AuthLoadingState message="Loading form..." />}>
           <LoginForm />
         </Suspense>
       </AuthLayout>
