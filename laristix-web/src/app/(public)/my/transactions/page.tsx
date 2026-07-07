@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { AuthGuard } from "@/components/features/auth/auth-guard";
-import { TransactionsPanel } from "@/components/features/transactions/transactions-panel";
+import { OrdersPanel } from "@/components/features/orders/orders-panel";
 
 function MyTransactionsPageContent() {
   return (
     <AuthGuard requireEmailVerified={false} preserveReturnUrl>
-      <TransactionsPanel />
+      <OrdersPanel />
     </AuthGuard>
   );
 }

@@ -8,23 +8,41 @@ export type TransactionFilter =
   | "waiting_for_payment";
 
 export const transactionFilterOptions: Array<{ value: TransactionFilter; label: string }> = [
-  { value: "all", label: "All Transaction" },
-  { value: "payment_success", label: "Payment Success" },
-  { value: "payment_expired", label: "Payment Expired" },
-  { value: "payment_cancelled", label: "Payment Cancelled" },
-  { value: "waiting_for_payment", label: "Waiting for Payment" },
+  { value: "all", label: "Semua transaksi" },
+  { value: "payment_success", label: "Pembayaran berhasil" },
+  { value: "payment_expired", label: "Pembayaran kedaluwarsa" },
+  { value: "payment_cancelled", label: "Pembayaran dibatalkan" },
+  { value: "waiting_for_payment", label: "Menunggu pembayaran" },
 ];
 
 export interface TransactionStatusDisplay {
   label: string;
   className: string;
+  badgeVariant: "success" | "warning" | "danger" | "muted" | "secondary";
 }
 
 export function getTransactionStatusDisplay(order: CheckoutOrder): TransactionStatusDisplay {
+  if (order.status === "refunded" || order.payment?.status_label === "refunded") {
+    return {
+      label: "Refunded",
+      className: "bg-red-50 text-red-600",
+      badgeVariant: "danger",
+    };
+  }
+
+  if (order.status === "partially_refunded") {
+    return {
+      label: "Partially Refunded",
+      className: "bg-orange-50 text-orange-700",
+      badgeVariant: "warning",
+    };
+  }
+
   if (order.status === "completed" || order.status === "paid" || order.payment?.status_label === "paid") {
     return {
       label: "Payment Success",
       className: "bg-emerald-50 text-emerald-700",
+      badgeVariant: "success",
     };
   }
 
@@ -32,19 +50,15 @@ export function getTransactionStatusDisplay(order: CheckoutOrder): TransactionSt
     return {
       label: "Payment Expired",
       className: "bg-gray-100 text-gray-600",
+      badgeVariant: "muted",
     };
   }
 
-  if (
-    order.status === "cancelled" ||
-    order.payment?.status_label === "failed" ||
-    order.status === "refunded" ||
-    order.status === "partially_refunded" ||
-    order.payment?.status_label === "refunded"
-  ) {
+  if (order.status === "cancelled" || order.payment?.status_label === "failed") {
     return {
       label: "Payment Cancelled",
       className: "bg-red-50 text-red-600",
+      badgeVariant: "danger",
     };
   }
 
@@ -56,12 +70,14 @@ export function getTransactionStatusDisplay(order: CheckoutOrder): TransactionSt
     return {
       label: "Waiting for Payment",
       className: "bg-amber-50 text-amber-700",
+      badgeVariant: "warning",
     };
   }
 
   return {
     label: "Payment Success",
     className: "bg-emerald-50 text-emerald-700",
+    badgeVariant: "success",
   };
 }
 
@@ -81,7 +97,7 @@ export function matchesTransactionFilter(
     case "payment_expired":
       return status === "Payment Expired";
     case "payment_cancelled":
-      return status === "Payment Cancelled";
+      return status === "Payment Cancelled" || status === "Refunded" || status === "Partially Refunded";
     case "waiting_for_payment":
       return status === "Waiting for Payment";
     default:
