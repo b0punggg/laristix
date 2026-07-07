@@ -106,6 +106,7 @@ export const apiPaths = {
 
 export const routes = {
   home: "/",
+  profile: "/profile",
   publicEvent: (uuid: string) => `/events/${uuid}`,
   publicEventCheckout: (uuid: string, ticketTypeId: number) =>
     `/events/${uuid}/checkout?ticket=${ticketTypeId}`,

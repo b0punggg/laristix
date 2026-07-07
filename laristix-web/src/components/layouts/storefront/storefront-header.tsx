@@ -131,6 +131,12 @@ export function StorefrontHeader() {
               <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border bg-white py-1 shadow-lg">
                 <p className="border-b px-4 py-2 text-xs text-gray-500">{user.name}</p>
                 <Link
+                  href={routes.profile}
+                  className="block px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Profil
+                </Link>
+                <Link
                   href={routes.myTransactions}
                   className="block px-4 py-2 text-sm hover:bg-gray-50"
                 >
