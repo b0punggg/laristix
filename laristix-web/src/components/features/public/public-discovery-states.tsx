@@ -1,5 +1,6 @@
-import { CalendarSearch, RefreshCw } from "lucide-react";
+import { CalendarSearch, RefreshCw, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DsEmptyState } from "@/design-system/components/states/empty-state";
 
 interface PublicEmptyEventsStateProps {
   hasFilters: boolean;
@@ -8,24 +9,22 @@ interface PublicEmptyEventsStateProps {
 
 export function PublicEmptyEventsState({ hasFilters, onClearFilters }: PublicEmptyEventsStateProps) {
   return (
-    <div className="rounded-2xl border border-dashed bg-muted/20 px-6 py-12 text-center">
-      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
-        <CalendarSearch className="size-7 text-muted-foreground" />
-      </div>
-      <p className="text-lg font-semibold text-foreground">
-        {hasFilters ? "Tidak ada event yang cocok" : "Belum ada event dipublikasikan"}
-      </p>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-        {hasFilters
-          ? "Coba ubah kategori, kota, atau kata kunci pencarian. Anda juga bisa hapus semua filter."
-          : "Event akan muncul di sini setelah organizer mempublikasikannya."}
-      </p>
+    <DsEmptyState
+      icon={hasFilters ? SearchX : CalendarSearch}
+      title={hasFilters ? "Tidak ada event yang cocok" : "Belum ada event dipublikasikan"}
+      description={
+        hasFilters
+          ? "Coba ubah kategori, lokasi, tanggal, atau kata kunci pencarian. Anda juga bisa hapus semua filter."
+          : "Event akan muncul di sini setelah organizer mempublikasikannya."
+      }
+      className="py-16"
+    >
       {hasFilters && onClearFilters ? (
-        <Button variant="outline" className="mt-6" onClick={onClearFilters}>
+        <Button variant="outline" onClick={onClearFilters}>
           Hapus semua filter
         </Button>
       ) : null}
-    </div>
+    </DsEmptyState>
   );
 }
 
@@ -39,15 +38,15 @@ export function PublicDiscoveryErrorState({
   onRetry,
 }: PublicDiscoveryErrorStateProps) {
   return (
-    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
-      <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-destructive/10">
-        <RefreshCw className="size-5 text-destructive" />
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-12 text-center">
+      <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-destructive/10">
+        <RefreshCw className="size-6 text-destructive" aria-hidden />
       </div>
-      <p className="font-medium text-foreground">{message}</p>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-lg font-semibold text-foreground">{message}</p>
+      <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
         Periksa koneksi internet Anda lalu coba lagi.
       </p>
-      <Button variant="outline" className="mt-4" onClick={onRetry}>
+      <Button variant="outline" className="mt-6" onClick={onRetry}>
         Coba lagi
       </Button>
     </div>

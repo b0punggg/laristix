@@ -46,7 +46,7 @@ export function PublicEventCard({
       <Card
         variant="interactive"
         padding="none"
-        className="h-full overflow-hidden border-border/80"
+        className="h-full overflow-hidden border-border/80 transition-shadow duration-300 group-hover:border-brand/20 group-hover:shadow-lg"
       >
         {/* Thumbnail */}
         <div className="relative aspect-[16/10] overflow-hidden bg-muted">

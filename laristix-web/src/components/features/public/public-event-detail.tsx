@@ -1,37 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, Ticket } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EventStatusBadge } from "@/components/features/events/event-status-badge";
-import { TicketKindBadge } from "@/components/features/tickets/ticket-kind-badge";
+import { Container } from "@/design-system/primitives/layout";
+import {
+  PublicEventDetailHero,
+  PublicEventDetailMobilePurchaseBar,
+  PublicEventDetailPurchaseCard,
+} from "@/components/features/public/public-event-detail-purchase";
+import { PublicEventDetailRelated } from "@/components/features/public/public-event-detail-related";
+import {
+  PublicEventDetailDescription,
+  PublicEventDetailFaq,
+  PublicEventDetailGallery,
+  PublicEventDetailInfoCards,
+  PublicEventDetailMap,
+  PublicEventDetailOrganizerCard,
+  PublicEventDetailSchedule,
+  PublicEventDetailSpeakers,
+  PublicEventDetailStatusBar,
+  PublicEventDetailTerms,
+  PublicEventDetailTickets,
+} from "@/components/features/public/public-event-detail-sections";
+import { PublicEventDetailSkeleton } from "@/components/features/public/public-event-detail-skeleton";
 import { routes } from "@/config/env";
 import { usePublicEventQuery, usePublicTicketsQuery } from "@/hooks/use-public-events";
 import { useMeQuery } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { formatCurrency } from "@/lib/currency";
-import { formatEventDateRange, formatSalesPeriod } from "@/lib/datetime";
+import {
+  buildEventGallery,
+  parseEventPageContent,
+} from "@/lib/event-page-content";
+import type { TicketType } from "@/types/ticket";
 
 interface PublicEventDetailProps {
   uuid: string;
 }
 
-function ticketAvailabilityLabel(isPurchasable: boolean, isSoldOut: boolean, isSalesOpen: boolean) {
-  if (isSoldOut) {
-    return "Habis";
+function resolvePurchaseCta(
+  tickets: TicketType[],
+  currentUser: { id: number } | null | undefined,
+  eventUuid: string,
+) {
+  const purchasable = tickets.find((ticket) => ticket.is_purchasable);
+
+  if (!purchasable) {
+    if (tickets.length === 0) {
+      return {
+        checkoutHref: null,
+        ctaLabel: "Tiket belum tersedia",
+        ctaDisabled: true,
+      };
+    }
+
+    const allSoldOut = tickets.every((ticket) => ticket.is_sold_out);
+    return {
+      checkoutHref: null,
+      ctaLabel: allSoldOut ? "Tiket habis" : "Lihat tiket",
+      ctaDisabled: allSoldOut,
+    };
   }
 
-  if (!isSalesOpen) {
-    return "Penjualan ditutup";
-  }
+  const checkoutUrl = routes.publicEventCheckout(eventUuid, purchasable.id);
 
-  if (isPurchasable) {
-    return "Tersedia";
-  }
-
-  return "Tidak tersedia";
+  return {
+    checkoutHref: currentUser ? checkoutUrl : routes.loginWithRedirect(checkoutUrl),
+    ctaLabel: currentUser ? "Beli Tiket" : "Masuk untuk beli",
+    ctaDisabled: false,
+  };
 }
 
 export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
@@ -46,178 +84,116 @@ export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
   const event = eventQuery.data;
   const tickets = ticketsQuery.data ?? [];
 
+  const pageContent = useMemo(
+    () => (event ? parseEventPageContent(event) : null),
+    [event],
+  );
+
+  const galleryItems = useMemo(
+    () => (event && pageContent ? buildEventGallery(event, pageContent) : []),
+    [event, pageContent],
+  );
+
+  const purchaseCta = useMemo(
+    () => resolvePurchaseCta(tickets, currentUser, uuid),
+    [tickets, currentUser, uuid],
+  );
+
   if (eventQuery.isLoading) {
-    return <p className="text-muted-foreground">Memuat detail event...</p>;
+    return <PublicEventDetailSkeleton />;
   }
 
-  if (eventQuery.isError || !event) {
+  if (eventQuery.isError || !event || !pageContent) {
     return (
-      <div className="space-y-4">
-        <Button variant="ghost" asChild className="-ml-2">
-          <Link href={routes.home}>
-            <ArrowLeft className="size-4" />
-            Kembali
-          </Link>
-        </Button>
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6">
-          <p className="font-medium">Event tidak ditemukan</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Event mungkin belum dipublikasikan atau tidak tersedia untuk publik.
-          </p>
+      <Container className="py-8">
+        <div className="space-y-4">
+          <Button variant="ghost" asChild className="-ml-2">
+            <Link href={routes.home}>
+              <ArrowLeft className="size-4" />
+              Kembali
+            </Link>
+          </Button>
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">
+            <p className="text-lg font-semibold text-foreground">Event tidak ditemukan</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Event mungkin belum dipublikasikan atau tidak tersedia untuk publik.
+            </p>
+          </div>
         </div>
-      </div>
+      </Container>
     );
   }
 
-  const venueLabel = [event.venue?.name, event.venue?.city].filter(Boolean).join(", ");
-
   return (
-    <div className="space-y-8">
-      <Button variant="ghost" asChild className="-ml-2">
-        <Link href={routes.home}>
-          <ArrowLeft className="size-4" />
-          Semua event
-        </Link>
-      </Button>
-
-      <div className="overflow-hidden rounded-xl border bg-card">
-        <div className="relative aspect-[21/9] bg-muted">
-          {event.banner_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.banner_url} alt={event.title} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <Calendar className="size-16 text-primary/30" />
-            </div>
-          )}
-        </div>
-        <div className="space-y-4 p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <EventStatusBadge status={event.status} />
-            {event.is_free ? <Badge variant="success">Gratis</Badge> : null}
-            {event.category ? <Badge variant="secondary">{event.category.name}</Badge> : null}
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{event.title}</h1>
-          {event.organizer ? (
-            <p className="text-muted-foreground">Diselenggarakan oleh {event.organizer.name}</p>
-          ) : null}
-          <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:gap-6">
-            <p className="flex items-center gap-2">
-              <Calendar className="size-4 shrink-0" />
-              {formatEventDateRange(event.start_at, event.end_at, event.timezone)}
-            </p>
-            {venueLabel ? (
-              <p className="flex items-center gap-2">
-                <MapPin className="size-4 shrink-0" />
-                {venueLabel}
-              </p>
-            ) : null}
-          </div>
-          {event.short_description ? (
-            <p className="text-lg text-muted-foreground">{event.short_description}</p>
-          ) : null}
-          {event.description ? (
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap text-foreground">
-              {event.description}
-            </div>
-          ) : null}
-        </div>
+    <div className="relative pb-24 lg:pb-12">
+      <div className="absolute left-4 top-4 z-20 sm:left-6 sm:top-6">
+        <Button
+          variant="ghost"
+          asChild
+          className="bg-black/30 text-white backdrop-blur-sm hover:bg-black/50 hover:text-white"
+        >
+          <Link href={routes.home}>
+            <ArrowLeft className="size-4" />
+            <span className="hidden sm:inline">Semua event</span>
+          </Link>
+        </Button>
       </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Ticket className="size-5" />
-          <h2 className="text-2xl font-bold tracking-tight">Tiket</h2>
+      <PublicEventDetailHero event={event} />
+
+      <Container className="py-8 md:py-12">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_400px]">
+          <main className="space-y-12 md:space-y-14">
+            <div className="space-y-6 lg:hidden">
+              <PublicEventDetailStatusBar event={event} />
+              {event.short_description ? (
+                <p className="text-lg leading-relaxed text-muted-foreground">
+                  {event.short_description}
+                </p>
+              ) : null}
+            </div>
+
+            <PublicEventDetailOrganizerCard event={event} />
+            <PublicEventDetailGallery items={galleryItems} />
+            <PublicEventDetailInfoCards event={event} />
+            <PublicEventDetailMap event={event} />
+            <PublicEventDetailDescription event={event} />
+            <PublicEventDetailSchedule items={pageContent.schedule} />
+            <PublicEventDetailSpeakers items={pageContent.speakers} />
+            <PublicEventDetailFaq items={pageContent.faq} />
+            <PublicEventDetailTerms terms={pageContent.terms} />
+            <PublicEventDetailTickets
+              eventUuid={uuid}
+              tickets={tickets}
+              currentUser={currentUser}
+              isLoading={ticketsQuery.isLoading}
+              isError={ticketsQuery.isError}
+            />
+            <PublicEventDetailRelated event={event} />
+          </main>
+
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-4">
+              <PublicEventDetailPurchaseCard
+                event={event}
+                tickets={tickets}
+                currentUser={currentUser}
+                checkoutHref={purchaseCta.checkoutHref}
+                ctaLabel={purchaseCta.ctaLabel}
+                ctaDisabled={purchaseCta.ctaDisabled}
+              />
+            </div>
+          </aside>
         </div>
+      </Container>
 
-        {ticketsQuery.isLoading ? (
-          <p className="text-muted-foreground">Memuat tiket...</p>
-        ) : null}
-
-        {ticketsQuery.isError ? (
-          <p className="text-sm text-destructive">Gagal memuat daftar tiket.</p>
-        ) : null}
-
-        {!ticketsQuery.isLoading && !ticketsQuery.isError && tickets.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-8 text-center">
-            <p className="font-medium">Belum ada tiket yang dipublikasikan</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Tiket dengan visibility publik akan ditampilkan di sini.
-            </p>
-          </div>
-        ) : null}
-
-        {!ticketsQuery.isLoading && !ticketsQuery.isError && tickets.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {tickets.map((ticket) => {
-              const availability = ticketAvailabilityLabel(
-                ticket.is_purchasable,
-                ticket.is_sold_out,
-                ticket.is_sales_open,
-              );
-              const canSelect = ticket.is_purchasable;
-              const checkoutUrl = routes.publicEventCheckout(uuid, ticket.id);
-              const ticketActionHref = currentUser
-                ? checkoutUrl
-                : routes.loginWithRedirect(checkoutUrl);
-
-              return (
-                <Card key={ticket.id}>
-                  <CardHeader className="space-y-2 pb-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle className="text-lg">{ticket.name}</CardTitle>
-                      <TicketKindBadge kind={ticket.kind} />
-                    </div>
-                    <p className="text-2xl font-bold">
-                      {ticket.is_free ? "Gratis" : formatCurrency(ticket.price, ticket.currency)}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {ticket.description ? (
-                      <p className="text-sm text-muted-foreground">{ticket.description}</p>
-                    ) : null}
-                    <dl className="grid gap-2 text-sm">
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-muted-foreground">Ketersediaan</dt>
-                        <dd className="font-medium">{availability}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-muted-foreground">Sisa kuota</dt>
-                        <dd className="font-medium">
-                          {ticket.available_quantity} / {ticket.quantity}
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-muted-foreground">Per pesanan</dt>
-                        <dd className="font-medium">
-                          {ticket.min_per_order}–{ticket.max_per_order} tiket
-                        </dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-muted-foreground">Periode penjualan</dt>
-                        <dd className="text-right font-medium">
-                          {formatSalesPeriod(ticket.sales_start_at, ticket.sales_end_at)}
-                        </dd>
-                      </div>
-                    </dl>
-                    {canSelect ? (
-                      <Button className="w-full" asChild>
-                        <Link href={ticketActionHref}>
-                          {currentUser ? "Pilih tiket" : "Masuk untuk beli tiket"}
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Button className="w-full" disabled>
-                        {availability}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : null}
-      </section>
+      <PublicEventDetailMobilePurchaseBar
+        event={event}
+        tickets={tickets}
+        checkoutHref={purchaseCta.checkoutHref}
+        ctaLabel={purchaseCta.ctaLabel}
+        ctaDisabled={purchaseCta.ctaDisabled}
+      />
     </div>
   );
 }

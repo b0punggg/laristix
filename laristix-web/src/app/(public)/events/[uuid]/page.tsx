@@ -5,9 +5,5 @@ interface PublicEventPageProps {
 }
 
 export default function PublicEventPage({ params }: PublicEventPageProps) {
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <PublicEventDetail uuid={params.uuid} />
-    </div>
-  );
+  return <PublicEventDetail uuid={params.uuid} />;
 }

@@ -26,5 +26,5 @@ export function getStorefrontMobileNavItems(user: AuthenticatedUser | null): Sto
 }
 
 export function isStorefrontMobileNavHidden(pathname: string): boolean {
-  return pathname.includes("/checkout");
+  return pathname.includes("/checkout") || /^\/events\/[^/]+$/.test(pathname);
 }

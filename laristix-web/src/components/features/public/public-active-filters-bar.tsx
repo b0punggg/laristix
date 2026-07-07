@@ -28,15 +28,11 @@ export function PublicActiveFiltersBar() {
   const clearCategory = () => navigate({ ...filters, category_id: undefined });
   const clearCity = () => navigate({ ...filters, city: undefined });
   const clearSearch = () => navigate({ ...filters, q: undefined });
-  const clearSection = () =>
-    navigate({
-      ...filters,
-      is_free: undefined,
-      upcoming_days: undefined,
-    });
+  const clearFree = () => navigate({ ...filters, is_free: undefined });
+  const clearDate = () => navigate({ ...filters, upcoming_days: undefined });
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2.5">
       <span className="text-xs font-medium text-muted-foreground">Filter aktif:</span>
       {filters.q ? (
         <Button variant="secondary" size="sm" className="h-7 gap-1 text-xs" onClick={clearSearch}>
@@ -56,9 +52,15 @@ export function PublicActiveFiltersBar() {
           <X className="size-3" />
         </Button>
       ) : null}
-      {sectionLabel ? (
-        <Button variant="secondary" size="sm" className="h-7 gap-1 text-xs" onClick={clearSection}>
-          {sectionLabel}
+      {filters.is_free ? (
+        <Button variant="secondary" size="sm" className="h-7 gap-1 text-xs" onClick={clearFree}>
+          Gratis
+          <X className="size-3" />
+        </Button>
+      ) : null}
+      {filters.upcoming_days ? (
+        <Button variant="secondary" size="sm" className="h-7 gap-1 text-xs" onClick={clearDate}>
+          {sectionLabel ?? `${filters.upcoming_days} hari`}
           <X className="size-3" />
         </Button>
       ) : null}
