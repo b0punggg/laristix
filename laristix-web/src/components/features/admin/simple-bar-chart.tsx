@@ -37,7 +37,7 @@ function formatDefault(value: number) {
   return String(value);
 }
 
-const CHART_PRIMARY = "hsl(222.2 47.4% 11.2%)";
+const CHART_PRIMARY = "hsl(var(--brand))";
 
 export function ChartSkeleton() {
   return (

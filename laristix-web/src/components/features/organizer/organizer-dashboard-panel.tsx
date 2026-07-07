@@ -8,18 +8,24 @@ import {
   DollarSign,
   Download,
   ScanLine,
+  ShoppingCart,
   Ticket,
-  TrendingUp,
   Users,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/common/empty-state";
 import { RefreshButton } from "@/components/common/refresh-button";
-import { AdminMetricCard } from "@/components/features/admin/admin-metric-card";
-import { ChartSkeleton, SimpleBarChart } from "@/components/features/admin/simple-bar-chart";
-import { Skeleton } from "@/components/ui/skeleton";
-import { OrganizerDashboardInsightsSection } from "@/components/features/organizer/organizer-dashboard-insights";
+import { OrganizerMetricCard } from "@/components/features/organizer/organizer-metric-card";
+import {
+  OrganizerCheckInHighlight,
+  OrganizerDashboardCharts,
+  OrganizerEventCalendar,
+  OrganizerNotificationsPanel,
+  OrganizerQuickActions,
+  OrganizerRecentActivities,
+  OrganizerRecentOrders,
+  OrganizerRevenueHero,
+  OrganizerUpcomingEvents,
+} from "@/components/features/organizer/organizer-dashboard-sections";
 import { OrganizerEmptyOnboarding } from "@/components/features/organizer/organizer-empty-onboarding";
 import { OrganizerInvitationsList } from "@/components/features/organizer/organizer-invitations-list";
 import { OrganizerPageHeader } from "@/components/features/organizer/organizer-page-header";
@@ -54,7 +60,6 @@ export function OrganizerDashboardPanel() {
 
   const totals = summaryQuery.data?.totals;
   const today = summaryQuery.data?.today;
-
   const hasNoEvents = !summaryQuery.isLoading && totals?.events === 0;
 
   const refreshAll = () => {
@@ -72,11 +77,18 @@ export function OrganizerDashboardPanel() {
     insightsQuery.dataUpdatedAt,
   );
 
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Selamat pagi";
+    if (hour < 18) return "Selamat siang";
+    return "Selamat malam";
+  }, []);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <OrganizerPageHeader
-        title="Dashboard"
-        description="Ringkasan event, registrasi, pendapatan, dan aktivitas check-in."
+        title={`${greeting}, ${user?.name?.split(" ")[0] ?? "Organizer"}`}
+        description="Ringkasan performa event, penjualan tiket, dan aktivitas check-in."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {summaryQuery.data ? (
@@ -85,19 +97,19 @@ export function OrganizerDashboardPanel() {
                 size="sm"
                 onClick={() => exportOrganizerSummaryCsv(summaryQuery.data!)}
               >
-                <Download className="mr-2 size-4" />
-                Export ringkasan
+                <Download className="size-4" aria-hidden />
+                Export
               </Button>
             ) : null}
             <Button asChild variant="outline" size="sm">
               <Link href={routes.organizerAnalytics}>
-                <BarChart3 className="mr-2 size-4" />
-                Analitik lengkap
+                <BarChart3 className="size-4" aria-hidden />
+                Analitik
               </Link>
             </Button>
             {canManageMembers(user) ? (
               <Button asChild variant="outline" size="sm">
-                <Link href={routes.organizerTeam}>Kelola tim</Link>
+                <Link href={routes.organizerTeam}>Tim</Link>
               </Button>
             ) : null}
             <RefreshButton
@@ -109,138 +121,116 @@ export function OrganizerDashboardPanel() {
         }
       />
 
+      <OrganizerQuickActions />
+
       <OrganizerInvitationsList />
 
       {hasNoEvents ? <OrganizerEmptyOnboarding /> : null}
 
+      <OrganizerRevenueHero summary={summaryQuery.data} isLoading={summaryQuery.isLoading} />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricCard
-          title="Pendapatan"
-          value={totals ? formatIdr(totals.revenue_net) : 0}
-          subtitle={`Hari ini: ${today ? formatIdr(today.revenue_net) : formatIdr(0)}`}
-          icon={DollarSign}
+        <OrganizerMetricCard
+          label="Order hari ini"
+          value={today?.orders ?? 0}
+          hint={`${totals?.orders_completed ?? 0} order selesai total`}
+          icon={ShoppingCart}
+          accent="violet"
           isLoading={summaryQuery.isLoading}
           isError={summaryQuery.isError}
         />
-        <AdminMetricCard
-          title="Registrasi"
-          value={totals?.registrations ?? 0}
-          subtitle={`Hari ini: ${today?.registrations ?? 0}`}
-          icon={Users}
-          isLoading={summaryQuery.isLoading}
-          isError={summaryQuery.isError}
-        />
-        <AdminMetricCard
-          title="Tiket terjual"
+        <OrganizerMetricCard
+          label="Tiket terjual"
           value={totals?.tickets_sold ?? 0}
-          subtitle={`${totals?.orders_completed ?? 0} order selesai`}
+          hint={`${totals?.registrations ?? 0} registrasi`}
           icon={Ticket}
+          accent="brand"
           isLoading={summaryQuery.isLoading}
           isError={summaryQuery.isError}
         />
-        <AdminMetricCard
-          title="Check-in"
+        <OrganizerMetricCard
+          label="Pendapatan hari ini"
+          value={today ? formatIdr(today.revenue_net) : formatIdr(0)}
+          hint={`Gross: ${today ? formatIdr(today.revenue_gross) : formatIdr(0)}`}
+          icon={DollarSign}
+          accent="emerald"
+          isLoading={summaryQuery.isLoading}
+          isError={summaryQuery.isError}
+        />
+        <OrganizerMetricCard
+          label="Check-in total"
           value={totals?.check_ins ?? 0}
-          subtitle={`Hari ini: ${today?.check_ins ?? 0}`}
+          hint={`Hari ini: ${today?.check_ins ?? 0}`}
           icon={ScanLine}
+          accent="sky"
+          isLoading={summaryQuery.isLoading}
+          isError={summaryQuery.isError}
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <OrganizerMetricCard
+          label="Event"
+          value={totals?.events ?? 0}
+          hint={`${totals?.events_published ?? 0} dipublikasi · ${totals?.events_draft ?? 0} draft`}
+          icon={Calendar}
+          accent="amber"
+          isLoading={summaryQuery.isLoading}
+          isError={summaryQuery.isError}
+        />
+        <OrganizerMetricCard
+          label="Registrasi"
+          value={totals?.registrations ?? 0}
+          hint={`Hari ini: ${today?.registrations ?? 0}`}
+          icon={Users}
+          accent="rose"
           isLoading={summaryQuery.isLoading}
           isError={summaryQuery.isError}
         />
       </div>
 
       {!hasNoEvents ? (
-        <OrganizerDashboardInsightsSection
-          insights={insightsQuery.data}
-          isLoading={insightsQuery.isLoading}
-        />
-      ) : null}
+        <>
+          <OrganizerCheckInHighlight count={insightsQuery.data?.check_in_today.count ?? 0} />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Event</CardTitle>
-            <Calendar className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {summaryQuery.isLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <p className="text-2xl font-bold">{totals?.events ?? 0}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {totals?.events_published ?? 0} dipublikasi · {totals?.events_draft ?? 0} draft
-            </p>
-            <Button asChild size="sm">
-              <Link href={routes.organizerEvents}>Lihat event</Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Penjualan gross
-            </CardTitle>
-            <TrendingUp className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {summaryQuery.isLoading ? (
-              <Skeleton className="h-8 w-28" />
-            ) : (
-              <p className="text-2xl font-bold">
-                {totals ? formatIdr(totals.revenue_gross) : formatIdr(0)}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Biaya platform: {totals ? formatIdr(totals.platform_fees) : formatIdr(0)}
-            </p>
-            <Button asChild size="sm" variant="outline">
-              <Link href={routes.scanner}>Buka scanner</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <div>
-            <CardTitle className="text-base">Tren 14 hari</CardTitle>
-            <p className="text-sm text-muted-foreground">Order, pendapatan, dan check-in</p>
-          </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href={routes.organizerAnalytics}>Lihat semua</Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {trendsQuery.isLoading ? (
-            <div className="space-y-8">
-              <ChartSkeleton />
-              <ChartSkeleton />
-            </div>
-          ) : trendsQuery.isError ? (
-            <EmptyState
-              icon={TrendingUp}
-              title="Gagal memuat tren"
-              description="Periksa koneksi lalu coba lagi."
-            >
-              <Button variant="outline" size="sm" onClick={() => trendsQuery.refetch()}>
-                Coba lagi
-              </Button>
-            </EmptyState>
-          ) : (
-            <>
-              <SimpleBarChart data={trendSeries} valueKey="orders" label="Order harian" />
-              <SimpleBarChart
-                data={trendSeries}
-                valueKey="revenue_gross"
-                label="Pendapatan harian (net)"
-                formatValue={formatIdr}
+          <div className="grid gap-6 xl:grid-cols-3">
+            <div className="xl:col-span-2">
+              <OrganizerDashboardCharts
+                trendSeries={trendSeries}
+                isLoading={trendsQuery.isLoading}
+                isError={trendsQuery.isError}
+                onRetry={() => trendsQuery.refetch()}
               />
-              <SimpleBarChart data={trendSeries} valueKey="check_ins" label="Check-in harian" />
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </div>
+            <div className="space-y-6">
+              <OrganizerEventCalendar
+                events={insightsQuery.data?.upcoming_events ?? []}
+                isLoading={insightsQuery.isLoading}
+              />
+              <OrganizerNotificationsPanel
+                insights={insightsQuery.data}
+                isLoading={insightsQuery.isLoading}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <OrganizerUpcomingEvents
+              insights={insightsQuery.data}
+              isLoading={insightsQuery.isLoading}
+            />
+            <OrganizerRecentOrders
+              insights={insightsQuery.data}
+              isLoading={insightsQuery.isLoading}
+            />
+          </div>
+
+          <OrganizerRecentActivities
+            insights={insightsQuery.data}
+            isLoading={insightsQuery.isLoading}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

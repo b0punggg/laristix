@@ -1,15 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { OrganizerSidebar } from "@/components/layouts/organizer-sidebar";
+import { OrganizerTopbar } from "@/components/layouts/organizer-topbar";
+import { AdminNav } from "@/components/layouts/admin-nav";
 import { AppLogo } from "@/components/common/app-logo";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/config/env";
 import { useLogoutMutation } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { AdminNav } from "@/components/layouts/admin-nav";
-import { OrganizerMobileNav } from "@/components/layouts/organizer-mobile-nav";
-import { OrganizerNav } from "@/components/layouts/organizer-nav";
 import { cn } from "@/lib/utils";
 
 export const adminNavItems = [
@@ -25,12 +23,7 @@ interface DashboardShellProps {
   useOrganizerNav?: boolean;
 }
 
-export function DashboardShell({
-  children,
-  title,
-  useAdminNav = false,
-  useOrganizerNav = false,
-}: DashboardShellProps) {
+function AdminDashboardShell({ children, title }: { children: React.ReactNode; title: string }) {
   const user = useAuthStore((s) => s.user);
   const logout = useLogoutMutation();
 
@@ -38,19 +31,14 @@ export function DashboardShell({
     <div className="flex min-h-screen">
       <aside className="hidden w-64 shrink-0 border-r bg-muted/30 p-4 md:block">
         <AppLogo />
-        {useAdminNav ? <AdminNav /> : null}
-        {useOrganizerNav ? <OrganizerNav /> : null}
+        <AdminNav />
       </aside>
-
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b px-4 py-3">
           <div className="min-w-0">
             <h1 className="truncate text-lg font-semibold">{title}</h1>
-            {user?.active_organizer ? (
-              <p className="truncate text-sm text-muted-foreground">{user.active_organizer.name}</p>
-            ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <span className="hidden max-w-[12rem] truncate text-sm text-muted-foreground lg:inline">
               {user?.email}
             </span>
@@ -64,13 +52,33 @@ export function DashboardShell({
             </Button>
           </div>
         </header>
-
-        <main className={cn("flex-1 p-4 sm:p-6", useOrganizerNav && "pb-24 md:pb-6")}>
-          {children}
-        </main>
+        <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
-
-      {useOrganizerNav ? <OrganizerMobileNav /> : null}
     </div>
   );
+}
+
+function OrganizerDashboardShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen bg-muted/20">
+      <OrganizerSidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <OrganizerTopbar />
+        <main className={cn("flex-1 p-4 sm:p-6 lg:p-8")}>{children}</main>
+      </div>
+    </div>
+  );
+}
+
+export function DashboardShell({
+  children,
+  title,
+  useAdminNav = false,
+  useOrganizerNav = false,
+}: DashboardShellProps) {
+  if (useOrganizerNav) {
+    return <OrganizerDashboardShell>{children}</OrganizerDashboardShell>;
+  }
+
+  return <AdminDashboardShell title={title}>{children}</AdminDashboardShell>;
 }
