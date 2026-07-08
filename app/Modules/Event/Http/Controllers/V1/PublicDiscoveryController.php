@@ -7,6 +7,7 @@ use App\Modules\Event\Contracts\EventServiceInterface;
 use App\Modules\Event\Http\Resources\EventCategoryResource;
 use App\Modules\Event\Http\Resources\FeaturedOrganizerResource;
 use App\Modules\Event\Http\Resources\PublicCityResource;
+use App\Modules\Event\Http\Resources\PublicCreatorResource;
 use Illuminate\Http\JsonResponse;
 
 class PublicDiscoveryController extends Controller
@@ -45,6 +46,15 @@ class PublicDiscoveryController extends Controller
         return response()->json([
             'data' => FeaturedOrganizerResource::collection(
                 $this->eventService->listFeaturedOrganizers(8)
+            ),
+        ]);
+    }
+
+    public function showCreator(string $slug): JsonResponse
+    {
+        return response()->json([
+            'data' => new PublicCreatorResource(
+                $this->eventService->showPublicCreator($slug)
             ),
         ]);
     }

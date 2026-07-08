@@ -12,6 +12,7 @@ import type {
   FeaturedOrganizer,
   PaginatedResponse,
   PublicCity,
+  PublicCreatorProfile,
   PublicEventListFilters,
   UpdateEventPayload,
 } from "@/types/event";
@@ -120,6 +121,13 @@ export const eventApi = {
 
   async showPublic(uuid: string) {
     const { data } = await apiClient.get<ApiResponse<Event>>(apiPaths.events.publicShow(uuid));
+    return data.data;
+  },
+
+  async showPublicCreator(slug: string) {
+    const { data } = await apiClient.get<ApiResponse<PublicCreatorProfile>>(
+      apiPaths.events.publicCreator(slug),
+    );
     return data.data;
   },
 };

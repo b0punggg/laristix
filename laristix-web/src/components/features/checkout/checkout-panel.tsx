@@ -39,9 +39,14 @@ import { useMidtransSnap } from "./use-midtrans-snap";
 interface CheckoutPanelProps {
   eventUuid: string;
   ticketTypeId: number;
+  initialQuantity?: number;
 }
 
-export function CheckoutPanel({ eventUuid, ticketTypeId }: CheckoutPanelProps) {
+export function CheckoutPanel({
+  eventUuid,
+  ticketTypeId,
+  initialQuantity = 1,
+}: CheckoutPanelProps) {
   const router = useRouter();
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const storedUser = useAuthStore((s) => s.user);
@@ -55,7 +60,7 @@ export function CheckoutPanel({ eventUuid, ticketTypeId }: CheckoutPanelProps) {
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [promoCode, setPromoCode] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [referralCode, setReferralCode] = useState("");
@@ -119,9 +124,13 @@ export function CheckoutPanel({ eventUuid, ticketTypeId }: CheckoutPanelProps) {
 
   useEffect(() => {
     if (ticket) {
-      setQuantity(ticket.min_per_order);
+      const nextQuantity = Math.min(
+        Math.max(initialQuantity, ticket.min_per_order),
+        Math.min(ticket.max_per_order, ticket.available_quantity),
+      );
+      setQuantity(nextQuantity);
     }
-  }, [ticket]);
+  }, [ticket, initialQuantity]);
 
   useEffect(() => {
     if (currentUser) {

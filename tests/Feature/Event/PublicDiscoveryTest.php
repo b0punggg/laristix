@@ -231,4 +231,71 @@ class PublicDiscoveryTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.logo_url', 'https://example.com/logo.png');
     }
+
+    public function test_public_creator_profile_returns_organizer_by_slug(): void
+    {
+        $category = EventCategory::query()->first();
+        $this->assertNotNull($category);
+
+        $event = $this->createPublishedEvent('Jakarta', $category->id);
+        $organizer = $event->organizer;
+        $organizer->update([
+            'logo_url' => 'https://example.com/logo.png',
+            'description' => 'Creator profile description',
+        ]);
+
+        $response = $this->getJson('/api/v1/public/creators/'.$organizer->slug);
+
+        $response->assertOk()
+            ->assertJsonPath('data.slug', $organizer->slug)
+            ->assertJsonPath('data.name', $organizer->name)
+            ->assertJsonPath('data.active_events_count', 1)
+            ->assertJsonPath('data.total_events_count', 1);
+    }
+
+    public function test_public_events_can_be_filtered_by_organizer_slug_and_timeframe(): void
+    {
+        $category = EventCategory::query()->first();
+        $this->assertNotNull($category);
+
+        $activeEvent = $this->createPublishedEvent('Jakarta', $category->id, [
+            'title' => 'Active Event',
+        ]);
+        $organizer = $activeEvent->organizer;
+
+        Event::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'organizer_id' => $organizer->id,
+            'venue_id' => $activeEvent->venue_id,
+            'category_id' => $category->id,
+            'created_by' => $activeEvent->created_by,
+            'title' => 'Past Event',
+            'slug' => 'past-event-'.Str::lower(Str::random(6)),
+            'status' => EventStatus::COMPLETED,
+            'visibility' => 'public',
+            'start_at' => now()->subDays(10),
+            'end_at' => now()->subDays(8),
+            'timezone' => 'Asia/Jakarta',
+            'is_free' => true,
+            'published_at' => now()->subDays(12),
+        ]);
+
+        $activeResponse = $this->getJson('/api/v1/public/events?'.http_build_query([
+            'organizer_slug' => $organizer->slug,
+            'timeframe' => 'active',
+        ]));
+
+        $activeResponse->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Active Event');
+
+        $pastResponse = $this->getJson('/api/v1/public/events?'.http_build_query([
+            'organizer_slug' => $organizer->slug,
+            'timeframe' => 'past',
+        ]));
+
+        $pastResponse->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Past Event');
+    }
 }

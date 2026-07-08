@@ -44,8 +44,9 @@ export function PublicHomeOrganizersSection() {
         ) : (
           <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2 scrollbar-thin">
             {organizers.map((organizer) => (
-              <div
+              <Link
                 key={organizer.uuid}
+                href={routes.publicCreator(organizer.slug)}
                 className="flex w-36 shrink-0 flex-col items-center gap-3 rounded-2xl border bg-card p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
               >
                 {organizer.logo_url ? (
@@ -66,7 +67,7 @@ export function PublicHomeOrganizersSection() {
                     {organizer.published_events_count} event
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

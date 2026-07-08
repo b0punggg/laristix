@@ -22,6 +22,8 @@ class EventController extends Controller
             'city',
             'is_free',
             'upcoming_days',
+            'organizer_slug',
+            'timeframe',
             'sort',
             'per_page',
             'page',

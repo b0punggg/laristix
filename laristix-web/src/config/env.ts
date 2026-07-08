@@ -43,6 +43,7 @@ export const apiPaths = {
     publicCities: "/api/v1/public/cities",
     publicStats: "/api/v1/public/stats",
     publicFeaturedOrganizers: "/api/v1/public/featured-organizers",
+    publicCreator: (slug: string) => `/api/v1/public/creators/${slug}`,
   },
   venues: {
     list: "/api/v1/venues",
@@ -108,8 +109,14 @@ export const routes = {
   home: "/",
   profile: "/profile",
   publicEvent: (uuid: string) => `/events/${uuid}`,
-  publicEventCheckout: (uuid: string, ticketTypeId: number) =>
-    `/events/${uuid}/checkout?ticket=${ticketTypeId}`,
+  publicCreator: (slug: string) => `/creator/${slug}`,
+  publicEventCheckout: (uuid: string, ticketTypeId: number, qty = 1) => {
+    const params = new URLSearchParams({ ticket: String(ticketTypeId) });
+    if (qty > 1) {
+      params.set("qty", String(qty));
+    }
+    return `/events/${uuid}/checkout?${params.toString()}`;
+  },
   checkoutFinish: (orderUuid: string) => `/checkout/${orderUuid}/finish`,
   myTickets: "/my/tickets",
   myTransactions: "/my/transactions",

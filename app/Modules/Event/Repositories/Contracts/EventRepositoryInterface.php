@@ -3,6 +3,7 @@
 namespace App\Modules\Event\Repositories\Contracts;
 
 use App\Modules\Event\Models\Event;
+use App\Modules\Organizer\Models\Organizer;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -50,4 +51,6 @@ interface EventRepositoryInterface
      * @return Collection<int, \App\Modules\Organizer\Models\Organizer>
      */
     public function listFeaturedOrganizers(int $limit = 8): Collection;
+
+    public function findPublicOrganizerBySlug(string $slug): ?Organizer;
 }

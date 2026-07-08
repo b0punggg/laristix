@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Calendar,
+  ChevronDown,
   ChevronRight,
   Clock,
   ExternalLink,
@@ -30,6 +32,7 @@ import { Text } from "@/design-system/primitives/text";
 import { routes } from "@/config/env";
 import { formatCurrency } from "@/lib/currency";
 import { formatEventDateRange, formatSalesPeriod } from "@/lib/datetime";
+import { getTicketAvailabilityLabel } from "@/hooks/use-event-purchase-selection";
 import {
   formatVenueAddress,
   getVenueMapEmbedUrl,
@@ -40,7 +43,6 @@ import {
   type EventScheduleItem,
   type EventSpeakerItem,
 } from "@/lib/event-page-content";
-import Link from "next/link";
 import type { Event } from "@/types/event";
 import type { TicketType } from "@/types/ticket";
 import { cn } from "@/lib/utils";
@@ -247,6 +249,27 @@ export function PublicEventDetailMap({ event }: { event: Event }) {
   );
 }
 
+export function PublicEventDetailDescriptionPlain({ event }: { event: Event }) {
+  if (!event.short_description && !event.description) {
+    return (
+      <p className="text-muted-foreground">Belum ada deskripsi untuk event ini.</p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {event.short_description ? (
+        <p className="text-base font-medium leading-relaxed text-foreground">{event.short_description}</p>
+      ) : null}
+      {event.description ? (
+        <div className="prose prose-sm max-w-none whitespace-pre-wrap text-muted-foreground">
+          {event.description}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function PublicEventDetailDescription({ event }: { event: Event }) {
   if (!event.short_description && !event.description) {
     return null;
@@ -400,6 +423,16 @@ export function PublicEventDetailFaq({ items }: { items: EventFaqItem[] }) {
   );
 }
 
+export function PublicEventDetailTermsPlain({ terms }: { terms: string | null }) {
+  if (!terms) {
+    return <p className="text-muted-foreground">Belum ada syarat dan ketentuan untuk event ini.</p>;
+  }
+
+  return (
+    <div className="prose prose-sm max-w-none whitespace-pre-wrap text-muted-foreground">{terms}</div>
+  );
+}
+
 export function PublicEventDetailTerms({ terms }: { terms: string | null }) {
   if (!terms) {
     return null;
@@ -421,27 +454,11 @@ export function PublicEventDetailTerms({ terms }: { terms: string | null }) {
   );
 }
 
-function ticketAvailabilityLabel(
-  isPurchasable: boolean,
-  isSoldOut: boolean,
-  isSalesOpen: boolean,
-) {
-  if (isSoldOut) {
-    return "Habis";
-  }
-
-  if (!isSalesOpen) {
-    return "Penjualan ditutup";
-  }
-
-  if (isPurchasable) {
-    return "Tersedia";
-  }
-
-  return "Tidak tersedia";
+function ticketAvailabilityLabel(ticket: TicketType) {
+  return getTicketAvailabilityLabel(ticket);
 }
 
-interface PublicEventDetailTicketsProps {
+interface PublicEventDetailLoketTicketsProps {
   eventUuid: string;
   tickets: TicketType[];
   currentUser: { id: number } | null | undefined;
@@ -449,10 +466,139 @@ interface PublicEventDetailTicketsProps {
   isError: boolean;
 }
 
-export function PublicEventDetailTickets({
+export function PublicEventDetailLoketTickets({
   eventUuid,
   tickets,
   currentUser,
+  isLoading,
+  isError,
+}: PublicEventDetailLoketTicketsProps) {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const purchasableTickets = tickets.filter((ticket) => ticket.is_purchasable);
+  const minPrice = purchasableTickets.length
+    ? Math.min(...purchasableTickets.map((ticket) => ticket.price))
+    : null;
+
+  return (
+    <section id="tickets" className="scroll-mt-28 space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="flex size-9 items-center justify-center rounded-xl bg-brand-muted text-brand">
+          <Ticket className="size-4" aria-hidden />
+        </span>
+        <h2 className="text-xl font-bold text-foreground">Tiket</h2>
+      </div>
+
+      {isLoading ? <p className="text-muted-foreground">Memuat tiket...</p> : null}
+      {isError ? <p className="text-sm text-destructive">Gagal memuat daftar tiket.</p> : null}
+
+      {!isLoading && !isError && tickets.length === 0 ? (
+        <div className="rounded-xl border border-dashed bg-muted/20 px-6 py-10 text-center">
+          <p className="font-semibold text-foreground">Belum ada tiket yang dipublikasikan</p>
+        </div>
+      ) : null}
+
+      {!isLoading && !isError && tickets.length > 0 ? (
+        <div className="space-y-3">
+          {tickets.map((ticket) => {
+            const availability = ticketAvailabilityLabel(ticket);
+            const isExpanded = expandedId === ticket.id;
+            const canBuy = ticket.is_purchasable;
+            const checkoutUrl = routes.publicEventCheckout(eventUuid, ticket.id);
+            const ticketHref = currentUser ? checkoutUrl : routes.loginWithRedirect(checkoutUrl);
+
+            return (
+              <Card key={ticket.id} className="overflow-hidden">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-4 p-4 text-left sm:p-5"
+                  onClick={() => setExpandedId(isExpanded ? null : ticket.id)}
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground">{ticket.name}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {ticket.is_free
+                        ? "Gratis"
+                        : `Harga mulai dari ${formatCurrency(ticket.price, ticket.currency)}`}
+                      {purchasableTickets.length > 1 && minPrice !== null && !ticket.is_free
+                        ? ` · ${purchasableTickets.length} kategori tiket`
+                        : null}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {canBuy ? (
+                      <Button
+                        type="button"
+                        className="hidden bg-brand hover:bg-brand-hover sm:inline-flex"
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Link href={ticketHref}>Beli Tiket</Link>
+                      </Button>
+                    ) : (
+                      <Badge variant="secondary">{availability}</Badge>
+                    )}
+                    <ChevronDown
+                      className={cn(
+                        "size-5 text-muted-foreground transition-transform",
+                        isExpanded && "rotate-180",
+                      )}
+                    />
+                  </div>
+                </button>
+
+                {isExpanded ? (
+                  <CardContent className="space-y-4 border-t bg-muted/20 pt-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TicketKindBadge kind={ticket.kind} />
+                      <Badge variant={canBuy ? "success" : "secondary"}>{availability}</Badge>
+                    </div>
+                    {ticket.description ? (
+                      <p className="text-sm leading-relaxed text-muted-foreground">{ticket.description}</p>
+                    ) : null}
+                    <dl className="grid gap-2 text-sm sm:grid-cols-3">
+                      <div>
+                        <dt className="text-muted-foreground">Sisa kuota</dt>
+                        <dd className="font-medium">
+                          {ticket.available_quantity} / {ticket.quantity}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Per pesanan</dt>
+                        <dd className="font-medium">
+                          {ticket.min_per_order}–{ticket.max_per_order}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Periode penjualan</dt>
+                        <dd className="font-medium">
+                          {formatSalesPeriod(ticket.sales_start_at, ticket.sales_end_at)}
+                        </dd>
+                      </div>
+                    </dl>
+                    {canBuy ? (
+                      <Button className="w-full bg-brand hover:bg-brand-hover sm:w-auto" asChild>
+                        <Link href={ticketHref}>Beli Tiket</Link>
+                      </Button>
+                    ) : null}
+                  </CardContent>
+                ) : null}
+              </Card>
+            );
+          })}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+interface PublicEventDetailTicketsProps {
+  tickets: TicketType[];
+  isLoading: boolean;
+  isError: boolean;
+}
+
+export function PublicEventDetailTickets({
+  tickets,
   isLoading,
   isError,
 }: PublicEventDetailTicketsProps) {
@@ -461,8 +607,8 @@ export function PublicEventDetailTickets({
       <SectionHeading
         id="event-tickets-heading"
         icon={Ticket}
-        title="Tiket"
-        description="Pilih tiket yang sesuai untuk Anda"
+        title="Detail Tiket"
+        description="Informasi lengkap setiap kategori tiket"
       />
 
       {isLoading ? <p className="text-muted-foreground">Memuat tiket...</p> : null}
@@ -479,79 +625,50 @@ export function PublicEventDetailTickets({
       ) : null}
 
       {!isLoading && !isError && tickets.length > 0 ? (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-3">
           {tickets.map((ticket) => {
-            const availability = ticketAvailabilityLabel(
-              ticket.is_purchasable,
-              ticket.is_sold_out,
-              ticket.is_sales_open,
-            );
-            const canSelect = ticket.is_purchasable;
-            const checkoutUrl = routes.publicEventCheckout(eventUuid, ticket.id);
-            const ticketActionHref = currentUser
-              ? checkoutUrl
-              : routes.loginWithRedirect(checkoutUrl);
+            const availability = ticketAvailabilityLabel(ticket);
 
             return (
-              <Card
-                key={ticket.id}
-                className={cn(
-                  "overflow-hidden transition-shadow hover:shadow-md",
-                  canSelect && "border-brand/20",
-                )}
-              >
-                <CardContent className="space-y-4 p-5">
+              <Card key={ticket.id} className="overflow-hidden">
+                <CardContent className="space-y-3 p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-lg font-semibold text-foreground">{ticket.name}</p>
+                        <p className="text-base font-semibold text-foreground">{ticket.name}</p>
                         <TicketKindBadge kind={ticket.kind} />
                       </div>
-                      <p className="text-2xl font-bold tracking-tight text-foreground">
+                      <p className="text-xl font-bold text-foreground">
                         {ticket.is_free ? "Gratis" : formatCurrency(ticket.price, ticket.currency)}
                       </p>
                     </div>
-                    <Badge variant={canSelect ? "success" : "secondary"}>{availability}</Badge>
+                    <Badge variant={ticket.is_purchasable ? "success" : "secondary"}>{availability}</Badge>
                   </div>
 
                   {ticket.description ? (
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {ticket.description}
-                    </p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{ticket.description}</p>
                   ) : null}
 
-                  <dl className="grid gap-2 rounded-xl bg-muted/40 p-4 text-sm">
-                    <div className="flex justify-between gap-4">
+                  <dl className="grid gap-2 rounded-xl bg-muted/40 p-4 text-sm sm:grid-cols-3">
+                    <div>
                       <dt className="text-muted-foreground">Sisa kuota</dt>
                       <dd className="font-medium">
                         {ticket.available_quantity} / {ticket.quantity}
                       </dd>
                     </div>
-                    <div className="flex justify-between gap-4">
+                    <div>
                       <dt className="text-muted-foreground">Per pesanan</dt>
                       <dd className="font-medium">
                         {ticket.min_per_order}–{ticket.max_per_order} tiket
                       </dd>
                     </div>
-                    <div className="flex justify-between gap-4">
+                    <div>
                       <dt className="text-muted-foreground">Periode penjualan</dt>
-                      <dd className="text-right font-medium">
+                      <dd className="font-medium">
                         {formatSalesPeriod(ticket.sales_start_at, ticket.sales_end_at)}
                       </dd>
                     </div>
                   </dl>
-
-                  {canSelect ? (
-                    <Button className="w-full bg-brand hover:bg-brand-hover" asChild>
-                      <Link href={ticketActionHref}>
-                        {currentUser ? "Pilih tiket" : "Masuk untuk beli tiket"}
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button className="w-full" disabled>
-                      {availability}
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             );

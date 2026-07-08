@@ -59,4 +59,6 @@ interface EventServiceInterface
      * @return \Illuminate\Support\Collection<int, \App\Modules\Organizer\Models\Organizer>
      */
     public function listFeaturedOrganizers(int $limit = 8);
+
+    public function showPublicCreator(string $slug): Organizer;
 }

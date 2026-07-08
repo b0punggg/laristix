@@ -14,6 +14,7 @@ use App\Modules\Event\Repositories\Contracts\EventCategoryRepositoryInterface;
 use App\Modules\Event\Repositories\Contracts\EventRepositoryInterface;
 use App\Modules\Event\Repositories\Contracts\VenueRepositoryInterface;
 use App\Modules\Organizer\Enums\OrganizerMemberRole;
+use App\Modules\Organizer\Exceptions\OrganizerNotFoundException;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Repositories\Contracts\OrganizerMemberRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -194,6 +195,17 @@ class EventService implements EventServiceInterface
     public function listFeaturedOrganizers(int $limit = 8)
     {
         return $this->events->listFeaturedOrganizers($limit);
+    }
+
+    public function showPublicCreator(string $slug): Organizer
+    {
+        $organizer = $this->events->findPublicOrganizerBySlug($slug);
+
+        if ($organizer === null) {
+            throw OrganizerNotFoundException::make();
+        }
+
+        return $organizer;
     }
 
     private function assertPublishable(Event $event): void

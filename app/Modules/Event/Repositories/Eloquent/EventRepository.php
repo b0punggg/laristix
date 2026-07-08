@@ -140,11 +140,33 @@ class EventRepository implements EventRepositoryInterface
             ->whereHas('organizer', fn ($q) => $q->where('status', 'active'));
 
         $sort = $filters['sort'] ?? 'start_at';
-        match ($sort) {
-            'published_at' => $query->orderByDesc('published_at'),
-            'title' => $query->orderBy('title'),
-            default => $query->orderBy('start_at'),
-        };
+        $timeframe = $filters['timeframe'] ?? 'active';
+
+        if (! empty($filters['organizer_slug'])) {
+            $query->whereHas('organizer', function ($organizerQuery) use ($filters) {
+                $organizerQuery->where('status', 'active')
+                    ->where('slug', $filters['organizer_slug']);
+            });
+        }
+
+        if ($timeframe === 'past') {
+            $query->where('end_at', '<', now());
+            $query->orderByDesc('end_at');
+        } else {
+            if (! empty($filters['upcoming_days'])) {
+                $days = max(1, min((int) $filters['upcoming_days'], 90));
+                $query->where('end_at', '>=', now())
+                    ->where('start_at', '<=', now()->addDays($days));
+            } else {
+                $query->where('end_at', '>=', now());
+            }
+
+            match ($sort) {
+                'published_at' => $query->orderByDesc('published_at'),
+                'title' => $query->orderBy('title'),
+                default => $query->orderBy('start_at'),
+            };
+        }
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -167,14 +189,6 @@ class EventRepository implements EventRepositoryInterface
 
         if (array_key_exists('is_free', $filters) && $filters['is_free'] !== null && $filters['is_free'] !== '') {
             $query->where('is_free', filter_var($filters['is_free'], FILTER_VALIDATE_BOOLEAN));
-        }
-
-        if (! empty($filters['upcoming_days'])) {
-            $days = max(1, min((int) $filters['upcoming_days'], 90));
-            $query->where('end_at', '>=', now())
-                ->where('start_at', '<=', now()->addDays($days));
-        } else {
-            $query->where('end_at', '>=', now());
         }
 
         $ticketTypeConstraint = function ($ticketQuery) {
@@ -262,5 +276,38 @@ class EventRepository implements EventRepositoryInterface
             ->orderBy('name')
             ->limit($limit)
             ->get(['id', 'uuid', 'name', 'slug', 'logo_url']);
+    }
+
+    public function findPublicOrganizerBySlug(string $slug): ?Organizer
+    {
+        $activeEventConstraint = function ($query) {
+            $query->whereIn('status', EventStatus::publicVisible())
+                ->where('visibility', EventVisibility::PUBLIC)
+                ->where('end_at', '>=', now());
+        };
+
+        $pastEventConstraint = function ($query) {
+            $query->whereIn('status', EventStatus::publicVisible())
+                ->where('visibility', EventVisibility::PUBLIC)
+                ->where('end_at', '<', now());
+        };
+
+        return Organizer::query()
+            ->where('slug', $slug)
+            ->where('status', 'active')
+            ->withCount([
+                'events as active_events_count' => $activeEventConstraint,
+                'events as past_events_count' => $pastEventConstraint,
+            ])
+            ->first([
+                'id',
+                'uuid',
+                'name',
+                'slug',
+                'logo_url',
+                'description',
+                'website',
+                'created_at',
+            ]);
     }
 }

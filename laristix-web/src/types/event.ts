@@ -49,6 +49,20 @@ export interface FeaturedOrganizer {
   published_events_count: number;
 }
 
+export interface PublicCreatorProfile {
+  id: number;
+  uuid: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  description: string | null;
+  website: string | null;
+  active_events_count: number;
+  past_events_count: number;
+  total_events_count: number;
+  joined_at: string | null;
+}
+
 export interface PublicPlatformStats {
   published_events_count: number;
   organizer_count: number;
@@ -107,6 +121,8 @@ export interface PublicEventListFilters {
   city?: string;
   is_free?: boolean;
   upcoming_days?: number;
+  organizer_slug?: string;
+  timeframe?: "active" | "past";
   sort?: "start_at" | "published_at" | "title";
   per_page?: number;
   page?: number;

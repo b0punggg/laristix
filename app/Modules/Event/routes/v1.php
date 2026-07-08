@@ -15,6 +15,7 @@ Route::prefix('public')->name('public.')->group(function () {
     Route::get('cities', [PublicDiscoveryController::class, 'cities'])->name('cities.index');
     Route::get('stats', [PublicDiscoveryController::class, 'stats'])->name('stats');
     Route::get('featured-organizers', [PublicDiscoveryController::class, 'featuredOrganizers'])->name('featured-organizers');
+    Route::get('creators/{slug}', [PublicDiscoveryController::class, 'showCreator'])->name('creators.show');
 });
 
 Route::middleware('auth:sanctum')->prefix('admin')->name('admin.')->group(function () {
