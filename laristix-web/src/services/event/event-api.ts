@@ -16,7 +16,7 @@ import type {
   PublicEventListFilters,
   UpdateEventPayload,
 } from "@/types/event";
-import type { EventDashboardSummary, EventDashboardTrends, EventDashboardInsights } from "@/types/organizer";
+import type { EventDashboardSummary, EventDashboardTrends, EventDashboardInsights, EventAttendeesFilters, EventAttendeesResponse, EventOrderDetail } from "@/types/organizer";
 
 export const eventApi = {
   async list(filters: EventListFilters = {}) {
@@ -107,6 +107,21 @@ export const eventApi = {
   async dashboardInsights(uuid: string) {
     const { data } = await apiClient.get<ApiResponse<EventDashboardInsights>>(
       apiPaths.events.dashboardInsights(uuid),
+    );
+    return data.data;
+  },
+
+  async attendees(uuid: string, filters: EventAttendeesFilters = {}) {
+    const { data } = await apiClient.get<EventAttendeesResponse>(
+      apiPaths.events.attendees(uuid),
+      { params: filters },
+    );
+    return data;
+  },
+
+  async eventOrder(eventUuid: string, orderUuid: string) {
+    const { data } = await apiClient.get<ApiResponse<EventOrderDetail>>(
+      apiPaths.events.orderShow(eventUuid, orderUuid),
     );
     return data.data;
   },

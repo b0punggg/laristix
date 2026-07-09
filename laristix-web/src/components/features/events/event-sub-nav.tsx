@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, ClipboardList, LayoutTemplate, Pencil, Settings2, Ticket, Users } from "lucide-react";
+import { BarChart3, ClipboardList, LayoutTemplate, Pencil, Settings2, Ticket, UserRound, Users } from "lucide-react";
 import { routes } from "@/config/env";
 import { canManageEvents } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/auth-store";
@@ -35,6 +35,13 @@ const navItems = [
     label: "Formulir",
     icon: ClipboardList,
     href: (uuid: string) => routes.organizerEventRegistration(uuid),
+    show: () => true,
+  },
+  {
+    key: "attendees",
+    label: "Pemesan",
+    icon: UserRound,
+    href: (uuid: string) => routes.organizerEventAttendees(uuid),
     show: () => true,
   },
   {

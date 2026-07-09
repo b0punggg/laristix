@@ -195,6 +195,121 @@ export interface EventDashboardInsights {
   attention_items: EventAttentionItem[];
 }
 
+export interface EventAttendeeCustomAnswer {
+  field_id: number;
+  label: string;
+  name: string;
+  value: string | boolean | number | null;
+}
+
+export interface EventAttendeeOrder {
+  uuid: string;
+  order_number: string;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_phone: string | null;
+  buyer_id_number: string | null;
+  buyer_date_of_birth: string | null;
+  buyer_gender: string | null;
+  status: string;
+  paid_at: string | null;
+  completed_at: string | null;
+  created_at: string | null;
+}
+
+export interface EventAttendee {
+  uuid: string;
+  seat_index: number;
+  attendee_name: string | null;
+  attendee_email: string | null;
+  attendee_phone: string | null;
+  id_number: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  status: string;
+  ticket_type_name: string | null;
+  ticket_code: string | null;
+  checked_in_at: string | null;
+  order: EventAttendeeOrder | null;
+  custom_answers: EventAttendeeCustomAnswer[];
+  created_at: string | null;
+}
+
+export interface EventAttendeesFilters {
+  search?: string;
+  order_status?: string;
+  per_page?: number;
+  page?: number;
+}
+
+export interface EventAttendeesResponse {
+  data: EventAttendee[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export interface EventOrderTicketDetail {
+  uuid: string;
+  seat_index: number;
+  attendee_name: string | null;
+  attendee_email: string | null;
+  attendee_phone: string | null;
+  id_number: string | null;
+  ticket_type_name: string | null;
+  ticket_code: string | null;
+  ticket_status: string | null;
+  checked_in_at: string | null;
+  registration_status: string;
+  custom_answers: Array<{ label: string; value: unknown }>;
+}
+
+export interface EventOrderDetail {
+  uuid: string;
+  order_number: string;
+  created_at: string | null;
+  paid_at: string | null;
+  completed_at: string | null;
+  status: string;
+  transaction_type: "free" | "paid";
+  transaction_type_label: string;
+  purchase_source: string;
+  invoice_status: string;
+  invoice_status_label: string;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_phone: string | null;
+  buyer_id_number: string | null;
+  buyer_date_of_birth: string | null;
+  buyer_gender: string | null;
+  currency: string;
+  subtotal: number;
+  discount_amount: number;
+  platform_fee_total: number;
+  total_amount: number;
+  organizer_net_amount: number;
+  fee_bearer: string;
+  promo_code: string | null;
+  coupon_code: string | null;
+  items: Array<{
+    ticket_type_name: string;
+    quantity: number;
+    unit_price: number;
+    subtotal: number;
+  }>;
+  tickets: EventOrderTicketDetail[];
+  payment: {
+    gateway: string;
+    payment_method: string | null;
+    status: string;
+    amount: number;
+    paid_at: string | null;
+  } | null;
+}
+
 export interface OrganizerScannerDashboardSummary {
   today: {
     scans: number;

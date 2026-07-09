@@ -9,6 +9,7 @@ use App\Modules\Event\Models\Event;
 use App\Modules\Ticketing\Models\TicketType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Registration extends Model implements TenantAware
@@ -62,5 +63,10 @@ class Registration extends Model implements TenantAware
     public function ticket(): HasOne
     {
         return $this->hasOne(Ticket::class);
+    }
+
+    public function answers(): HasMany
+    {
+        return $this->hasMany(RegistrationAnswer::class);
     }
 }

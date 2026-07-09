@@ -2,6 +2,7 @@
 
 use App\Modules\Event\Http\Controllers\V1\AdminEventController;
 use App\Modules\Event\Http\Controllers\V1\PublicDiscoveryController;
+use App\Modules\Event\Http\Controllers\V1\EventAttendeeController;
 use App\Modules\Event\Http\Controllers\V1\EventCategoryController;
 use App\Modules\Event\Http\Controllers\V1\EventController;
 use App\Modules\Event\Http\Controllers\V1\EventDashboardController;
@@ -51,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('events.dashboard.trends');
         Route::get('events/{uuid}/dashboard/insights', [EventDashboardController::class, 'insights'])
             ->name('events.dashboard.insights');
+
+        Route::get('events/{uuid}/attendees', [EventAttendeeController::class, 'index'])
+            ->name('events.attendees.index');
+        Route::get('events/{uuid}/orders/{orderUuid}', [EventAttendeeController::class, 'showOrder'])
+            ->name('events.orders.show');
 
         Route::get('venues', [VenueController::class, 'index'])->name('venues.index');
         Route::post('venues', [VenueController::class, 'store'])->name('venues.store');

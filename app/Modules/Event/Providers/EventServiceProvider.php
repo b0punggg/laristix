@@ -3,6 +3,7 @@
 namespace App\Modules\Event\Providers;
 
 use App\Modules\Event\Contracts\EventAnalyticsServiceInterface;
+use App\Modules\Event\Contracts\EventAttendeeServiceInterface;
 use App\Modules\Event\Contracts\EventServiceInterface;
 use App\Modules\Event\Contracts\VenueServiceInterface;
 use App\Modules\Event\Repositories\Contracts\EventCategoryRepositoryInterface;
@@ -14,6 +15,7 @@ use App\Modules\Event\Repositories\Eloquent\EventRepository;
 use App\Modules\Event\Repositories\Eloquent\EventTagRepository;
 use App\Modules\Event\Repositories\Eloquent\VenueRepository;
 use App\Modules\Event\Services\EventAnalyticsService;
+use App\Modules\Event\Services\EventAttendeeService;
 use App\Modules\Event\Services\EventService;
 use App\Modules\Event\Services\VenueService;
 use Illuminate\Support\ServiceProvider;
@@ -33,6 +35,7 @@ class EventServiceProvider extends ServiceProvider
         $this->app->singleton(EventTagRepositoryInterface::class, EventTagRepository::class);
         $this->app->singleton(EventServiceInterface::class, EventService::class);
         $this->app->singleton(EventAnalyticsServiceInterface::class, EventAnalyticsService::class);
+        $this->app->singleton(EventAttendeeServiceInterface::class, EventAttendeeService::class);
         $this->app->singleton(VenueServiceInterface::class, VenueService::class);
     }
 
