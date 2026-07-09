@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Pencil, Ticket, Users } from "lucide-react";
+import { BarChart3, ClipboardList, LayoutTemplate, Pencil, Settings2, Ticket, Users } from "lucide-react";
 import { routes } from "@/config/env";
 import { canManageEvents } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/auth-store";
@@ -28,6 +28,27 @@ const navItems = [
     label: "Tiket",
     icon: Ticket,
     href: (uuid: string) => routes.organizerEventTickets(uuid),
+    show: () => true,
+  },
+  {
+    key: "registration",
+    label: "Formulir",
+    icon: ClipboardList,
+    href: (uuid: string) => routes.organizerEventRegistration(uuid),
+    show: () => true,
+  },
+  {
+    key: "checkout-settings",
+    label: "Checkout",
+    icon: Settings2,
+    href: (uuid: string) => routes.organizerEventCheckoutSettings(uuid),
+    show: () => true,
+  },
+  {
+    key: "microsite",
+    label: "Halaman",
+    icon: LayoutTemplate,
+    href: (uuid: string) => routes.organizerEventMicrosite(uuid),
     show: () => true,
   },
   {

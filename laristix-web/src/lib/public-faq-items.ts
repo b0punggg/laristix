@@ -33,7 +33,7 @@ export const publicFaqItems: PublicFaqItem[] = [
     category: "organizer",
     question: "Bagaimana cara menjadi organizer di Laristix?",
     answer:
-      "Klik 'Buat Event Kamu', daftarkan organisasimu, dan mulai buat event pertama. Tim kami akan memverifikasi akun organizer sebelum event dipublikasikan.",
+      "Kunjungi halaman Buat Event di Laristix, daftarkan organisasimu, lalu mulai buat event pertama. Tim kami akan memverifikasi akun organizer sebelum event dipublikasikan.",
   },
   {
     category: "organizer",

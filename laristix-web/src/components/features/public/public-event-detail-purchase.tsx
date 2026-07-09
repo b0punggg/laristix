@@ -50,7 +50,10 @@ interface PublicEventDetailHeroProps {
 export function PublicEventDetailHero({ event }: PublicEventDetailHeroProps) {
   const venueLabel = formatVenueAddress(event.venue) || event.venue?.name || "Lokasi akan diumumkan";
   const dateLabel = formatEventDateRange(event.start_at, event.end_at, event.timezone);
-  const categoryLabel = event.category?.name ?? "Event";
+  const categoryLabel =
+    event.categories && event.categories.length > 0
+      ? event.categories.map((category) => category.name).join(", ")
+      : event.category?.name ?? "Event";
 
   return (
     <section className="relative isolate bg-zinc-900">
@@ -84,6 +87,18 @@ export function PublicEventDetailHero({ event }: PublicEventDetailHeroProps) {
           <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]">
             {event.title}
           </h1>
+          {event.tags && event.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {event.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white/95 backdrop-blur-sm"
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
           <ul className="space-y-3 text-sm text-white/90 sm:text-base">
             <li className="flex items-start gap-3">
               <MapPin className="mt-0.5 size-5 shrink-0 text-brand-light" aria-hidden />

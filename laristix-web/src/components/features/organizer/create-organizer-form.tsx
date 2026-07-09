@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { routes } from "@/config/env";
+import { readRedirectSearchParam } from "@/lib/create-event-funnel";
+import { createEventOnboardingTarget } from "@/lib/public-create-event-data";
 import { useCreateOrganizerMutation } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -38,7 +41,10 @@ const timezones = [
 
 export function CreateOrganizerForm() {
   const user = useAuthStore((s) => s.user);
-  const createOrganizer = useCreateOrganizerMutation();
+  const searchParams = useSearchParams();
+  const nextPath = readRedirectSearchParam(searchParams) ?? createEventOnboardingTarget;
+  const createOrganizer = useCreateOrganizerMutation(nextPath);
+  const isOnboarding = nextPath.includes("onboarding=1");
 
   const {
     register,
@@ -84,16 +90,25 @@ export function CreateOrganizerForm() {
         )}
       >
         <CardContent className="space-y-4 pt-6">
+          {isOnboarding ? (
+            <div className="rounded-xl border border-brand/20 bg-brand/5 p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Langkah 1 dari 2</p>
+              <p className="mt-1">
+                Buat workspace organizer dulu, lalu lanjut ke form event pertama Anda — target
+                selesai dalam sekitar 5 menit.
+              </p>
+            </div>
+          ) : null}
           <div className="space-y-2">
-            <Label htmlFor="name">Organizer name *</Label>
-            <Input id="name" placeholder="My Event Company" {...register("name")} />
+            <Label htmlFor="name">Nama organizer *</Label>
+            <Input id="name" placeholder="Nama brand atau tim event" {...register("name")} />
             {errors.name ? (
               <p className="text-sm text-destructive">{errors.name.message}</p>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Contact email *</Label>
+            <Label htmlFor="email">Email kontak *</Label>
             <Input id="email" type="email" {...register("email")} />
             {errors.email ? (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -110,8 +125,8 @@ export function CreateOrganizerForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
-              <Input id="phone" type="tel" {...register("phone")} />
+              <Label htmlFor="phone">Nomor telepon</Label>
+              <Input id="phone" type="tel" placeholder="08xxxxxxxxxx" {...register("phone")} />
             </div>
           </div>
 
@@ -140,13 +155,17 @@ export function CreateOrganizerForm() {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            You will become the owner of this organizer. It may require platform approval before
-            going fully active.
+            Anda akan menjadi owner organizer ini. Akun dapat memerlukan persetujuan platform
+            sebelum event dipublikasikan.
           </p>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={createOrganizer.isPending}>
-            {createOrganizer.isPending ? "Creating..." : "Create organizer"}
+            {createOrganizer.isPending
+              ? "Membuat..."
+              : isOnboarding
+                ? "Lanjut buat event"
+                : "Buat organizer"}
           </Button>
           <p className="text-sm text-muted-foreground">
             Already have an organizer?{" "}

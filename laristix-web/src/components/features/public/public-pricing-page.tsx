@@ -155,7 +155,7 @@ export function PublicPricingPage() {
                 <Link href="#dukungan">Nego di sini</Link>
               </Button>
               <Button asChild className="bg-brand hover:bg-brand-hover">
-                <Link href={routes.createOrganizer}>
+                <Link href={routes.buatEvent}>
                   Daftarkan Event
                   <ArrowRight className="size-4" />
                 </Link>

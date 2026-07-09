@@ -24,13 +24,19 @@ class StoreEventRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'venue_id' => ['required', 'integer', 'exists:venues,id'],
-            'category_id' => ['required', 'integer', 'exists:event_categories,id'],
+            'category_id' => ['required_without:category_ids', 'integer', 'exists:event_categories,id'],
+            'category_ids' => ['sometimes', 'array', 'min:1'],
+            'category_ids.*' => ['integer', 'exists:event_categories,id'],
+            'tag_ids' => ['sometimes', 'array'],
+            'tag_ids.*' => ['integer', 'exists:event_tags,id'],
             'start_at' => ['required', 'date', 'after:now'],
             'end_at' => ['required', 'date', 'after:start_at'],
             'timezone' => ['required', 'string', 'max:50', 'timezone'],
             'capacity' => ['nullable', 'integer', 'min:1'],
             'is_free' => ['sometimes', 'boolean'],
             'visibility' => ['sometimes', 'string', Rule::in(EventVisibility::values())],
+            'banner_url' => ['nullable', 'string', 'url', 'max:500'],
+            'settings' => ['sometimes', 'array'],
         ];
     }
 

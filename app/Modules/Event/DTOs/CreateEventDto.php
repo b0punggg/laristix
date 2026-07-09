@@ -40,6 +40,23 @@ class CreateEventDto
     /** @var string */
     public $visibility;
 
+    /** @var string|null */
+    public $bannerUrl;
+
+    /** @var array<string, mixed>|null */
+    public $settings;
+
+    /** @var list<int>|null */
+    public $categoryIds;
+
+    /** @var list<int>|null */
+    public $tagIds;
+
+    /**
+     * @param  array<string, mixed>|null  $settings
+     * @param  list<int>|null  $categoryIds
+     * @param  list<int>|null  $tagIds
+     */
     public function __construct(
         string $title,
         string $startAt,
@@ -52,7 +69,11 @@ class CreateEventDto
         ?int $categoryId = null,
         ?int $capacity = null,
         bool $isFree = false,
-        string $visibility = 'public'
+        string $visibility = 'public',
+        ?string $bannerUrl = null,
+        ?array $settings = null,
+        ?array $categoryIds = null,
+        ?array $tagIds = null
     ) {
         $this->title = $title;
         $this->startAt = $startAt;
@@ -66,5 +87,9 @@ class CreateEventDto
         $this->capacity = $capacity;
         $this->isFree = $isFree;
         $this->visibility = $visibility;
+        $this->bannerUrl = $bannerUrl;
+        $this->settings = $settings;
+        $this->categoryIds = $categoryIds;
+        $this->tagIds = $tagIds;
     }
 }

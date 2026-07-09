@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Building2, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,12 +10,15 @@ import { AuthLoadingState } from "@/components/features/auth/auth-ui";
 import { OrganizerInvitationsList } from "@/components/features/organizer/organizer-invitations-list";
 import { organizerMemberRoleLabel } from "@/lib/organizer-member-labels";
 import { routes } from "@/config/env";
+import { buildCreateOrganizerFunnelHref, readRedirectSearchParam } from "@/lib/create-event-funnel";
 import { useOrganizersQuery, useSwitchOrganizerMutation } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 export function OrganizerPicker() {
+  const searchParams = useSearchParams();
+  const redirectTo = readRedirectSearchParam(searchParams);
   const { data: organizers, isLoading, isError } = useOrganizersQuery();
-  const switchOrganizer = useSwitchOrganizerMutation();
+  const switchOrganizer = useSwitchOrganizerMutation(redirectTo);
 
   if (isLoading) {
     return <AuthLoadingState message="Memuat organizer..." />;
@@ -46,7 +50,7 @@ export function OrganizerPicker() {
                 </p>
               </div>
               <Button asChild className="w-full bg-brand hover:bg-brand-hover" size="lg">
-                <Link href={routes.createOrganizer}>
+                <Link href={buildCreateOrganizerFunnelHref(redirectTo ?? undefined)}>
                   <Plus className="size-4" aria-hidden />
                   Buat organizer
                 </Link>
@@ -106,7 +110,7 @@ export function OrganizerPicker() {
             ))}
           </div>
           <Button variant="outline" className="w-full" size="lg" asChild>
-            <Link href={routes.createOrganizer}>
+            <Link href={buildCreateOrganizerFunnelHref(redirectTo ?? undefined)}>
               <Plus className="size-4" aria-hidden />
               Buat organizer lain
             </Link>

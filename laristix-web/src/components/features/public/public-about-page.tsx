@@ -59,7 +59,7 @@ export function PublicAboutPage() {
                 variant="outline"
                 className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
               >
-                <Link href={routes.createOrganizer}>Jadi Organizer</Link>
+                <Link href={routes.buatEvent}>Jadi Organizer</Link>
               </Button>
             </div>
           </div>
@@ -115,7 +115,7 @@ export function PublicAboutPage() {
                 <Link href={routes.home}>Lihat Event</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href={routes.createOrganizer}>Daftarkan Eventmu</Link>
+                <Link href={routes.buatEvent}>Daftarkan Eventmu</Link>
               </Button>
             </div>
           </div>

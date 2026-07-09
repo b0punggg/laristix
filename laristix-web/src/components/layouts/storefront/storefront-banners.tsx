@@ -6,7 +6,7 @@ export function StorefrontBanners() {
   return (
     <section className="mx-auto grid max-w-7xl gap-4 px-4 py-6 md:grid-cols-2">
       <Link
-        href={routes.createOrganizer}
+        href={routes.buatEvent}
         className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1e4fd6] via-[#2563eb] to-[#3b82f6] p-6 text-white shadow-md transition-transform hover:scale-[1.01] sm:p-8"
       >
         <div className="relative z-10 max-w-[85%] space-y-3">

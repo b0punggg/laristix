@@ -12,6 +12,7 @@ use App\Modules\Event\Exceptions\EventNotFoundException;
 use App\Modules\Event\Models\Event;
 use App\Modules\Event\Repositories\Contracts\EventCategoryRepositoryInterface;
 use App\Modules\Event\Repositories\Contracts\EventRepositoryInterface;
+use App\Modules\Event\Repositories\Contracts\EventTagRepositoryInterface;
 use App\Modules\Event\Repositories\Contracts\VenueRepositoryInterface;
 use App\Modules\Organizer\Enums\OrganizerMemberRole;
 use App\Modules\Organizer\Exceptions\OrganizerNotFoundException;
@@ -31,6 +32,9 @@ class EventService implements EventServiceInterface
     /** @var EventCategoryRepositoryInterface */
     private $categories;
 
+    /** @var EventTagRepositoryInterface */
+    private $tags;
+
     /** @var OrganizerMemberRepositoryInterface */
     private $members;
 
@@ -38,11 +42,13 @@ class EventService implements EventServiceInterface
         EventRepositoryInterface $events,
         VenueRepositoryInterface $venues,
         EventCategoryRepositoryInterface $categories,
+        EventTagRepositoryInterface $tags,
         OrganizerMemberRepositoryInterface $members
     ) {
         $this->events = $events;
         $this->venues = $venues;
         $this->categories = $categories;
+        $this->tags = $tags;
         $this->members = $members;
     }
 
@@ -50,14 +56,17 @@ class EventService implements EventServiceInterface
     {
         $this->assertCanManage($organizer, $user);
         $this->assertVenueBelongsToOrganizer($organizer->id, $dto->venueId);
-        $this->assertCategoryAvailable($organizer->id, $dto->categoryId);
+
+        $categoryIds = $dto->categoryIds ?? ($dto->categoryId !== null ? [$dto->categoryId] : []);
+        $primaryCategoryId = $categoryIds[0] ?? $dto->categoryId;
+        $this->assertCategoryAvailable($organizer->id, $primaryCategoryId);
 
         $slug = $this->resolveSlug($organizer->id, $dto->title, $dto->slug);
 
-        return $this->events->create([
+        $event = $this->events->create([
             'organizer_id' => $organizer->id,
             'venue_id' => $dto->venueId,
-            'category_id' => $dto->categoryId,
+            'category_id' => $primaryCategoryId,
             'created_by' => $user->id,
             'title' => $dto->title,
             'slug' => $slug,
@@ -70,7 +79,13 @@ class EventService implements EventServiceInterface
             'timezone' => $dto->timezone,
             'capacity' => $dto->capacity,
             'is_free' => $dto->isFree,
+            'banner_url' => $dto->bannerUrl,
+            'settings' => $dto->settings,
         ]);
+
+        $this->syncTaxonomy($event, $organizer->id, $categoryIds, $dto->tagIds, $primaryCategoryId);
+
+        return $event->fresh(['venue', 'category', 'categories', 'tags']);
     }
 
     public function update(Event $event, User $user, UpdateEventDto $dto): Event
@@ -83,7 +98,25 @@ class EventService implements EventServiceInterface
             throw EventAccessDeniedException::make('Only draft or published events can be edited.');
         }
 
-        return $this->events->update($event, $dto->toArray());
+        $updated = $this->events->update($event, $dto->toArray());
+
+        if ($dto->categoryIds !== null || $dto->tagIds !== null) {
+            $categoryIds = $dto->categoryIds;
+            if ($categoryIds !== null && $categoryIds !== [] && $updated->category_id !== $categoryIds[0]) {
+                $updated->update(['category_id' => $categoryIds[0]]);
+                $updated = $updated->fresh();
+            }
+
+            $this->syncTaxonomy(
+                $updated,
+                $event->organizer_id,
+                $dto->categoryIds,
+                $dto->tagIds,
+                $updated->category_id
+            );
+        }
+
+        return $updated->fresh(['venue', 'category', 'categories', 'tags']);
     }
 
     public function delete(Event $event, User $user): void
@@ -101,7 +134,7 @@ class EventService implements EventServiceInterface
     {
         $this->assertCanView($event->organizer, $user);
 
-        return $event->load(['venue', 'category', 'createdBy', 'schedules', 'media']);
+        return $event->load(['venue', 'category', 'categories', 'tags', 'createdBy', 'schedules', 'media']);
     }
 
     public function publish(Event $event, User $user): Event
@@ -265,6 +298,48 @@ class EventService implements EventServiceInterface
 
         if ($this->categories->findForOrganizer($organizerId, $categoryId) === null) {
             throw EventAccessDeniedException::make('Category is not available for this organizer.');
+        }
+    }
+
+    /**
+     * @param  list<int>|null  $categoryIds
+     * @param  list<int>|null  $tagIds
+     */
+    private function syncTaxonomy(
+        Event $event,
+        int $organizerId,
+        ?array $categoryIds,
+        ?array $tagIds,
+        ?int $fallbackCategoryId = null
+    ): void {
+        if ($categoryIds !== null) {
+            $validCategoryIds = [];
+
+            foreach ($categoryIds as $categoryId) {
+                if ($this->categories->findForOrganizer($organizerId, (int) $categoryId) !== null) {
+                    $validCategoryIds[] = (int) $categoryId;
+                }
+            }
+
+            $event->categories()->sync($validCategoryIds);
+
+            $primaryCategoryId = $validCategoryIds[0] ?? $fallbackCategoryId;
+
+            if ($primaryCategoryId !== null && $event->category_id !== $primaryCategoryId) {
+                $event->update(['category_id' => $primaryCategoryId]);
+            }
+        }
+
+        if ($tagIds !== null) {
+            $validTagIds = [];
+
+            foreach ($tagIds as $tagId) {
+                if ($this->tags->findForOrganizer($organizerId, (int) $tagId) !== null) {
+                    $validTagIds[] = (int) $tagId;
+                }
+            }
+
+            $event->tags()->sync($validTagIds);
         }
     }
 

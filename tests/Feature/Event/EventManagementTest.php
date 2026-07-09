@@ -9,6 +9,8 @@ use App\Modules\Event\Models\Venue;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -87,6 +89,47 @@ class EventManagementTest extends TestCase
         $response->assertJsonPath('data.title', 'Tech Conference 2026');
         $response->assertJsonPath('data.management.can_publish', true);
         $response->assertJsonPath('data.management.can_edit', true);
+    }
+
+    public function test_owner_can_create_event_with_banner_and_settings(): void
+    {
+        [$user, $organizer] = $this->createOrganizerOwner();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/events', $this->eventPayload($organizer, [
+            'banner_url' => 'https://cdn.example.com/banner.jpg',
+            'settings' => [
+                'terms' => 'Tiket tidak dapat dikembalikan.',
+                'contact' => [
+                    'name' => 'PIC Event',
+                    'email' => 'pic@example.com',
+                    'phone' => '08123456789',
+                ],
+            ],
+        ]));
+
+        $response->assertCreated();
+        $response->assertJsonPath('data.banner_url', 'https://cdn.example.com/banner.jpg');
+        $response->assertJsonPath('data.settings.terms', 'Tiket tidak dapat dikembalikan.');
+        $response->assertJsonPath('data.settings.contact.email', 'pic@example.com');
+    }
+
+    public function test_owner_can_upload_event_banner(): void
+    {
+        Storage::fake('public');
+
+        [$user, $organizer] = $this->createOrganizerOwner();
+        Sanctum::actingAs($user);
+
+        $file = UploadedFile::fake()->image('banner.jpg', 724, 340);
+
+        $response = $this->post('/api/v1/events/banner-upload', [
+            'banner' => $file,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonStructure(['data' => ['url']]);
+        $this->assertStringContainsString('storage', $response->json('data.url'));
     }
 
     public function test_owner_can_edit_draft_event(): void

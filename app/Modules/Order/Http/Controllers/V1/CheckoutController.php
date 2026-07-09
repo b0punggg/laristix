@@ -27,10 +27,15 @@ class CheckoutController extends Controller
             buyerName: $request->validated('buyer_name'),
             buyerEmail: $request->validated('buyer_email'),
             buyerPhone: $request->validated('buyer_phone'),
+            buyerIdNumber: $request->validated('buyer_id_number'),
+            buyerDateOfBirth: $request->validated('buyer_date_of_birth'),
+            buyerGender: $request->validated('buyer_gender'),
             userId: $user->id,
             idempotencyKey: $request->header('Idempotency-Key'),
             ipAddress: $request->ip(),
             userAgent: $request->userAgent(),
+            answers: $request->validated('answers') ?? [],
+            attendees: $request->validated('attendees') ?? [],
         ));
 
         return (new CheckoutResource($result))

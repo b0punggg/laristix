@@ -26,12 +26,14 @@ class Registration extends Model implements TenantAware
         'attendee_name',
         'attendee_email',
         'attendee_phone',
+        'metadata',
         'status',
         'confirmed_at',
         'cancelled_at',
     ];
 
     protected $casts = [
+        'metadata' => 'array',
         'seat_index' => 'integer',
         'confirmed_at' => 'datetime',
         'cancelled_at' => 'datetime',

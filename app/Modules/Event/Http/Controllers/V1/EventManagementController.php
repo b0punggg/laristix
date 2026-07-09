@@ -14,9 +14,11 @@ use App\Modules\Event\Http\Requests\ListEventsRequest;
 use App\Modules\Event\Http\Requests\PublishEventRequest;
 use App\Modules\Event\Http\Requests\StoreEventRequest;
 use App\Modules\Event\Http\Requests\UpdateEventRequest;
+use App\Modules\Event\Http\Requests\UploadEventBannerRequest;
 use App\Modules\Event\Http\Resources\EventResource;
 use App\Modules\Event\Repositories\Contracts\EventRepositoryInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class EventManagementController extends Controller
 {
@@ -58,11 +60,15 @@ class EventManagementController extends Controller
             capacity: $request->validated('capacity'),
             isFree: $request->boolean('is_free'),
             visibility: $request->validated('visibility') ?? 'public',
+            bannerUrl: $request->validated('banner_url'),
+            settings: $request->validated('settings'),
+            categoryIds: $request->validated('category_ids'),
+            tagIds: $request->validated('tag_ids'),
         ));
 
         return response()->json([
             'message' => 'Event created as draft.',
-            'data' => new EventResource($event->load(['venue', 'category', 'createdBy'])),
+            'data' => new EventResource($event->load(['venue', 'category', 'categories', 'tags', 'createdBy'])),
         ], 201);
     }
 
@@ -101,11 +107,27 @@ class EventManagementController extends Controller
             isFree: $request->has('is_free') ? $request->boolean('is_free') : null,
             visibility: $request->validated('visibility'),
             settings: $request->validated('settings'),
+            categoryIds: $request->validated('category_ids'),
+            tagIds: $request->validated('tag_ids'),
         ));
 
         return response()->json([
             'message' => 'Event updated successfully.',
-            'data' => new EventResource($updated->load(['venue', 'category', 'createdBy'])),
+            'data' => new EventResource($updated->load(['venue', 'category', 'categories', 'tags', 'createdBy'])),
+        ]);
+    }
+
+    public function uploadBanner(UploadEventBannerRequest $request): JsonResponse
+    {
+        $organizer = $this->requireOrganizer();
+        $path = $request->file('banner')->store("event-banners/{$organizer->id}", 'public');
+        $url = Storage::disk('public')->url($path);
+
+        return response()->json([
+            'message' => 'Banner uploaded successfully.',
+            'data' => [
+                'url' => $url,
+            ],
         ]);
     }
 
@@ -136,7 +158,7 @@ class EventManagementController extends Controller
 
         return response()->json([
             'message' => 'Event published successfully.',
-            'data' => new EventResource($published->load(['venue', 'category', 'createdBy'])),
+            'data' => new EventResource($published->load(['venue', 'category', 'categories', 'tags', 'createdBy'])),
         ]);
     }
 
@@ -152,7 +174,7 @@ class EventManagementController extends Controller
 
         return response()->json([
             'message' => 'Event reverted to draft.',
-            'data' => new EventResource($draft->load(['venue', 'category', 'createdBy'])),
+            'data' => new EventResource($draft->load(['venue', 'category', 'categories', 'tags', 'createdBy'])),
         ]);
     }
 

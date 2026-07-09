@@ -211,7 +211,7 @@ export function useOrganizersQuery(enabled = true) {
   });
 }
 
-export function useSwitchOrganizerMutation() {
+export function useSwitchOrganizerMutation(redirectTo?: string | null) {
   const setUser = useAuthStore((s) => s.setUser);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -224,7 +224,7 @@ export function useSwitchOrganizerMutation() {
       queryClient.setQueryData(authKeys.me, user);
       queryClient.invalidateQueries({ queryKey: authKeys.organizers });
       toast.success("Organizer switched.");
-      redirectAfterAuth(user.primary_role, router);
+      redirectAfterAuth(user.primary_role, router, redirectTo);
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error, "Could not switch organizer."));
@@ -232,7 +232,7 @@ export function useSwitchOrganizerMutation() {
   });
 }
 
-export function useCreateOrganizerMutation() {
+export function useCreateOrganizerMutation(redirectTo?: string | null) {
   const setUser = useAuthStore((s) => s.setUser);
   const clearAuth = useAuthStore((s) => s.clear);
   const queryClient = useQueryClient();
@@ -258,7 +258,7 @@ export function useCreateOrganizerMutation() {
         toast.success(response.message ?? "Organizer created successfully.");
       }
 
-      redirectAfterAuth(user.primary_role, router);
+      redirectAfterAuth(user.primary_role, router, redirectTo);
     },
     onError: (error) => {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -266,7 +266,7 @@ export function useCreateOrganizerMutation() {
         queryClient.setQueryData(authKeys.me, null);
         queryClient.setQueryData(authKeys.session, null);
         toast.error("Sesi Anda telah berakhir. Silakan masuk kembali.");
-        router.replace(routes.loginWithRedirect(routes.createOrganizer));
+        router.replace(routes.loginWithRedirect(redirectTo ?? routes.createOrganizer));
         return;
       }
 

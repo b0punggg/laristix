@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import {
   Calendar,
   ChevronDown,
@@ -134,8 +134,9 @@ export function PublicEventDetailOrganizerCard({ event }: { event: Event }) {
     .toUpperCase();
 
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 p-5">
+    <Link href={routes.publicCreator(event.organizer.slug)} className="block transition-opacity hover:opacity-95">
+      <Card>
+        <CardContent className="flex items-center gap-4 p-5">
         <Avatar className="size-14 border">
           {event.organizer.logo_url ? (
             <AvatarImage src={event.organizer.logo_url} alt={event.organizer.name} />
@@ -148,8 +149,9 @@ export function PublicEventDetailOrganizerCard({ event }: { event: Event }) {
           <p className="text-sm text-muted-foreground">Penyelenggara terverifikasi Laristix</p>
         </div>
         <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 

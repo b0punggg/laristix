@@ -229,7 +229,7 @@ class EventRepository implements EventRepositoryInterface
     public function findPublicByUuid(string $uuid): ?Event
     {
         return Event::withoutOrganizerScope()
-            ->with(['venue', 'category', 'organizer', 'schedules', 'media'])
+            ->with(['venue', 'category', 'categories', 'tags', 'organizer', 'schedules', 'media'])
             ->where('uuid', $uuid)
             ->whereIn('status', EventStatus::publicVisible())
             ->where('visibility', EventVisibility::PUBLIC)

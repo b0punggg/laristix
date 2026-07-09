@@ -76,16 +76,20 @@ export function useCreateVenueMutation() {
   });
 }
 
-export function useCreateEventMutation() {
+export function useCreateEventMutation(options?: { redirectTo?: string | false }) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const redirectTo = options?.redirectTo;
 
   return useMutation({
     mutationFn: (payload: CreateEventPayload) => eventApi.create(payload),
     onSuccess: (response) => {
       toast.success(response.message ?? "Event created.");
       queryClient.invalidateQueries({ queryKey: eventKeys.all });
-      router.push(routes.organizerEventEdit(response.data.uuid));
+
+      if (redirectTo !== false) {
+        router.push(redirectTo ?? routes.organizerEventEdit(response.data.uuid));
+      }
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
   });

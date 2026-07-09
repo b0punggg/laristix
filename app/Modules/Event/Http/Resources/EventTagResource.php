@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Modules\Event\Http\Resources;
+
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class EventTagResource extends JsonResource
+{
+    /**
+     * @param  \Illuminate\Http\Request  $request
+     * @return array<string, mixed>
+     */
+    public function toArray($request): array
+    {
+        return [
+            'id' => $this->id,
+            'organizer_id' => $this->organizer_id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'is_global' => $this->isGlobal(),
+        ];
+    }
+}

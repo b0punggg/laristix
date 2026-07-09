@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, CalendarPlus, TrendingUp, Users } from "lucide-react";
+import { CalendarPlus, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CreateEventCtaButton } from "@/components/features/public/create-event-cta-button";
 import { Container } from "@/design-system/primitives/layout";
 import { Text } from "@/design-system/primitives/text";
 import { routes } from "@/config/env";
-
 const perks = [
   { icon: CalendarPlus, label: "Buat event dalam menit" },
   { icon: TrendingUp, label: "Dashboard analitik real-time" },
@@ -47,12 +47,11 @@ export function PublicHomeOrganizerCtaSection() {
             </div>
 
             <div className="flex flex-col items-start gap-4 lg:items-end">
-              <Button asChild size="lg" className="bg-white text-brand shadow-lg hover:bg-brand-muted">
-                <Link href={routes.createOrganizer}>
-                  Daftar sebagai Organizer
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-              </Button>
+              <CreateEventCtaButton
+                size="lg"
+                className="bg-white text-brand shadow-lg hover:bg-brand-muted"
+                label="Buat Event Sekarang"
+              />
               <p className="text-sm text-white/60">Gratis untuk memulai · Tanpa biaya bulanan</p>
             </div>
           </div>

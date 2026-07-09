@@ -11,7 +11,7 @@ export function StorefrontTopBar() {
     <div className="bg-brand text-brand-foreground">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-xs sm:text-sm">
         <Link
-          href={routes.createOrganizer}
+          href={routes.buatEvent}
           className="storefront-focus-ring rounded-sm font-medium transition-opacity hover:opacity-90"
         >
           + Daftarkan Eventmu Sekarang

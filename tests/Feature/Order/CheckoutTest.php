@@ -40,6 +40,15 @@ class CheckoutTest extends TestCase
             'slug' => 'checkout-org-'.Str::lower(Str::random(6)),
             'email' => 'checkout@example.com',
             'status' => 'active',
+            'settings' => $free ? null : [
+                'compliance' => [
+                    'type' => 'individual',
+                    'legal_name' => 'Checkout Organizer',
+                    'ktp_number' => '3201010101010001',
+                    'status' => 'verified',
+                    'verified_at' => now()->toIso8601String(),
+                ],
+            ],
         ]);
 
         OrganizerMember::query()->create([

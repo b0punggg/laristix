@@ -9,7 +9,22 @@ import type { CreateCheckoutPayload } from "@/types/checkout";
 export const checkoutKeys = {
   all: ["checkout"] as const,
   order: (uuid: string) => ["checkout", "order", uuid] as const,
+  quote: (eventUuid: string, ticketTypeId: number, quantity: number) =>
+    ["checkout", "quote", eventUuid, ticketTypeId, quantity] as const,
 };
+
+export function useCheckoutQuoteQuery(
+  eventUuid: string,
+  ticketTypeId: number,
+  quantity: number,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: checkoutKeys.quote(eventUuid, ticketTypeId, quantity),
+    queryFn: () => checkoutApi.quote(eventUuid, ticketTypeId, quantity),
+    enabled: enabled && ticketTypeId > 0 && quantity > 0,
+  });
+}
 
 export function useCheckoutMutation(eventUuid: string) {
   const queryClient = useQueryClient();

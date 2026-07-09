@@ -6,6 +6,7 @@ import type {
   CreateCheckoutPayload,
   CheckoutOrder,
   PaymentValidationResult,
+  CheckoutQuote,
 } from "@/types/checkout";
 
 export const checkoutApi = {
@@ -18,6 +19,17 @@ export const checkoutApi = {
       {
         headers,
       },
+    );
+    return data.data;
+  },
+
+  async quote(eventUuid: string, ticketTypeId: number, quantity: number) {
+    const params = new URLSearchParams({
+      ticket_type_id: String(ticketTypeId),
+      quantity: String(quantity),
+    });
+    const { data } = await apiClient.get<ApiResponse<CheckoutQuote>>(
+      `${apiPaths.checkout.quote(eventUuid)}?${params.toString()}`,
     );
     return data.data;
   },

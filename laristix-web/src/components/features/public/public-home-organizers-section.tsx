@@ -27,7 +27,7 @@ export function PublicHomeOrganizersSection() {
             </Text>
           </div>
           <Link
-            href={routes.createOrganizer}
+            href={routes.buatEvent}
             className="ds-focus-ring hidden items-center gap-1 text-sm font-medium text-brand hover:underline sm:inline-flex"
           >
             Jadi organizer

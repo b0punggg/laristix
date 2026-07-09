@@ -107,6 +107,29 @@ export interface CreateCheckoutPayload {
   buyer_name: string;
   buyer_email: string;
   buyer_phone?: string;
+  buyer_id_number?: string;
+  buyer_date_of_birth?: string;
+  buyer_gender?: string;
+  answers?: Array<{ field_id: number; value: string | boolean | null }>;
+  attendees?: Array<{
+    name: string;
+    email?: string;
+    phone?: string;
+    id_number?: string;
+    date_of_birth?: string;
+    gender?: string;
+    answers?: Array<{ field_id: number; value: string | boolean | null }>;
+  }>;
+}
+
+export interface CheckoutQuote {
+  subtotal: number;
+  platform_fee_pct_rate: number;
+  platform_fee_flat: number;
+  platform_fee_total: number;
+  fee_bearer: "attendee" | "organizer";
+  total_amount: number;
+  organizer_net_amount: number;
 }
 
 export interface PaymentValidationResult {

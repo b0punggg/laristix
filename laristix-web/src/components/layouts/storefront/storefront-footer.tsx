@@ -18,7 +18,7 @@ const footerColumns = [
     title: "Layanan",
     links: [
       { label: "Jelajahi Event", href: routes.home },
-      { label: "Buat Event", href: routes.createOrganizer },
+      { label: "Buat Event", href: routes.buatEvent },
       { label: "Tiket Saya", href: routes.myTickets },
     ],
   },
@@ -35,7 +35,7 @@ const footerColumns = [
     links: [
       { label: "Daftar Organizer", href: routes.createOrganizer },
       { label: "Dashboard", href: routes.login },
-      { label: "Panduan Event", href: routes.createOrganizer },
+      { label: "Panduan Event", href: routes.buatEvent },
     ],
   },
 ] as const;

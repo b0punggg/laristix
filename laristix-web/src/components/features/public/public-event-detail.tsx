@@ -15,9 +15,16 @@ import {
 import { PublicEventDetailRelated } from "@/components/features/public/public-event-detail-related";
 import { PublicEventDetailShare } from "@/components/features/public/public-event-detail-share";
 import {
-  PublicEventDetailDescriptionPlain,
+  PublicEventDetailDescription,
+  PublicEventDetailFaq,
+  PublicEventDetailGallery,
+  PublicEventDetailInfoCards,
   PublicEventDetailLoketTickets,
-  PublicEventDetailTermsPlain,
+  PublicEventDetailMap,
+  PublicEventDetailOrganizerCard,
+  PublicEventDetailSchedule,
+  PublicEventDetailSpeakers,
+  PublicEventDetailTerms,
 } from "@/components/features/public/public-event-detail-sections";
 import { PublicEventDetailSkeleton } from "@/components/features/public/public-event-detail-skeleton";
 import { routes } from "@/config/env";
@@ -25,7 +32,7 @@ import { useEventPurchaseSelection } from "@/hooks/use-event-purchase-selection"
 import { usePublicEventQuery, usePublicTicketsQuery } from "@/hooks/use-public-events";
 import { useMeQuery } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { parseEventPageContent } from "@/lib/event-page-content";
+import { buildEventGallery, parseEventPageContent } from "@/lib/event-page-content";
 
 const TAB_SECTIONS: Record<PublicEventDetailTab, string> = {
   deskripsi: "deskripsi",
@@ -59,6 +66,11 @@ export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
   const pageContent = useMemo(
     () => (event ? parseEventPageContent(event) : null),
     [event],
+  );
+
+  const galleryItems = useMemo(
+    () => (event && pageContent ? buildEventGallery(event, pageContent) : []),
+    [event, pageContent],
   );
 
   const purchase = useEventPurchaseSelection(tickets, uuid, currentUser);
@@ -138,10 +150,7 @@ export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
   return (
     <div className="relative pb-24 lg:pb-12">
       <PublicEventDetailHero event={event} />
-      <PublicEventDetailTabs
-        activeTab={activeTab}
-        onTabChange={scrollToSection}
-      />
+      <PublicEventDetailTabs activeTab={activeTab} onTabChange={scrollToSection} />
 
       <Container className="py-8 md:py-10">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-8">
@@ -156,8 +165,15 @@ export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
             </div>
 
             <div className="space-y-12">
-              <section id="deskripsi" className="scroll-mt-28">
-                <PublicEventDetailDescriptionPlain event={event} />
+              <section id="deskripsi" className="scroll-mt-28 space-y-12">
+                <PublicEventDetailInfoCards event={event} />
+                <PublicEventDetailOrganizerCard event={event} />
+                <PublicEventDetailDescription event={event} />
+                <PublicEventDetailGallery items={galleryItems} />
+                <PublicEventDetailSchedule items={pageContent.schedule} />
+                <PublicEventDetailSpeakers items={pageContent.speakers} />
+                <PublicEventDetailMap event={event} />
+                <PublicEventDetailFaq items={pageContent.faq} />
               </section>
 
               <PublicEventDetailLoketTickets
@@ -169,7 +185,7 @@ export function PublicEventDetail({ uuid }: PublicEventDetailProps) {
               />
 
               <section id="syarat" className="scroll-mt-28">
-                <PublicEventDetailTermsPlain terms={pageContent.terms} />
+                <PublicEventDetailTerms terms={pageContent.terms} />
               </section>
             </div>
 

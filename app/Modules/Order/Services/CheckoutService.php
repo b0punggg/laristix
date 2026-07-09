@@ -5,6 +5,7 @@ namespace App\Modules\Order\Services;
 use App\Modules\Admin\Contracts\PlatformSettingServiceInterface;
 use App\Modules\Event\Enums\EventStatus;
 use App\Modules\Event\Models\Event;
+use App\Modules\Event\Support\EventCheckoutSettings;
 use App\Modules\Order\Contracts\CheckoutServiceInterface;
 use App\Modules\Order\Contracts\OrderFulfillmentServiceInterface;
 use App\Modules\Order\DTOs\CreateCheckoutDto;
@@ -17,6 +18,7 @@ use App\Modules\Order\Models\OrderItem;
 use App\Modules\Order\Models\Registration;
 use App\Modules\Order\Repositories\Contracts\OrderRepositoryInterface;
 use App\Modules\Organizer\Models\OrganizerFeeConfig;
+use App\Modules\Organizer\Services\OrganizerComplianceService;
 use App\Modules\Payment\Contracts\MidtransSnapServiceInterface;
 use App\Modules\Ticketing\Models\TicketType;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -30,6 +32,8 @@ class CheckoutService implements CheckoutServiceInterface
         private readonly OrderFulfillmentServiceInterface $fulfillment,
         private readonly MidtransSnapServiceInterface $snapService,
         private readonly PlatformSettingServiceInterface $platformSettings,
+        private readonly OrganizerComplianceService $complianceService,
+        private readonly RegistrationFormService $registrationForms,
     ) {}
 
     public function checkout(CreateCheckoutDto $dto): array
@@ -44,6 +48,7 @@ class CheckoutService implements CheckoutServiceInterface
 
         return DB::transaction(function () use ($dto) {
             $event = Event::withoutOrganizerScope()
+                ->with('organizer')
                 ->where('uuid', $dto->eventUuid)
                 ->whereIn('status', EventStatus::publicVisible())
                 ->where('visibility', 'public')
@@ -53,6 +58,8 @@ class CheckoutService implements CheckoutServiceInterface
             if ($event === null) {
                 throw CheckoutException::make('Event is not available for checkout.', 404);
             }
+
+            $checkoutSettings = EventCheckoutSettings::fromEventSettings($event->settings);
 
             $ticketType = TicketType::withoutOrganizerScope()
                 ->whereKey($dto->ticketTypeId)
@@ -68,9 +75,11 @@ class CheckoutService implements CheckoutServiceInterface
                 throw CheckoutException::make('This ticket is not available for purchase.');
             }
 
-            if ($dto->quantity < $ticketType->min_per_order || $dto->quantity > $ticketType->max_per_order) {
+            $maxPerOrder = $checkoutSettings->effectiveMaxPerOrder($ticketType->max_per_order);
+
+            if ($dto->quantity < $ticketType->min_per_order || $dto->quantity > $maxPerOrder) {
                 throw CheckoutException::make(
-                    "Quantity must be between {$ticketType->min_per_order} and {$ticketType->max_per_order}."
+                    "Quantity must be between {$ticketType->min_per_order} and {$maxPerOrder}."
                 );
             }
 
@@ -78,8 +87,26 @@ class CheckoutService implements CheckoutServiceInterface
                 throw CheckoutException::make('Insufficient ticket availability.');
             }
 
+            $this->validateBuyerFields($checkoutSettings, $dto);
+            $this->enforceOneEmailPerTransaction($checkoutSettings, $event->id, $dto->buyerEmail);
+
+            $attendeePayloads = $this->resolveAttendeePayloads($checkoutSettings, $dto);
+
             $subtotal = round((float) $ticketType->price * $dto->quantity, 2);
-            $pricing = $this->calculatePricing($event->organizer_id, $subtotal);
+
+            if ($subtotal > 0 && ! $this->complianceService->isVerified($event->organizer)) {
+                throw CheckoutException::make(
+                    'Penyelenggara belum menyelesaikan verifikasi KTP/NPWP untuk menjual tiket berbayar.'
+                );
+            }
+
+            $pricing = $this->calculatePricing(
+                $event->organizer_id,
+                $subtotal,
+                $checkoutSettings->feeBearer
+            );
+
+            $buyerMetadata = $this->buildBuyerMetadata($dto);
 
             $order = $this->orders->create([
                 'order_number' => $this->generateOrderNumber(),
@@ -103,6 +130,7 @@ class CheckoutService implements CheckoutServiceInterface
                 'expires_at' => now()->addMinutes((int) config('order_module.order_ttl_minutes', 30)),
                 'ip_address' => $dto->ipAddress,
                 'user_agent' => $dto->userAgent,
+                'metadata' => $buyerMetadata !== [] ? ['buyer_profile' => $buyerMetadata] : null,
             ]);
 
             $orderItem = OrderItem::withoutOrganizerScope()->create([
@@ -118,19 +146,30 @@ class CheckoutService implements CheckoutServiceInterface
 
             $ticketType->increment('reserved_count', $dto->quantity);
 
-            for ($seat = 1; $seat <= $dto->quantity; $seat++) {
-                Registration::withoutOrganizerScope()->create([
+            foreach ($attendeePayloads as $index => $attendee) {
+                $seat = $index + 1;
+                $validatedAnswers = $this->registrationForms->validateAnswers(
+                    $event,
+                    $attendee['answers'] ?? []
+                );
+
+                $registration = Registration::withoutOrganizerScope()->create([
                     'organizer_id' => $event->organizer_id,
                     'event_id' => $event->id,
                     'order_id' => $order->id,
                     'order_item_id' => $orderItem->id,
                     'ticket_type_id' => $ticketType->id,
                     'seat_index' => $seat,
-                    'attendee_name' => $dto->buyerName,
-                    'attendee_email' => $dto->buyerEmail,
-                    'attendee_phone' => $dto->buyerPhone,
+                    'attendee_name' => $attendee['name'],
+                    'attendee_email' => $attendee['email'] ?? $dto->buyerEmail,
+                    'attendee_phone' => $attendee['phone'] ?? $dto->buyerPhone,
+                    'metadata' => $this->buildAttendeeMetadata($attendee),
                     'status' => RegistrationStatus::PENDING,
                 ]);
+
+                if ($validatedAnswers !== []) {
+                    $this->registrationForms->saveAnswers($registration, $validatedAnswers);
+                }
             }
 
             if ((float) $order->total_amount <= 0) {
@@ -144,10 +183,42 @@ class CheckoutService implements CheckoutServiceInterface
             $order->fill(['status' => OrderStatus::AWAITING_PAYMENT]);
             $order->save();
 
-            $payment = $this->snapService->initiate($order);
+            $this->snapService->initiate($order);
 
             return $this->buildCheckoutResponse($order->fresh(['items', 'payment', 'registrations.ticket']));
         });
+    }
+
+    /**
+     * @return array{
+     *   subtotal: float,
+     *   platform_fee_pct_rate: float,
+     *   platform_fee_flat: float,
+     *   platform_fee_total: float,
+     *   fee_bearer: string,
+     *   total_amount: float,
+     *   organizer_net_amount: float
+     * }
+     */
+    public function quote(Event $event, TicketType $ticketType, int $quantity): array
+    {
+        $checkoutSettings = EventCheckoutSettings::fromEventSettings($event->settings);
+        $maxPerOrder = $checkoutSettings->effectiveMaxPerOrder($ticketType->max_per_order);
+
+        if ($quantity < $ticketType->min_per_order || $quantity > $maxPerOrder) {
+            throw CheckoutException::make(
+                "Quantity must be between {$ticketType->min_per_order} and {$maxPerOrder}."
+            );
+        }
+
+        $subtotal = round((float) $ticketType->price * $quantity, 2);
+        $pricing = $this->calculatePricing(
+            $event->organizer_id,
+            $subtotal,
+            $checkoutSettings->feeBearer
+        );
+
+        return array_merge(['subtotal' => $subtotal], $pricing);
     }
 
     public function showPublic(string $uuid): Order
@@ -202,6 +273,145 @@ class CheckoutService implements CheckoutServiceInterface
         return $number;
     }
 
+    private function validateBuyerFields(EventCheckoutSettings $settings, CreateCheckoutDto $dto): void
+    {
+        $fields = $settings->buyerFields;
+        $values = [
+            'name' => $dto->buyerName,
+            'email' => $dto->buyerEmail,
+            'phone' => $dto->buyerPhone,
+            'id_number' => $dto->buyerIdNumber,
+            'date_of_birth' => $dto->buyerDateOfBirth,
+            'gender' => $dto->buyerGender,
+        ];
+
+        foreach ($fields as $key => $config) {
+            if (! $config['enabled']) {
+                continue;
+            }
+
+            $value = $values[$key] ?? null;
+
+            if ($config['required'] && ($value === null || trim((string) $value) === '')) {
+                throw CheckoutException::make("Field pemesan {$key} wajib diisi.");
+            }
+        }
+    }
+
+    private function enforceOneEmailPerTransaction(
+        EventCheckoutSettings $settings,
+        int $eventId,
+        string $buyerEmail
+    ): void {
+        if (! $settings->oneEmailPerTransaction) {
+            return;
+        }
+
+        $hasExisting = Order::withoutOrganizerScope()
+            ->where('event_id', $eventId)
+            ->where('buyer_email', $buyerEmail)
+            ->whereIn('status', [
+                OrderStatus::PENDING,
+                OrderStatus::AWAITING_PAYMENT,
+                OrderStatus::PAID,
+                OrderStatus::COMPLETED,
+            ])
+            ->exists();
+
+        if ($hasExisting) {
+            throw CheckoutException::make(
+                'Email ini sudah digunakan untuk transaksi event ini. Satu email hanya boleh satu transaksi.'
+            );
+        }
+    }
+
+    /**
+     * @return list<array{
+     *   name: string,
+     *   email?: string|null,
+     *   phone?: string|null,
+     *   id_number?: string|null,
+     *   date_of_birth?: string|null,
+     *   gender?: string|null,
+     *   answers?: list<array{field_id: int, value: mixed}>
+     * }>
+     */
+    private function resolveAttendeePayloads(EventCheckoutSettings $settings, CreateCheckoutDto $dto): array
+    {
+        if ($settings->oneAttendeePerTicket) {
+            if (count($dto->attendees) !== $dto->quantity) {
+                throw CheckoutException::make(
+                    'Data peserta wajib diisi untuk setiap tiket ketika mode satu tiket satu data pemesan aktif.'
+                );
+            }
+
+            foreach ($dto->attendees as $index => $attendee) {
+                if (trim($attendee['name'] ?? '') === '') {
+                    throw CheckoutException::make('Nama peserta tiket #'.($index + 1).' wajib diisi.');
+                }
+            }
+
+            return $dto->attendees;
+        }
+
+        $payload = [
+            'name' => $dto->buyerName,
+            'email' => $dto->buyerEmail,
+            'phone' => $dto->buyerPhone,
+            'id_number' => $dto->buyerIdNumber,
+            'date_of_birth' => $dto->buyerDateOfBirth,
+            'gender' => $dto->buyerGender,
+            'answers' => $dto->answers,
+        ];
+
+        return array_fill(0, $dto->quantity, $payload);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function buildBuyerMetadata(CreateCheckoutDto $dto): array
+    {
+        $metadata = [];
+
+        if ($dto->buyerIdNumber !== null && $dto->buyerIdNumber !== '') {
+            $metadata['id_number'] = $dto->buyerIdNumber;
+        }
+
+        if ($dto->buyerDateOfBirth !== null && $dto->buyerDateOfBirth !== '') {
+            $metadata['date_of_birth'] = $dto->buyerDateOfBirth;
+        }
+
+        if ($dto->buyerGender !== null && $dto->buyerGender !== '') {
+            $metadata['gender'] = $dto->buyerGender;
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attendee
+     * @return array<string, string>|null
+     */
+    private function buildAttendeeMetadata(array $attendee): ?array
+    {
+        $metadata = [];
+
+        if (! empty($attendee['id_number'])) {
+            $metadata['id_number'] = (string) $attendee['id_number'];
+        }
+
+        if (! empty($attendee['date_of_birth'])) {
+            $metadata['date_of_birth'] = (string) $attendee['date_of_birth'];
+        }
+
+        if (! empty($attendee['gender'])) {
+            $metadata['gender'] = (string) $attendee['gender'];
+        }
+
+        return $metadata !== [] ? $metadata : null;
+    }
+
     /**
      * @return array{
      *   platform_fee_pct_rate: float,
@@ -212,7 +422,7 @@ class CheckoutService implements CheckoutServiceInterface
      *   organizer_net_amount: float
      * }
      */
-    private function calculatePricing(int $organizerId, float $subtotal): array
+    private function calculatePricing(int $organizerId, float $subtotal, ?string $eventFeeBearer = null): array
     {
         $config = OrganizerFeeConfig::query()
             ->where('organizer_id', $organizerId)
@@ -229,7 +439,7 @@ class CheckoutService implements CheckoutServiceInterface
                 $subtotal,
                 (float) $config->percentage_rate,
                 (float) $config->flat_amount,
-                $config->fee_bearer
+                $eventFeeBearer ?? $config->fee_bearer
             );
         }
 
@@ -240,15 +450,17 @@ class CheckoutService implements CheckoutServiceInterface
                 $subtotal,
                 (float) ($default['percentage_rate'] ?? 0),
                 (float) ($default['flat_amount'] ?? 0),
-                (string) ($default['fee_bearer'] ?? 'attendee')
+                $eventFeeBearer ?? (string) ($default['fee_bearer'] ?? 'attendee')
             );
         }
+
+        $feeBearer = $eventFeeBearer ?? 'attendee';
 
         return [
             'platform_fee_pct_rate' => 0,
             'platform_fee_flat' => 0,
             'platform_fee_total' => 0,
-            'fee_bearer' => 'attendee',
+            'fee_bearer' => $feeBearer,
             'total_amount' => $subtotal,
             'organizer_net_amount' => $subtotal,
         ];

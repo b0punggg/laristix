@@ -6,6 +6,7 @@ use App\Modules\Event\Http\Controllers\V1\EventCategoryController;
 use App\Modules\Event\Http\Controllers\V1\EventController;
 use App\Modules\Event\Http\Controllers\V1\EventDashboardController;
 use App\Modules\Event\Http\Controllers\V1\EventManagementController;
+use App\Modules\Event\Http\Controllers\V1\EventTagController;
 use App\Modules\Event\Http\Controllers\V1\VenueController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('events', [EventManagementController::class, 'store'])
             ->middleware('throttle:'.config('event_module.rate_limits.create'))
             ->name('events.store');
+        Route::post('events/banner-upload', [EventManagementController::class, 'uploadBanner'])
+            ->middleware('throttle:'.config('event_module.rate_limits.update'))
+            ->name('events.banner-upload');
         Route::get('events/{uuid}', [EventManagementController::class, 'show'])->name('events.show');
         Route::patch('events/{uuid}', [EventManagementController::class, 'update'])
             ->middleware('throttle:'.config('event_module.rate_limits.update'))
@@ -54,5 +58,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('event-categories', [EventCategoryController::class, 'indexAuthenticated'])
             ->name('event-categories.index');
+
+        Route::get('event-tags', [EventTagController::class, 'index'])->name('event-tags.index');
+        Route::post('event-tags', [EventTagController::class, 'store'])
+            ->middleware('throttle:'.config('event_module.rate_limits.update'))
+            ->name('event-tags.store');
     });
 });

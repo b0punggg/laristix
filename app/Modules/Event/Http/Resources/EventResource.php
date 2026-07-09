@@ -45,6 +45,8 @@ class EventResource extends JsonResource
             'published_at' => $this->published_at?->toIso8601String(),
             'venue' => new VenueResource($this->whenLoaded('venue')),
             'category' => new EventCategoryResource($this->whenLoaded('category')),
+            'categories' => EventCategoryResource::collection($this->whenLoaded('categories')),
+            'tags' => EventTagResource::collection($this->whenLoaded('tags')),
             'created_by' => $this->whenLoaded('createdBy', fn () => [
                 'id' => $this->createdBy->id,
                 'name' => $this->createdBy->name,

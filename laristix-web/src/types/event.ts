@@ -15,6 +15,10 @@ export interface EventVenue {
   type: string;
   address?: string | null;
   city: string | null;
+  province?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  online_url?: string | null;
 }
 
 export interface EventCategory {
@@ -25,6 +29,14 @@ export interface EventCategory {
   icon: string | null;
   is_global: boolean;
   events_count?: number;
+}
+
+export interface EventTag {
+  id: number;
+  organizer_id: number | null;
+  name: string;
+  slug: string;
+  is_global: boolean;
 }
 
 export interface PublicCity {
@@ -90,6 +102,8 @@ export interface Event {
   published_at: string | null;
   venue?: EventVenue | null;
   category?: EventCategory | null;
+  categories?: EventCategory[];
+  tags?: EventTag[];
   organizer?: EventOrganizerSummary | null;
   management?: EventManagementFlags;
   created_at: string;
@@ -137,14 +151,18 @@ export interface CreateEventPayload {
   slug?: string;
   description?: string;
   short_description?: string;
+  banner_url?: string | null;
   venue_id: number;
   category_id: number;
+  category_ids?: number[];
+  tag_ids?: number[];
   start_at: string;
   end_at: string;
   timezone: string;
   capacity?: number | null;
   is_free?: boolean;
   visibility?: EventVisibility;
+  settings?: Record<string, unknown>;
 }
 
 export interface CreateVenuePayload {
@@ -152,6 +170,7 @@ export interface CreateVenuePayload {
   type?: "physical" | "online" | "hybrid";
   address?: string;
   city?: string;
+  online_url?: string;
 }
 
 export interface UpdateEventPayload {
@@ -161,10 +180,13 @@ export interface UpdateEventPayload {
   banner_url?: string | null;
   venue_id?: number | null;
   category_id?: number | null;
+  category_ids?: number[];
+  tag_ids?: number[];
   start_at?: string;
   end_at?: string;
   timezone?: string;
   capacity?: number | null;
   is_free?: boolean;
   visibility?: EventVisibility;
+  settings?: Record<string, unknown>;
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AuthGuard } from "@/components/features/auth/auth-guard";
 import { CreateOrganizerForm } from "@/components/features/organizer/create-organizer-form";
 import { AuthLayout } from "@/components/layouts/auth-layout";
@@ -7,10 +8,12 @@ export default function CreateOrganizerPage() {
     <AuthGuard requireOrganizer={false} preserveReturnUrl>
       <AuthLayout
         variant="organizer"
-        title="Create organizer"
-        description="Set up your event organizer workspace on Laristix"
+        title="Buat organizer"
+        description="Siapkan workspace untuk mengelola dan menjual tiket event Anda"
       >
-        <CreateOrganizerForm />
+        <Suspense fallback={<div className="text-sm text-muted-foreground">Memuat...</div>}>
+          <CreateOrganizerForm />
+        </Suspense>
       </AuthLayout>
     </AuthGuard>
   );

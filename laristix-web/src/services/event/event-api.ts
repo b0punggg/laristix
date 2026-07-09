@@ -44,6 +44,24 @@ export const eventApi = {
     return data;
   },
 
+  async uploadBanner(file: File) {
+    await ensureCsrfCookie();
+    const formData = new FormData();
+    formData.append("banner", file);
+
+    const { data } = await apiClient.post<ApiResponse<{ url: string }>>(
+      apiPaths.events.bannerUpload,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return data.data.url;
+  },
+
   async update(uuid: string, payload: UpdateEventPayload) {
     await ensureCsrfCookie();
     const { data } = await apiClient.patch<ApiResponse<Event>>(

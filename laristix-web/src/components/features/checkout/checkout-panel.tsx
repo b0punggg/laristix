@@ -28,13 +28,21 @@ import { FormSectionCard } from "@/components/features/events/event-management-u
 import { TicketKindBadge } from "@/components/features/tickets/ticket-kind-badge";
 import { routes } from "@/config/env";
 import { usePublicEventQuery, usePublicTicketsQuery } from "@/hooks/use-public-events";
-import { useCheckoutMutation } from "@/hooks/use-checkout";
+import { useCheckoutMutation, useCheckoutQuoteQuery } from "@/hooks/use-checkout";
+import { usePublicRegistrationFormQuery } from "@/hooks/use-phase-c";
 import { useMeQuery } from "@/hooks/use-auth";
 import { formatEventDateShort } from "@/lib/datetime";
 import { formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useMidtransSnap } from "./use-midtrans-snap";
+import { CheckoutRegistrationFields } from "./checkout-registration-fields";
+import { CheckoutAttendeeFields } from "./checkout-attendee-fields";
+import { Select } from "@/components/ui/select";
+import {
+  parseEventCheckoutSettings,
+  type CheckoutAttendeePayload,
+} from "@/lib/event-checkout-settings";
 
 interface CheckoutPanelProps {
   eventUuid: string;
@@ -55,16 +63,22 @@ export function CheckoutPanel({
 
   const eventQuery = usePublicEventQuery(eventUuid);
   const ticketsQuery = usePublicTicketsQuery(eventUuid);
+  const registrationFormQuery = usePublicRegistrationFormQuery(eventUuid);
   const checkoutMutation = useCheckoutMutation(eventUuid);
 
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("");
+  const [buyerIdNumber, setBuyerIdNumber] = useState("");
+  const [buyerDateOfBirth, setBuyerDateOfBirth] = useState("");
+  const [buyerGender, setBuyerGender] = useState("");
+  const [attendees, setAttendees] = useState<CheckoutAttendeePayload[]>([]);
   const [quantity, setQuantity] = useState(initialQuantity);
   const [promoCode, setPromoCode] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [registrationAnswers, setRegistrationAnswers] = useState<Record<number, string | boolean>>({});
   const [snapToken, setSnapToken] = useState<string | null>(null);
   const [clientKey, setClientKey] = useState<string | null>(null);
   const [orderUuid, setOrderUuid] = useState<string | null>(null);
@@ -75,7 +89,32 @@ export function CheckoutPanel({
     [ticketsQuery.data, ticketTypeId],
   );
 
-  const total = ticket ? ticket.price * quantity : 0;
+  const checkoutSettings = useMemo(
+    () => parseEventCheckoutSettings(eventQuery.data?.settings),
+    [eventQuery.data?.settings],
+  );
+
+  const effectiveMaxPerOrder = useMemo(() => {
+    if (!ticket) {
+      return 1;
+    }
+
+    if (checkoutSettings.max_tickets_per_transaction === null) {
+      return ticket.max_per_order;
+    }
+
+    return Math.min(ticket.max_per_order, checkoutSettings.max_tickets_per_transaction);
+  }, [checkoutSettings.max_tickets_per_transaction, ticket]);
+
+  const quoteQuery = useCheckoutQuoteQuery(
+    eventUuid,
+    ticketTypeId,
+    quantity,
+    Boolean(ticket && !ticket.is_free),
+  );
+
+  const total = quoteQuery.data?.total_amount ?? (ticket ? ticket.price * quantity : 0);
+  const platformFee = quoteQuery.data?.platform_fee_total ?? 0;
   const venue = eventQuery.data?.venue;
   const venueLabel = [venue?.name, venue?.city].filter(Boolean).join(", ");
   const eventSchedule = eventQuery.data?.start_at
@@ -126,11 +165,25 @@ export function CheckoutPanel({
     if (ticket) {
       const nextQuantity = Math.min(
         Math.max(initialQuantity, ticket.min_per_order),
-        Math.min(ticket.max_per_order, ticket.available_quantity),
+        Math.min(effectiveMaxPerOrder, ticket.available_quantity),
       );
       setQuantity(nextQuantity);
     }
-  }, [ticket, initialQuantity]);
+  }, [ticket, initialQuantity, effectiveMaxPerOrder]);
+
+  useEffect(() => {
+    if (!checkoutSettings.one_attendee_per_ticket) {
+      return;
+    }
+
+    setAttendees((current) => {
+      const next = [...current];
+      while (next.length < quantity) {
+        next.push({ name: "" });
+      }
+      return next.slice(0, quantity);
+    });
+  }, [checkoutSettings.one_attendee_per_ticket, quantity]);
 
   useEffect(() => {
     if (currentUser) {
@@ -144,9 +197,46 @@ export function CheckoutPanel({
     if (!ticket) return;
     const safeValue = Math.min(
       Math.max(nextValue, ticket.min_per_order),
-      Math.min(ticket.max_per_order, Math.max(ticket.available_quantity, ticket.min_per_order)),
+      Math.min(effectiveMaxPerOrder, Math.max(ticket.available_quantity, ticket.min_per_order)),
     );
     setQuantity(safeValue);
+  }
+
+  function updateAttendee(index: number, patch: Partial<CheckoutAttendeePayload>) {
+    setAttendees((current) =>
+      current.map((attendee, attendeeIndex) =>
+        attendeeIndex === index ? { ...attendee, ...patch } : attendee,
+      ),
+    );
+  }
+
+  function updateAttendeeAnswer(index: number, fieldId: number, value: string | boolean) {
+    setAttendees((current) =>
+      current.map((attendee, attendeeIndex) => {
+        if (attendeeIndex !== index) {
+          return attendee;
+        }
+
+        const answers = { ...(attendee.answers ?? []).reduce<Record<number, string | boolean>>(
+          (acc, item) => {
+            acc[item.field_id] = item.value ?? "";
+            return acc;
+          },
+          {},
+        ) };
+        answers[fieldId] = value;
+
+        return {
+          ...attendee,
+          answers: Object.entries(answers)
+            .filter(([, answerValue]) => answerValue !== "" && answerValue !== false)
+            .map(([fieldIdKey, answerValue]) => ({
+              field_id: Number(fieldIdKey),
+              value: answerValue,
+            })),
+        };
+      }),
+    );
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -162,6 +252,18 @@ export function CheckoutPanel({
         buyer_name: buyerName,
         buyer_email: buyerEmail,
         buyer_phone: buyerPhone || undefined,
+        buyer_id_number: buyerIdNumber || undefined,
+        buyer_date_of_birth: buyerDateOfBirth || undefined,
+        buyer_gender: buyerGender || undefined,
+        answers: checkoutSettings.one_attendee_per_ticket
+          ? undefined
+          : Object.entries(registrationAnswers)
+              .filter(([, value]) => value !== "" && value !== false)
+              .map(([fieldId, value]) => ({
+                field_id: Number(fieldId),
+                value,
+              })),
+        attendees: checkoutSettings.one_attendee_per_ticket ? attendees : undefined,
       },
       {
         onSuccess: (data) => {
@@ -320,7 +422,7 @@ export function CheckoutPanel({
                     Min {ticket.min_per_order}
                   </span>
                   <span className="rounded-full bg-background px-2.5 py-1 ring-1 ring-border/70">
-                    Maks {ticket.max_per_order}
+                    Maks {effectiveMaxPerOrder}
                   </span>
                   <span className="rounded-full bg-background px-2.5 py-1 ring-1 ring-border/70">
                     Tersisa {ticket.available_quantity}
@@ -347,7 +449,7 @@ export function CheckoutPanel({
                     id="quantity"
                     type="number"
                     min={ticket.min_per_order}
-                    max={ticket.max_per_order}
+                    max={effectiveMaxPerOrder}
                     value={quantity}
                     onChange={(e) => changeQuantity(Number(e.target.value) || ticket.min_per_order)}
                     required
@@ -360,7 +462,7 @@ export function CheckoutPanel({
                     className="size-10 rounded-xl"
                     onClick={() => changeQuantity(quantity + 1)}
                     disabled={
-                      quantity >= ticket.max_per_order || quantity >= ticket.available_quantity
+                      quantity >= effectiveMaxPerOrder || quantity >= ticket.available_quantity
                     }
                   >
                     <Plus className="size-4" />
@@ -400,7 +502,11 @@ export function CheckoutPanel({
 
           <FormSectionCard
             title="Buyer Details"
-            description="Data ini digunakan untuk pengiriman invoice dan tiket."
+            description={
+              checkoutSettings.one_attendee_per_ticket
+                ? "Data kontak pemesan untuk invoice dan notifikasi."
+                : "Data ini digunakan untuk pengiriman invoice dan tiket."
+            }
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <FormField id="buyer_name" label="Nama lengkap" required className="sm:col-span-2">
@@ -422,17 +528,101 @@ export function CheckoutPanel({
                   required
                 />
               </FormField>
-              <FormField id="buyer_phone" label="No. telepon">
-                <Input
+              {checkoutSettings.buyer_fields.phone.enabled ? (
+                <FormField
                   id="buyer_phone"
-                  value={buyerPhone}
-                  onChange={(e) => setBuyerPhone(e.target.value)}
-                  className="h-11"
-                  placeholder="Opsional"
-                />
-              </FormField>
+                  label="No. telepon"
+                  required={checkoutSettings.buyer_fields.phone.required}
+                >
+                  <Input
+                    id="buyer_phone"
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    className="h-11"
+                    required={checkoutSettings.buyer_fields.phone.required}
+                    placeholder={checkoutSettings.buyer_fields.phone.required ? undefined : "Opsional"}
+                  />
+                </FormField>
+              ) : null}
+              {checkoutSettings.buyer_fields.id_number.enabled ? (
+                <FormField
+                  id="buyer_id_number"
+                  label="No. KTP"
+                  required={checkoutSettings.buyer_fields.id_number.required}
+                  className="sm:col-span-2"
+                >
+                  <Input
+                    id="buyer_id_number"
+                    value={buyerIdNumber}
+                    onChange={(e) => setBuyerIdNumber(e.target.value)}
+                    className="h-11"
+                    required={checkoutSettings.buyer_fields.id_number.required}
+                  />
+                </FormField>
+              ) : null}
+              {checkoutSettings.buyer_fields.date_of_birth.enabled ? (
+                <FormField
+                  id="buyer_date_of_birth"
+                  label="Tanggal lahir"
+                  required={checkoutSettings.buyer_fields.date_of_birth.required}
+                >
+                  <Input
+                    id="buyer_date_of_birth"
+                    type="date"
+                    value={buyerDateOfBirth}
+                    onChange={(e) => setBuyerDateOfBirth(e.target.value)}
+                    className="h-11"
+                    required={checkoutSettings.buyer_fields.date_of_birth.required}
+                  />
+                </FormField>
+              ) : null}
+              {checkoutSettings.buyer_fields.gender.enabled ? (
+                <FormField
+                  id="buyer_gender"
+                  label="Jenis kelamin"
+                  required={checkoutSettings.buyer_fields.gender.required}
+                >
+                  <Select
+                    id="buyer_gender"
+                    value={buyerGender}
+                    onChange={(e) => setBuyerGender(e.target.value)}
+                    required={checkoutSettings.buyer_fields.gender.required}
+                  >
+                    <option value="">Pilih</option>
+                    <option value="male">Laki-laki</option>
+                    <option value="female">Perempuan</option>
+                    <option value="other">Lainnya</option>
+                  </Select>
+                </FormField>
+              ) : null}
             </div>
+            {!checkoutSettings.one_attendee_per_ticket ? (
+              <div className="mt-5">
+                <CheckoutRegistrationFields
+                  fields={registrationFormQuery.data?.fields ?? []}
+                  values={registrationAnswers}
+                  onChange={(fieldId, value) =>
+                    setRegistrationAnswers((current) => ({ ...current, [fieldId]: value }))
+                  }
+                />
+              </div>
+            ) : null}
           </FormSectionCard>
+
+          {checkoutSettings.one_attendee_per_ticket ? (
+            <FormSectionCard
+              title="Data pemegang tiket"
+              description="Isi data untuk setiap tiket dalam transaksi ini."
+            >
+              <CheckoutAttendeeFields
+                quantity={quantity}
+                attendees={attendees}
+                registrationFields={registrationFormQuery.data?.fields ?? []}
+                onChange={updateAttendee}
+                onAnswerChange={updateAttendeeAnswer}
+              />
+            </FormSectionCard>
+          ) : null}
 
           <FormSectionCard
             title="Promo Code"
@@ -587,7 +777,13 @@ export function CheckoutPanel({
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-muted-foreground">Platform fee</span>
-                <span className="font-medium">Termasuk</span>
+                <span className="font-medium">
+                  {ticket.is_free
+                    ? "—"
+                    : platformFee > 0
+                      ? formatCurrency(platformFee, ticket.currency)
+                      : "Termasuk"}
+                </span>
               </div>
               <div className="flex justify-between gap-3 border-t border-border/80 pt-3 text-base">
                 <span className="font-semibold">Total</span>

@@ -43,8 +43,16 @@ class UpdateEventDto
     /** @var array<string, mixed>|null */
     public $settings;
 
+    /** @var list<int>|null */
+    public $categoryIds;
+
+    /** @var list<int>|null */
+    public $tagIds;
+
     /**
      * @param  array<string, mixed>|null  $settings
+     * @param  list<int>|null  $categoryIds
+     * @param  list<int>|null  $tagIds
      */
     public function __construct(
         ?string $title = null,
@@ -59,7 +67,9 @@ class UpdateEventDto
         ?int $capacity = null,
         ?bool $isFree = null,
         ?string $visibility = null,
-        ?array $settings = null
+        ?array $settings = null,
+        ?array $categoryIds = null,
+        ?array $tagIds = null
     ) {
         $this->title = $title;
         $this->description = $description;
@@ -74,6 +84,8 @@ class UpdateEventDto
         $this->isFree = $isFree;
         $this->visibility = $visibility;
         $this->settings = $settings;
+        $this->categoryIds = $categoryIds;
+        $this->tagIds = $tagIds;
     }
 
     /**

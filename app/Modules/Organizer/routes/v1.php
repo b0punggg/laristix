@@ -2,6 +2,7 @@
 
 use App\Modules\Organizer\Http\Controllers\V1\AdminOrganizerController;
 use App\Modules\Organizer\Http\Controllers\V1\AdminOrganizerFeeConfigController;
+use App\Modules\Organizer\Http\Controllers\V1\OrganizerComplianceController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerDashboardController;
 use App\Modules\Organizer\Http\Controllers\V1\OrganizerMemberController;
@@ -35,6 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('organizers.suspend');
         Route::patch('organizers/{uuid}/activate', [AdminOrganizerController::class, 'activate'])
             ->name('organizers.activate');
+        Route::post('organizers/{uuid}/compliance/verify', [OrganizerComplianceController::class, 'verify'])
+            ->name('organizers.compliance.verify');
+        Route::post('organizers/{uuid}/compliance/reject', [OrganizerComplianceController::class, 'reject'])
+            ->name('organizers.compliance.reject');
     });
 
     Route::middleware(['resolve.organizer', 'organizer.context'])->group(function () {
@@ -46,6 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('organizers.current.dashboard.insights');
         Route::get('organizers/current/dashboard/scanner-summary', [OrganizerDashboardController::class, 'scannerSummary'])
             ->name('organizers.current.dashboard.scanner-summary');
+        Route::get('organizers/current/fee-preview', [OrganizerDashboardController::class, 'feePreview'])
+            ->name('organizers.current.fee-preview');
 
         Route::get('organizers/current', [OrganizerController::class, 'showCurrent'])
             ->name('organizers.current.show');
@@ -62,5 +69,11 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('organizers.members.update');
         Route::delete('organizers/current/members/{memberId}', [OrganizerMemberController::class, 'destroy'])
             ->name('organizers.members.destroy');
+
+        Route::get('organizers/current/compliance', [OrganizerComplianceController::class, 'showCurrent'])
+            ->name('organizers.current.compliance.show');
+        Route::post('organizers/current/compliance', [OrganizerComplianceController::class, 'submitCurrent'])
+            ->middleware('throttle:'.config('organizer_module.rate_limits.update'))
+            ->name('organizers.current.compliance.submit');
     });
 });

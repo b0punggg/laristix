@@ -19,7 +19,7 @@ export function OrganizerEmptyOnboarding() {
         <EmptyState
           icon={CalendarPlus}
           title="Belum ada event"
-          description="Mulai dengan membuat event pertama untuk menjual tiket dan mengelola peserta."
+          description="Mulai dengan membuat event pertama untuk menjual tiket dan mengelola peserta — selesai dalam sekitar 5 menit."
         >
           {canCreate ? (
             <Button asChild>
