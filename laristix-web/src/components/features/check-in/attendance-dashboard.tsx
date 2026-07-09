@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EventSubNav } from "@/components/features/events/event-sub-nav";
+import { EventStatusBadge } from "@/components/features/events/event-status-badge";
 import { routes } from "@/config/env";
+import { useEventQuery } from "@/hooks/use-events";
 import { useAttendanceStatsQuery, useCheckInListQuery } from "@/hooks/use-check-in";
 
 interface AttendanceDashboardProps {
@@ -12,22 +15,39 @@ interface AttendanceDashboardProps {
 }
 
 export function AttendanceDashboard({ eventUuid, eventTitle }: AttendanceDashboardProps) {
+  const eventQuery = useEventQuery(eventUuid);
   const statsQuery = useAttendanceStatsQuery(eventUuid);
   const listQuery = useCheckInListQuery(eventUuid);
   const stats = statsQuery.data;
   const checkIns = listQuery.data?.data ?? [];
+  const event = eventQuery.data;
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="ghost" size="sm" asChild className="-ml-2">
+          <Link href={routes.organizerEvents}>
+            Kembali ke event
+          </Link>
+        </Button>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">Dashboard Kehadiran</h2>
-          {eventTitle ? <p className="text-sm text-muted-foreground">{eventTitle}</p> : null}
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Kehadiran</h1>
+            {event ? <EventStatusBadge status={event.status} /> : null}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {eventTitle ?? event?.title ?? "Statistik check-in event"}
+          </p>
         </div>
         <Button asChild variant="outline">
           <Link href={routes.scanner}>Buka scanner</Link>
         </Button>
       </div>
+
+      <EventSubNav eventUuid={eventUuid} eventStatus={event?.status} />
 
       {statsQuery.isLoading ? <p className="text-muted-foreground">Memuat statistik...</p> : null}
 

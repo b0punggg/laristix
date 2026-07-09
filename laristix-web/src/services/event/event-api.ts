@@ -16,6 +16,7 @@ import type {
   PublicEventListFilters,
   UpdateEventPayload,
 } from "@/types/event";
+import type { EventDashboardSummary, EventDashboardTrends, EventDashboardInsights } from "@/types/organizer";
 
 export const eventApi = {
   async list(filters: EventListFilters = {}) {
@@ -68,6 +69,28 @@ export const eventApi = {
     await ensureCsrfCookie();
     const { data } = await apiClient.post<ApiResponse<Event>>(apiPaths.events.draft(uuid));
     return data;
+  },
+
+  async dashboardSummary(uuid: string) {
+    const { data } = await apiClient.get<ApiResponse<EventDashboardSummary>>(
+      apiPaths.events.dashboardSummary(uuid),
+    );
+    return data.data;
+  },
+
+  async dashboardTrends(uuid: string, days = 30) {
+    const { data } = await apiClient.get<ApiResponse<EventDashboardTrends>>(
+      apiPaths.events.dashboardTrends(uuid),
+      { params: { days } },
+    );
+    return data.data;
+  },
+
+  async dashboardInsights(uuid: string) {
+    const { data } = await apiClient.get<ApiResponse<EventDashboardInsights>>(
+      apiPaths.events.dashboardInsights(uuid),
+    );
+    return data.data;
   },
 
   async venues() {

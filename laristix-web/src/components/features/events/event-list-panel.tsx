@@ -177,7 +177,7 @@ export function EventListPanel() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
                         <Link
-                          href={routes.organizerEventEdit(event.uuid)}
+                          href={routes.organizerEventDashboard(event.uuid)}
                           className="ds-focus-ring block truncate text-lg font-semibold text-foreground hover:text-brand"
                         >
                           {event.title}

@@ -12,6 +12,7 @@ import { formatCurrency } from "@/lib/currency";
 import { canManageEvents } from "@/lib/permissions";
 import { useAuthStore } from "@/stores/auth-store";
 import type { TicketKind, TicketListFilters } from "@/types/ticket";
+import { EventSubNav } from "@/components/features/events/event-sub-nav";
 import { EventStatusBadge } from "@/components/features/events/event-status-badge";
 import { FormSectionCard, FormTabButton } from "@/components/features/events/event-management-ui";
 import { TicketActions } from "./ticket-actions";
@@ -79,14 +80,17 @@ export function TicketListPanel({ eventUuid }: TicketListPanelProps) {
         </Button>
         {event ? (
           <Button variant="ghost" size="sm" asChild>
-            <Link href={routes.organizerEventEdit(eventUuid)}>Edit event</Link>
+            <Link href={routes.organizerEventDashboard(eventUuid)}>Dashboard</Link>
           </Button>
         ) : null}
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Tiket</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Tiket</h1>
+            {event ? <EventStatusBadge status={event.status} /> : null}
+          </div>
           <p className="text-sm text-muted-foreground">
             {event ? (
               <>
@@ -99,7 +103,6 @@ export function TicketListPanel({ eventUuid }: TicketListPanelProps) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {event ? <EventStatusBadge status={event.status} /> : null}
           {canManageEvents(user) ? (
             <Button asChild className="bg-brand hover:bg-brand-hover">
               <Link href={routes.organizerEventTicketNew(eventUuid)}>
@@ -110,6 +113,8 @@ export function TicketListPanel({ eventUuid }: TicketListPanelProps) {
           ) : null}
         </div>
       </div>
+
+      <EventSubNav eventUuid={eventUuid} eventStatus={event?.status} />
 
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-thin">
         {kindTabs.map((tab) => (

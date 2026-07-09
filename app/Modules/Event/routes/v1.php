@@ -4,6 +4,7 @@ use App\Modules\Event\Http\Controllers\V1\AdminEventController;
 use App\Modules\Event\Http\Controllers\V1\PublicDiscoveryController;
 use App\Modules\Event\Http\Controllers\V1\EventCategoryController;
 use App\Modules\Event\Http\Controllers\V1\EventController;
+use App\Modules\Event\Http\Controllers\V1\EventDashboardController;
 use App\Modules\Event\Http\Controllers\V1\EventManagementController;
 use App\Modules\Event\Http\Controllers\V1\VenueController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('events/{uuid}/draft', [EventManagementController::class, 'draft'])
             ->middleware('throttle:'.config('event_module.rate_limits.update'))
             ->name('events.draft');
+
+        Route::get('events/{uuid}/dashboard/summary', [EventDashboardController::class, 'summary'])
+            ->name('events.dashboard.summary');
+        Route::get('events/{uuid}/dashboard/trends', [EventDashboardController::class, 'trends'])
+            ->name('events.dashboard.trends');
+        Route::get('events/{uuid}/dashboard/insights', [EventDashboardController::class, 'insights'])
+            ->name('events.dashboard.insights');
 
         Route::get('venues', [VenueController::class, 'index'])->name('venues.index');
         Route::post('venues', [VenueController::class, 'store'])->name('venues.store');

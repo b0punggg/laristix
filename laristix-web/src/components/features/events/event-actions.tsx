@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Archive, Pencil, Rocket, RotateCcw, Ticket, Trash2, Users } from "lucide-react";
+import { Archive, BarChart3, Pencil, Rocket, RotateCcw, Ticket, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/config/env";
 import {
@@ -42,6 +42,13 @@ export function EventActions({
       <div className={layout === "stack" ? "flex flex-col gap-2.5" : "flex flex-wrap gap-2"}>
         {!hideNavLinks ? (
           <>
+            <Button variant="outline" size="sm" asChild className={buttonClass}>
+              <Link href={routes.organizerEventDashboard(event.uuid)}>
+                <BarChart3 className="size-4" />
+                Dashboard
+              </Link>
+            </Button>
+
             <Button variant="outline" size="sm" asChild className={buttonClass}>
               <Link href={routes.organizerEventTickets(event.uuid)}>
                 <Ticket className="size-4" />

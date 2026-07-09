@@ -36,6 +36,9 @@ export const apiPaths = {
     delete: (uuid: string) => `/api/v1/events/${uuid}`,
     publish: (uuid: string) => `/api/v1/events/${uuid}/publish`,
     draft: (uuid: string) => `/api/v1/events/${uuid}/draft`,
+    dashboardSummary: (uuid: string) => `/api/v1/events/${uuid}/dashboard/summary`,
+    dashboardTrends: (uuid: string) => `/api/v1/events/${uuid}/dashboard/trends`,
+    dashboardInsights: (uuid: string) => `/api/v1/events/${uuid}/dashboard/insights`,
     adminList: "/api/v1/admin/events",
     publicList: "/api/v1/public/events",
     publicShow: (uuid: string) => `/api/v1/public/events/${uuid}`,
@@ -142,6 +145,7 @@ export const routes = {
   organizerEvents: "/events",
   organizerEventNew: "/events/new",
   organizerEventEdit: (uuid: string) => `/events/${uuid}/edit`,
+  organizerEventDashboard: (uuid: string) => `/events/${uuid}/dashboard`,
   organizerEventTickets: (uuid: string) => `/events/${uuid}/tickets`,
   organizerEventTicketNew: (uuid: string) => `/events/${uuid}/tickets/new`,
   organizerEventTicketEdit: (eventUuid: string, ticketId: number) =>

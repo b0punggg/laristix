@@ -229,8 +229,6 @@ interface OrganizerUpcomingEventsProps {
 }
 
 export function OrganizerUpcomingEvents({ insights, isLoading }: OrganizerUpcomingEventsProps) {
-  const user = useAuthStore((s) => s.user);
-
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
@@ -258,13 +256,9 @@ export function OrganizerUpcomingEvents({ insights, isLoading }: OrganizerUpcomi
                 trailing={
                   <Button asChild variant="ghost" size="sm" className="shrink-0">
                     <Link
-                      href={
-                        canManageEvents(user)
-                          ? routes.organizerEventEdit(event.uuid)
-                          : routes.organizerEventAttendance(event.uuid)
-                      }
+                      href={routes.organizerEventDashboard(event.uuid)}
                     >
-                      Detail
+                      Dashboard
                     </Link>
                   </Button>
                 }
@@ -306,9 +300,14 @@ export function OrganizerRecentOrders({ insights, isLoading }: OrganizerRecentOr
                 key={item.event.uuid}
                 event={item.event}
                 trailing={
-                  <div className="shrink-0 text-right">
-                    <p className="font-semibold text-foreground">{formatIdr(item.revenue_net)}</p>
-                    <p className="text-xs text-muted-foreground">{item.orders_count} order</p>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <div className="text-right">
+                      <p className="font-semibold text-foreground">{formatIdr(item.revenue_net)}</p>
+                      <p className="text-xs text-muted-foreground">{item.orders_count} order</p>
+                    </div>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={routes.organizerEventDashboard(item.event.uuid)}>Dashboard</Link>
+                    </Button>
                   </div>
                 }
               />
@@ -556,7 +555,7 @@ export function OrganizerNotificationsPanel({
                   <Link
                     href={
                       canManageEvents(user)
-                        ? routes.organizerEventEdit(item.event.uuid)
+                        ? routes.organizerEventDashboard(item.event.uuid)
                         : routes.organizerEventAttendance(item.event.uuid)
                     }
                   >

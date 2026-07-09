@@ -121,6 +121,80 @@ export interface OrganizerDashboardInsights {
   top_events_by_revenue: OrganizerTopEventByRevenue[];
 }
 
+export interface EventDashboardEventSummary {
+  uuid: string;
+  title: string;
+  status: string;
+  start_at: string;
+  end_at: string;
+  timezone: string;
+  is_free: boolean;
+}
+
+export interface EventDashboardSummary {
+  event: EventDashboardEventSummary;
+  totals: {
+    orders_completed: number;
+    tickets_sold: number;
+    tickets_remaining: number;
+    registrations: number;
+    check_ins: number;
+    revenue_gross: number;
+    revenue_net: number;
+    platform_fees: number;
+  };
+  today: {
+    orders: number;
+    registrations: number;
+    revenue_gross: number;
+    revenue_net: number;
+    check_ins: number;
+  };
+}
+
+export interface EventDashboardTrends {
+  days: number;
+  series: OrganizerTrendPoint[];
+}
+
+export type EventAttentionType = "tickets_low_stock" | "no_check_in_gates";
+
+export interface EventAttentionItem {
+  type: EventAttentionType;
+  message: string;
+  ticket_type_id?: number;
+  ticket_type_name?: string;
+}
+
+export interface EventTicketBreakdown {
+  ticket_type_id: number;
+  name: string;
+  sold: number;
+  quantity: number;
+  remaining: number;
+  revenue_gross: number;
+}
+
+export interface EventRecentOrder {
+  uuid: string;
+  order_number: string;
+  buyer_name: string;
+  buyer_email: string;
+  status: string;
+  total_amount: number;
+  organizer_net_amount: number;
+  paid_at: string | null;
+}
+
+export interface EventDashboardInsights {
+  ticket_breakdown: EventTicketBreakdown[];
+  recent_orders: EventRecentOrder[];
+  check_in_today: {
+    count: number;
+  };
+  attention_items: EventAttentionItem[];
+}
+
 export interface OrganizerScannerDashboardSummary {
   today: {
     scans: number;

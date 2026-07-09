@@ -5,6 +5,10 @@ const pageTitles: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (p) => p.startsWith(routes.organizerAnalytics), title: "Analitik" },
   { match: (p) => p.startsWith(routes.organizerTeam), title: "Tim" },
   { match: (p) => p.startsWith(routes.organizerEvents), title: "Event" },
+  {
+    match: (p) => /\/events\/[^/]+\/dashboard$/.test(p),
+    title: "Dashboard Event",
+  },
   { match: (p) => p.startsWith(routes.scanner), title: "Scanner" },
   { match: (p) => p === routes.selectOrganizer, title: "Pilih Organizer" },
 ];
