@@ -7,15 +7,10 @@ import { PublicEventList } from "@/components/features/public/public-event-list"
 import { StorefrontHero } from "@/components/layouts/storefront/storefront-hero";
 import { PublicHomeContinueSection } from "@/components/features/public/public-home-continue-section";
 import { PublicHomeDiscovery } from "@/components/features/public/public-home-discovery";
-import { PublicHomeFaqSection } from "@/components/features/public/public-home-faq";
-import { PublicHomeHowItWorksSection } from "@/components/features/public/public-home-how-it-works";
 import { PublicHomeLocalEventsSection } from "@/components/features/public/public-home-local-events-section";
 import { PublicHomeOrganizerCtaSection } from "@/components/features/public/public-home-organizer-cta";
 import { PublicHomeOrganizersSection } from "@/components/features/public/public-home-organizers-section";
 import { PublicHomeSections } from "@/components/features/public/public-home-sections";
-import { PublicHomeStatsSection } from "@/components/features/public/public-home-stats-section";
-import { PublicHomeTestimonialsSection } from "@/components/features/public/public-home-testimonials";
-import { PublicHomeWhySection } from "@/components/features/public/public-home-why-section";
 import {
   hasActiveDiscoveryFilters,
   parsePublicDiscoveryFilters,
@@ -50,12 +45,7 @@ export function PublicHomeContent() {
             <PublicHomeLocalEventsSection hidden={Boolean(filters.city)} />
           </Container>
 
-          <PublicHomeStatsSection />
           <PublicHomeOrganizersSection />
-          <PublicHomeWhySection />
-          <PublicHomeHowItWorksSection />
-          <PublicHomeTestimonialsSection />
-          <PublicHomeFaqSection />
 
           <Container className="py-12 md:py-16">
             <PublicEventList title="Jelajahi Semua Event" variant="section" />

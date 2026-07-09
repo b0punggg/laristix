@@ -2,7 +2,7 @@ import Link from "next/link";
 import { routes } from "@/config/env";
 
 const topLinks = [
-  { label: "Tentang Kami", href: "#tentang" },
+  { label: "Tentang Kami", href: routes.about },
   { label: "Customer Service", href: "#dukungan" },
 ] as const;
 

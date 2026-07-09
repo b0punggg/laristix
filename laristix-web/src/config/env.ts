@@ -107,6 +107,11 @@ export const apiPaths = {
 
 export const routes = {
   home: "/",
+  about: "/tentang-kami",
+  terms: "/syarat-ketentuan",
+  privacy: "/kebijakan-privasi",
+  faq: "/faq",
+  pricing: "/biaya",
   profile: "/profile",
   publicEvent: (uuid: string) => `/events/${uuid}`,
   publicCreator: (slug: string) => `/creator/${slug}`,

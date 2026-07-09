@@ -8,9 +8,10 @@ const footerColumns = [
   {
     title: "Laristix",
     links: [
-      { label: "Tentang Kami", href: "#tentang" },
-      { label: "Syarat & Ketentuan", href: "#" },
-      { label: "Kebijakan Privasi", href: "#" },
+      { label: "Tentang Kami", href: routes.about },
+      { label: "Biaya", href: routes.pricing },
+      { label: "Syarat & Ketentuan", href: routes.terms },
+      { label: "Kebijakan Privasi", href: routes.privacy },
     ],
   },
   {
@@ -25,7 +26,7 @@ const footerColumns = [
     title: "Dukungan",
     links: [
       { label: "Customer Service", href: "#dukungan" },
-      { label: "FAQ", href: "#" },
+      { label: "FAQ", href: routes.faq },
       { label: "Partnership", href: routes.createOrganizer },
     ],
   },
