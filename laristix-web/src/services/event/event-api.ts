@@ -16,7 +16,19 @@ import type {
   PublicEventListFilters,
   UpdateEventPayload,
 } from "@/types/event";
-import type { EventDashboardSummary, EventDashboardTrends, EventDashboardInsights, EventAttendeesFilters, EventAttendeesResponse, EventOrderDetail } from "@/types/organizer";
+import type {
+  CreateEventPromoCodePayload,
+  CreateEventWithdrawalPayload,
+  EventAttendeesFilters,
+  EventAttendeesResponse,
+  EventDashboardInsights,
+  EventDashboardSummary,
+  EventDashboardTrends,
+  EventOrderDetail,
+  EventPromoCode,
+  EventWithdrawal,
+  EventWithdrawalListResponse,
+} from "@/types/organizer";
 
 export const eventApi = {
   async list(filters: EventListFilters = {}) {
@@ -122,6 +134,36 @@ export const eventApi = {
   async eventOrder(eventUuid: string, orderUuid: string) {
     const { data } = await apiClient.get<ApiResponse<EventOrderDetail>>(
       apiPaths.events.orderShow(eventUuid, orderUuid),
+    );
+    return data.data;
+  },
+
+  async promoCodes(uuid: string) {
+    const { data } = await apiClient.get<ApiResponse<EventPromoCode[]>>(apiPaths.events.promoCodes(uuid));
+    return data.data;
+  },
+
+  async createPromoCode(uuid: string, payload: CreateEventPromoCodePayload) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<ApiResponse<EventPromoCode>>(
+      apiPaths.events.promoCodes(uuid),
+      payload,
+    );
+    return data.data;
+  },
+
+  async withdrawals(uuid: string) {
+    const { data } = await apiClient.get<ApiResponse<EventWithdrawalListResponse>>(
+      apiPaths.events.withdrawals(uuid),
+    );
+    return data.data;
+  },
+
+  async createWithdrawal(uuid: string, payload: CreateEventWithdrawalPayload) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<ApiResponse<EventWithdrawal>>(
+      apiPaths.events.withdrawals(uuid),
+      payload,
     );
     return data.data;
   },

@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Modules\Order\Models;
+
+use App\Core\Support\Traits\HasOrganizer;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class PromoCodeUsage extends Model
+{
+    use HasOrganizer;
+
+    public $timestamps = false;
+
+    protected $fillable = [
+        'promo_code_id',
+        'order_id',
+        'organizer_id',
+        'discount_applied',
+        'created_at',
+    ];
+
+    protected $casts = [
+        'discount_applied' => 'decimal:2',
+        'created_at' => 'datetime',
+    ];
+
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+}

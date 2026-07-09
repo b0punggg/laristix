@@ -5,6 +5,7 @@ namespace Tests\Feature\Event;
 use App\Modules\Auth\Models\User;
 use App\Modules\Event\Enums\EventStatus;
 use App\Modules\Event\Models\Event;
+use App\Modules\Event\Models\EventWithdrawal;
 use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
@@ -91,8 +92,141 @@ class EventDashboardTest extends TestCase
         $response->assertJsonPath('data.event.uuid', $event->uuid);
         $response->assertJsonPath('data.event.title', 'Target Event');
         $response->assertJsonPath('data.totals.orders_completed', 1);
+        $response->assertJsonPath('data.totals.ticket_sales_gross', 100000);
+        $response->assertJsonPath('data.totals.promo_total', 0);
+        $response->assertJsonPath('data.totals.promo_usage_count', 0);
         $response->assertJsonPath('data.totals.revenue_gross', 105000);
         $response->assertJsonPath('data.totals.revenue_net', 100000);
+        $response->assertJsonPath('data.totals.platform_fees', 5000);
+        $response->assertJsonPath('data.totals.quotation_total', 0);
+        $response->assertJsonPath('data.totals.withdrawn_total', 0);
+        $response->assertJsonPath('data.totals.pending_withdrawal_total', 0);
+        $response->assertJsonPath('data.totals.available_to_withdraw', 100000);
+    }
+
+    public function test_event_dashboard_summary_includes_promo_totals(): void
+    {
+        [$user, $organizer] = $this->createOrganizerOwner();
+
+        $event = Event::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'organizer_id' => $organizer->id,
+            'created_by' => $user->id,
+            'title' => 'Promo Event',
+            'slug' => 'promo-event',
+            'status' => EventStatus::PUBLISHED,
+            'visibility' => 'public',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDays(2),
+            'timezone' => 'Asia/Jakarta',
+            'is_free' => false,
+        ]);
+
+        Order::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'order_number' => 'ORD-'.strtoupper(Str::random(8)),
+            'organizer_id' => $organizer->id,
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+            'buyer_name' => 'Buyer',
+            'buyer_email' => 'buyer@example.com',
+            'status' => OrderStatus::COMPLETED,
+            'subtotal' => 200000,
+            'discount_amount' => 20000,
+            'total_amount' => 189000,
+            'platform_fee_total' => 9000,
+            'organizer_net_amount' => 180000,
+            'paid_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->withHeader('X-Organizer-Id', (string) $organizer->id)
+            ->getJson("/api/v1/events/{$event->uuid}/dashboard/summary");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.totals.ticket_sales_gross', 200000);
+        $response->assertJsonPath('data.totals.promo_total', 20000);
+        $response->assertJsonPath('data.totals.promo_usage_count', 1);
+        $response->assertJsonPath('data.totals.revenue_net', 180000);
+    }
+
+    public function test_event_dashboard_summary_includes_quotation_and_withdrawable_balance(): void
+    {
+        [$user, $organizer] = $this->createOrganizerOwner();
+
+        $event = Event::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'organizer_id' => $organizer->id,
+            'created_by' => $user->id,
+            'title' => 'Finance Event',
+            'slug' => 'finance-event',
+            'status' => EventStatus::PUBLISHED,
+            'visibility' => 'public',
+            'start_at' => now()->addDay(),
+            'end_at' => now()->addDays(2),
+            'timezone' => 'Asia/Jakarta',
+            'is_free' => false,
+            'settings' => [
+                'finance' => [
+                    'quotation_amount' => 25000,
+                    'quotation_description' => 'Ground handling',
+                ],
+            ],
+        ]);
+
+        Order::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'order_number' => 'ORD-'.strtoupper(Str::random(8)),
+            'organizer_id' => $organizer->id,
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+            'buyer_name' => 'Buyer',
+            'buyer_email' => 'buyer@example.com',
+            'status' => OrderStatus::COMPLETED,
+            'subtotal' => 150000,
+            'total_amount' => 150000,
+            'organizer_net_amount' => 150000,
+            'paid_at' => now(),
+            'completed_at' => now(),
+        ]);
+
+        EventWithdrawal::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'organizer_id' => $organizer->id,
+            'event_id' => $event->id,
+            'amount' => 50000,
+            'status' => 'paid',
+            'bank_name' => 'BCA',
+            'account_holder' => 'Finance Owner',
+            'account_number' => '1234567890',
+            'requested_at' => now()->subDay(),
+            'processed_at' => now()->subHours(20),
+        ]);
+
+        EventWithdrawal::withoutOrganizerScope()->create([
+            'uuid' => (string) Str::uuid(),
+            'organizer_id' => $organizer->id,
+            'event_id' => $event->id,
+            'amount' => 10000,
+            'status' => 'pending',
+            'bank_name' => 'BCA',
+            'account_holder' => 'Finance Owner',
+            'account_number' => '1234567890',
+            'requested_at' => now()->subHours(2),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->withHeader('X-Organizer-Id', (string) $organizer->id)
+            ->getJson("/api/v1/events/{$event->uuid}/dashboard/summary");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.totals.quotation_total', 25000);
+        $response->assertJsonPath('data.totals.withdrawn_total', 50000);
+        $response->assertJsonPath('data.totals.pending_withdrawal_total', 10000);
+        $response->assertJsonPath('data.totals.available_to_withdraw', 65000);
     }
 
     public function test_event_dashboard_summary_is_scoped_to_single_event(): void
@@ -312,6 +446,7 @@ class EventDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data.ticket_breakdown.0.name', 'VIP');
+        $response->assertJsonPath('data.ticket_breakdown.0.unit_price', 150000);
         $response->assertJsonPath('data.ticket_breakdown.0.sold', 2);
         $response->assertJsonPath('data.recent_orders.0.order_number', $order->order_number);
         $response->assertJsonPath('data.recent_orders.0.buyer_name', 'Buyer');

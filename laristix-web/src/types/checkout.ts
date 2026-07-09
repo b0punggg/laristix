@@ -120,10 +120,14 @@ export interface CreateCheckoutPayload {
     gender?: string;
     answers?: Array<{ field_id: number; value: string | boolean | null }>;
   }>;
+  promo_code?: string;
 }
 
 export interface CheckoutQuote {
   subtotal: number;
+  discount_amount: number;
+  promo_code: string | null;
+  promo_description: string | null;
   platform_fee_pct_rate: number;
   platform_fee_flat: number;
   platform_fee_total: number;

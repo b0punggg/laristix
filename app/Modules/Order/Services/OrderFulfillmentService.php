@@ -3,6 +3,7 @@
 namespace App\Modules\Order\Services;
 
 use App\Modules\Order\Contracts\OrderFulfillmentServiceInterface;
+use App\Modules\Order\Contracts\PromoCodeServiceInterface;
 use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Order\Enums\RegistrationStatus;
 use App\Modules\Order\Models\Order;
@@ -20,6 +21,7 @@ class OrderFulfillmentService implements OrderFulfillmentServiceInterface
     public function __construct(
         private readonly DailyStatsRecorderServiceInterface $statsRecorder,
         private readonly ActivityLogServiceInterface $activityLogs,
+        private readonly PromoCodeServiceInterface $promoCodes,
     ) {}
 
     public function fulfill(Order $order): Order
@@ -108,6 +110,8 @@ class OrderFulfillmentService implements OrderFulfillmentServiceInterface
     public function releaseReservation(Order $order): void
     {
         $order->loadMissing(['items', 'registrations']);
+
+        $this->promoCodes->release($order);
 
         foreach ($order->items as $item) {
             TicketType::withoutOrganizerScope()

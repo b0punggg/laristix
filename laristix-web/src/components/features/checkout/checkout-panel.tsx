@@ -17,8 +17,9 @@ import {
   ShieldCheck,
   Sparkles,
   Ticket,
-  Users,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +30,7 @@ import { TicketKindBadge } from "@/components/features/tickets/ticket-kind-badge
 import { routes } from "@/config/env";
 import { usePublicEventQuery, usePublicTicketsQuery } from "@/hooks/use-public-events";
 import { useCheckoutMutation, useCheckoutQuoteQuery } from "@/hooks/use-checkout";
+import { getApiErrorMessage } from "@/lib/api/client";
 import { usePublicRegistrationFormQuery } from "@/hooks/use-phase-c";
 import { useMeQuery } from "@/hooks/use-auth";
 import { formatEventDateShort } from "@/lib/datetime";
@@ -75,8 +77,8 @@ export function CheckoutPanel({
   const [attendees, setAttendees] = useState<CheckoutAttendeePayload[]>([]);
   const [quantity, setQuantity] = useState(initialQuantity);
   const [promoCode, setPromoCode] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | undefined>(undefined);
   const [couponCode, setCouponCode] = useState("");
-  const [referralCode, setReferralCode] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [registrationAnswers, setRegistrationAnswers] = useState<Record<number, string | boolean>>({});
   const [snapToken, setSnapToken] = useState<string | null>(null);
@@ -110,10 +112,13 @@ export function CheckoutPanel({
     eventUuid,
     ticketTypeId,
     quantity,
+    appliedPromoCode,
     Boolean(ticket && !ticket.is_free),
   );
 
-  const total = quoteQuery.data?.total_amount ?? (ticket ? ticket.price * quantity : 0);
+  const subtotal = quoteQuery.data?.subtotal ?? (ticket ? ticket.price * quantity : 0);
+  const discountAmount = quoteQuery.data?.discount_amount ?? 0;
+  const total = quoteQuery.data?.total_amount ?? subtotal;
   const platformFee = quoteQuery.data?.platform_fee_total ?? 0;
   const venue = eventQuery.data?.venue;
   const venueLabel = [venue?.name, venue?.city].filter(Boolean).join(", ");
@@ -239,6 +244,31 @@ export function CheckoutPanel({
     );
   }
 
+  function applyPromoCode() {
+    const nextCode = promoCode.trim().toUpperCase();
+
+    if (!nextCode) {
+      toast.error("Masukkan kode promo terlebih dahulu.");
+      return;
+    }
+
+    setAppliedPromoCode(nextCode);
+  }
+
+  function removePromoCode() {
+    setAppliedPromoCode(undefined);
+    setPromoCode("");
+  }
+
+  useEffect(() => {
+    if (!appliedPromoCode || !quoteQuery.isError) {
+      return;
+    }
+
+    toast.error(getApiErrorMessage(quoteQuery.error));
+    setAppliedPromoCode(undefined);
+  }, [appliedPromoCode, quoteQuery.error, quoteQuery.isError]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) {
@@ -264,6 +294,7 @@ export function CheckoutPanel({
                 value,
               })),
         attendees: checkoutSettings.one_attendee_per_ticket ? attendees : undefined,
+        promo_code: appliedPromoCode,
       },
       {
         onSuccess: (data) => {
@@ -625,11 +656,11 @@ export function CheckoutPanel({
           ) : null}
 
           <FormSectionCard
-            title="Promo Code"
-            description="Ruang promo tersedia tanpa mengubah integrasi pembayaran saat ini."
+            title="Kode Promo"
+            description="Masukkan kode promo event untuk mendapatkan diskon."
           >
             <div className="grid gap-4 lg:grid-cols-3">
-              <div className="space-y-2">
+              <div className="space-y-2 lg:col-span-2">
                 <label htmlFor="promo-code" className="text-sm font-medium">
                   Promo
                 </label>
@@ -639,17 +670,42 @@ export function CheckoutPanel({
                     <Input
                       id="promo-code"
                       value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                       className="h-11 pl-9"
                       placeholder="PROMO2026"
+                      disabled={Boolean(appliedPromoCode)}
                     />
                   </div>
-                  <Button type="button" variant="outline" disabled>
-                    Apply
-                  </Button>
+                  {appliedPromoCode ? (
+                    <Button type="button" variant="outline" onClick={removePromoCode}>
+                      <X className="size-4" />
+                      Hapus
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={applyPromoCode}
+                      disabled={quoteQuery.isFetching}
+                    >
+                      {quoteQuery.isFetching && appliedPromoCode === undefined ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : null}
+                      Terapkan
+                    </Button>
+                  )}
                 </div>
+                {appliedPromoCode && quoteQuery.data?.promo_code ? (
+                  <p className="flex items-center gap-2 text-sm text-emerald-600">
+                    <CheckCircle2 className="size-4" />
+                    Promo {quoteQuery.data.promo_code} diterapkan
+                    {quoteQuery.data.promo_description
+                      ? ` — ${quoteQuery.data.promo_description}`
+                      : ""}
+                  </p>
+                ) : null}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 opacity-60">
                 <label htmlFor="coupon-code" className="text-sm font-medium">
                   Coupon
                 </label>
@@ -662,26 +718,7 @@ export function CheckoutPanel({
                       onChange={(e) => setCouponCode(e.target.value)}
                       className="h-11 pl-9"
                       placeholder="COUPON"
-                    />
-                  </div>
-                  <Button type="button" variant="outline" disabled>
-                    Apply
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="referral-code" className="text-sm font-medium">
-                  Referral
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Users className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="referral-code"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value)}
-                      className="h-11 pl-9"
-                      placeholder="REFERRAL"
+                      disabled
                     />
                   </div>
                   <Button type="button" variant="outline" disabled>
@@ -691,8 +728,7 @@ export function CheckoutPanel({
               </div>
             </div>
             <p className="mt-3 text-xs text-muted-foreground">
-              Kolom promo, coupon, dan referral disiapkan untuk pengalaman checkout tanpa
-              mengubah integrasi backend atau pembayaran saat ini.
+              Kupon dan referral akan tersedia pada fase berikutnya.
             </p>
           </FormSectionCard>
 
@@ -770,11 +806,19 @@ export function CheckoutPanel({
                 <span className="font-medium">{quantity}</span>
               </div>
               <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Harga</span>
+                <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-medium">
-                  {ticket.is_free ? "Gratis" : formatCurrency(ticket.price, ticket.currency)}
+                  {ticket.is_free ? "Gratis" : formatCurrency(subtotal, ticket.currency)}
                 </span>
               </div>
+              {discountAmount > 0 ? (
+                <div className="flex justify-between gap-3 text-emerald-600">
+                  <span>Promo {quoteQuery.data?.promo_code ? `(${quoteQuery.data.promo_code})` : ""}</span>
+                  <span className="font-medium">
+                    -{formatCurrency(discountAmount, ticket.currency)}
+                  </span>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-3">
                 <span className="text-muted-foreground">Platform fee</span>
                 <span className="font-medium">

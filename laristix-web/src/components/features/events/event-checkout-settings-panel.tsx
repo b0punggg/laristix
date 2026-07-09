@@ -8,11 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/ui/form-field";
 import { FormSectionCard } from "@/components/features/events/event-management-ui";
+import { EventPromoCodesSection } from "@/components/features/events/event-promo-codes-section";
 import { EventSubNav } from "@/components/features/events/event-sub-nav";
 import { routes } from "@/config/env";
 import { useEventQuery, useUpdateEventMutation } from "@/hooks/use-events";
 import { useOrganizerFeePreviewQuery } from "@/hooks/use-organizer-fee-preview";
 import { buildEventSettings } from "@/lib/event-settings";
+import {
+  parseEventFinanceSettings,
+  type EventFinanceSettings,
+} from "@/lib/event-finance-settings";
 import {
   CHECKOUT_BUYER_FIELD_LABELS,
   parseEventCheckoutSettings,
@@ -34,11 +39,13 @@ export function EventCheckoutSettingsPanel({ eventUuid }: EventCheckoutSettingsP
   const eventQuery = useEventQuery(eventUuid);
   const updateMutation = useUpdateEventMutation(eventUuid);
   const [settings, setSettings] = useState<EventCheckoutSettings | null>(null);
+  const [financeSettings, setFinanceSettings] = useState<EventFinanceSettings | null>(null);
   const [simulationPrice, setSimulationPrice] = useState(100000);
 
   useEffect(() => {
     if (eventQuery.data) {
       setSettings(parseEventCheckoutSettings(eventQuery.data.settings));
+      setFinanceSettings(parseEventFinanceSettings(eventQuery.data.settings));
     }
   }, [eventQuery.data]);
 
@@ -85,16 +92,19 @@ export function EventCheckoutSettingsPanel({ eventUuid }: EventCheckoutSettingsP
   }
 
   async function handleSave() {
-    if (!eventQuery.data || !settings) {
+    if (!eventQuery.data || !settings || !financeSettings) {
       return;
     }
 
     await updateMutation.mutateAsync({
-      settings: buildEventSettings(eventQuery.data.settings, { checkout: settings }),
+      settings: buildEventSettings(
+        buildEventSettings(eventQuery.data.settings, { checkout: settings }),
+        { finance: financeSettings },
+      ),
     });
   }
 
-  if (!settings) {
+  if (!settings || !financeSettings) {
     return null;
   }
 
@@ -337,6 +347,57 @@ export function EventCheckoutSettingsPanel({ eventUuid }: EventCheckoutSettingsP
           ) : null}
         </div>
       </FormSectionCard>
+
+      <FormSectionCard
+        title="Layanan tambahan / quotation"
+        description="Biaya layanan tambahan seperti ground handling akan diperhitungkan di dashboard event."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormField
+            id="quotation-amount"
+            label="Nominal quotation (IDR)"
+            helpText="Kosongkan atau isi 0 jika tidak ada biaya tambahan."
+          >
+            <Input
+              id="quotation-amount"
+              type="number"
+              min={0}
+              step={1000}
+              value={financeSettings.quotation_amount || ""}
+              onChange={(event) =>
+                setFinanceSettings((current) =>
+                  current
+                    ? {
+                        ...current,
+                        quotation_amount: Math.max(0, Number(event.target.value) || 0),
+                      }
+                    : current,
+                )
+              }
+            />
+          </FormField>
+          <FormField
+            id="quotation-description"
+            label="Keterangan quotation"
+            helpText="Contoh: Ground handling, crew support, atau layanan tambahan lain."
+          >
+            <Input
+              id="quotation-description"
+              value={financeSettings.quotation_description}
+              onChange={(event) =>
+                setFinanceSettings((current) =>
+                  current
+                    ? { ...current, quotation_description: event.target.value }
+                    : current,
+                )
+              }
+              placeholder="Ground handling"
+            />
+          </FormField>
+        </div>
+      </FormSectionCard>
+
+      <EventPromoCodesSection eventUuid={eventUuid} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="outline" asChild>

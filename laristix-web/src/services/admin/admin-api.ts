@@ -3,6 +3,8 @@ import { apiPaths } from "@/config/env";
 import type { ApiResponse } from "@/types/auth";
 import type {
   ActivityLogEntry,
+  AdminWithdrawal,
+  AdminWithdrawalDocumentType,
   AdminDashboardSummary,
   AnalyticsTrends,
   AuditLogEntry,
@@ -12,6 +14,7 @@ import type {
   OrganizerFeeConfig,
   PlatformSetting,
   StoreOrganizerFeeConfigPayload,
+  UpdateAdminWithdrawalPayload,
 } from "@/types/admin";
 import type { PaginatedResponse } from "@/types/event";
 import { fetchAllPaginated } from "@/lib/fetch-paginated-all";
@@ -72,6 +75,39 @@ export const adminApi = {
     return fetchAllPaginated<AuditLogEntry>((page, perPage) =>
       adminApi.listAuditLogs({ ...filters, page, per_page: perPage }),
     );
+  },
+
+  async listWithdrawals() {
+    const { data } = await apiClient.get<ApiResponse<AdminWithdrawal[]>>(apiPaths.admin.withdrawals);
+    return data.data;
+  },
+
+  async updateWithdrawal(uuid: string, payload: UpdateAdminWithdrawalPayload) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.patch<ApiResponse<{ uuid: string; status: string }>>(
+      apiPaths.admin.withdrawal(uuid),
+      payload,
+    );
+    return data;
+  },
+
+  async uploadWithdrawalDocument(uuid: string, type: AdminWithdrawalDocumentType, file: File) {
+    await ensureCsrfCookie();
+    const formData = new FormData();
+    formData.append("document", file);
+    formData.append("type", type);
+
+    const { data } = await apiClient.post<ApiResponse<{ type: string; url: string }>>(
+      apiPaths.admin.withdrawalDocuments(uuid),
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    return data.data;
   },
 
   async listOrganizerFeeConfigs(organizerUuid: string) {

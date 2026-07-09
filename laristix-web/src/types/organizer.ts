@@ -140,13 +140,22 @@ export interface EventDashboardSummary {
     registrations: number;
     check_ins: number;
     revenue_gross: number;
+    ticket_sales_gross: number;
+    promo_total: number;
+    promo_usage_count: number;
     revenue_net: number;
     platform_fees: number;
+    quotation_total: number;
+    withdrawn_total: number;
+    pending_withdrawal_total: number;
+    available_to_withdraw: number;
   };
   today: {
     orders: number;
     registrations: number;
     revenue_gross: number;
+    ticket_sales_gross: number;
+    promo_total: number;
     revenue_net: number;
     check_ins: number;
   };
@@ -169,6 +178,7 @@ export interface EventAttentionItem {
 export interface EventTicketBreakdown {
   ticket_type_id: number;
   name: string;
+  unit_price: number;
   sold: number;
   quantity: number;
   remaining: number;
@@ -186,8 +196,84 @@ export interface EventRecentOrder {
   paid_at: string | null;
 }
 
+export interface EventPromoBreakdown {
+  code: string;
+  usage_count: number;
+  discount_total: number;
+}
+
+export interface EventPromoCode {
+  id: number;
+  code: string;
+  description: string | null;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  max_discount_amount: number | null;
+  usage_limit: number | null;
+  usage_count: number;
+  min_order_amount: number | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  event_id: number | null;
+  created_at: string | null;
+}
+
+export interface EventWithdrawal {
+  uuid: string;
+  amount: number;
+  status: "pending" | "processing" | "paid" | "rejected";
+  status_label: string;
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  invoice_number: string | null;
+  invoice_url: string | null;
+  supporting_document_url: string | null;
+  transfer_proof_url: string | null;
+  status_history: Array<{
+    status: string;
+    label: string;
+    at: string;
+    notes: string | null;
+  }>;
+  notes: string | null;
+  requested_at: string | null;
+  processed_at: string | null;
+  created_at: string | null;
+}
+
+export interface EventWithdrawalListResponse {
+  available_balance: number;
+  pending_balance: number;
+  withdrawn_total: number;
+  data: EventWithdrawal[];
+}
+
+export interface CreateEventWithdrawalPayload {
+  amount: number;
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  notes?: string;
+}
+
+export interface CreateEventPromoCodePayload {
+  code: string;
+  description?: string;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  max_discount_amount?: number;
+  usage_limit?: number;
+  min_order_amount?: number;
+  valid_from?: string;
+  valid_until?: string;
+  is_active?: boolean;
+}
+
 export interface EventDashboardInsights {
   ticket_breakdown: EventTicketBreakdown[];
+  promo_breakdown: EventPromoBreakdown[];
   recent_orders: EventRecentOrder[];
   check_in_today: {
     count: number;

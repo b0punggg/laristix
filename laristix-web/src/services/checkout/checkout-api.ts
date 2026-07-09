@@ -23,11 +23,14 @@ export const checkoutApi = {
     return data.data;
   },
 
-  async quote(eventUuid: string, ticketTypeId: number, quantity: number) {
+  async quote(eventUuid: string, ticketTypeId: number, quantity: number, promoCode?: string) {
     const params = new URLSearchParams({
       ticket_type_id: String(ticketTypeId),
       quantity: String(quantity),
     });
+    if (promoCode) {
+      params.set("promo_code", promoCode);
+    }
     const { data } = await apiClient.get<ApiResponse<CheckoutQuote>>(
       `${apiPaths.checkout.quote(eventUuid)}?${params.toString()}`,
     );

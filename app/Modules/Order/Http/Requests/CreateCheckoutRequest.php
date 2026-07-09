@@ -39,6 +39,7 @@ class CreateCheckoutRequest extends FormRequest
             'attendees.*.answers' => ['sometimes', 'array'],
             'attendees.*.answers.*.field_id' => ['required', 'integer', 'min:1'],
             'attendees.*.answers.*.value' => ['nullable'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

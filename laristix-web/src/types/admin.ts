@@ -115,3 +115,53 @@ export interface LogListFilters {
   page?: number;
   per_page?: number;
 }
+
+export interface AdminWithdrawalEventSummary {
+  uuid: string;
+  title: string;
+}
+
+export interface AdminWithdrawalOrganizerSummary {
+  uuid: string;
+  name: string;
+  slug: string;
+}
+
+export interface AdminWithdrawal {
+  uuid: string;
+  amount: number;
+  status: "pending" | "processing" | "paid" | "rejected";
+  bank_name: string;
+  account_holder: string;
+  account_number: string;
+  invoice_number: string | null;
+  invoice_url: string | null;
+  supporting_document_url: string | null;
+  transfer_proof_url: string | null;
+  status_history: Array<{
+    status: string;
+    label: string;
+    at: string;
+    notes: string | null;
+  }>;
+  notes: string | null;
+  requested_at: string | null;
+  processed_at: string | null;
+  created_at: string | null;
+  event: AdminWithdrawalEventSummary | null;
+  organizer: AdminWithdrawalOrganizerSummary | null;
+}
+
+export interface UpdateAdminWithdrawalPayload {
+  status: "pending" | "processing" | "paid" | "rejected";
+  notes?: string | null;
+  invoice_number?: string | null;
+  invoice_url?: string | null;
+  supporting_document_url?: string | null;
+  transfer_proof_url?: string | null;
+}
+
+export type AdminWithdrawalDocumentType =
+  | "invoice"
+  | "supporting_document"
+  | "transfer_proof";

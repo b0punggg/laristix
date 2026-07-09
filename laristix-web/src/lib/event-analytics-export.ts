@@ -28,9 +28,13 @@ export function exportEventSummaryCsv(summary: EventDashboardSummary) {
       ["Tiket tersisa", totals.tickets_remaining, ""],
       ["Order selesai", totals.orders_completed, today.orders],
       ["Check-in", totals.check_ins, today.check_ins],
-      ["Pendapatan net", totals.revenue_net, today.revenue_net],
-      ["Pendapatan gross", totals.revenue_gross, today.revenue_gross],
-      ["Biaya platform", totals.platform_fees, ""],
+      ["Penjualan tiket online", totals.ticket_sales_gross, today.ticket_sales_gross],
+      ["Total promo", totals.promo_total, today.promo_total],
+      ["Biaya layanan", totals.platform_fees, ""],
+      ["Quotation", totals.quotation_total, ""],
+      ["Total pendapatan", totals.revenue_net, today.revenue_net],
+      ["Dana belum ditarik", totals.available_to_withdraw, ""],
+      ["Dibayar pembeli", totals.revenue_gross, today.revenue_gross],
     ],
   );
 }
@@ -61,9 +65,10 @@ export function exportEventTicketBreakdownCsv(insights: EventDashboardInsights, 
 
   downloadCsv(
     `breakdown-tiket-${slug}-${new Date().toISOString().slice(0, 10)}.csv`,
-    ["Tipe tiket", "Terjual", "Kuota", "Sisa", "Pendapatan gross"],
+    ["Tipe tiket", "Harga tiket", "Terjual", "Kuota", "Sisa", "Total penjualan"],
     insights.ticket_breakdown.map((row) => [
       row.name,
+      row.unit_price,
       row.sold,
       row.quantity,
       row.remaining,

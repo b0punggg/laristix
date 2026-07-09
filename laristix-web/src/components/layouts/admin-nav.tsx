@@ -13,6 +13,7 @@ import {
   PieChart,
   ScrollText,
   Settings,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { routes } from "@/config/env";
@@ -30,6 +31,7 @@ const navItems: Array<{
   { href: routes.adminAnalytics, label: "Revenue & Reports", icon: PieChart },
   { href: routes.adminEvents, label: "Events", icon: Calendar },
   { href: routes.adminOrganizers, label: "Organizers", icon: Building2, showPendingBadge: true },
+  { href: routes.adminWithdrawals, label: "Withdrawals", icon: Wallet },
   { href: routes.adminSettings, label: "CMS", icon: FileCode2 },
   { href: routes.adminSettings, label: "Notification Templates", icon: Megaphone },
   { href: routes.adminLogs, label: "Logs", icon: ScrollText },

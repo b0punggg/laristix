@@ -38,6 +38,10 @@ class Order extends Model implements TenantAware
         'fee_bearer',
         'total_amount',
         'organizer_net_amount',
+        'promo_code_id',
+        'promo_code_snapshot',
+        'coupon_id',
+        'coupon_snapshot',
         'idempotency_key',
         'expires_at',
         'paid_at',
@@ -86,6 +90,11 @@ class Order extends Model implements TenantAware
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
+    }
+
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     public function isAwaitingPayment(): bool

@@ -2,6 +2,8 @@ import type { EventMicrositeSettings } from "@/lib/event-microsite";
 import { applyMicrositeSettings } from "@/lib/event-microsite";
 import type { EventCheckoutSettings } from "@/lib/event-checkout-settings";
 import { applyCheckoutSettings } from "@/lib/event-checkout-settings";
+import type { EventFinanceSettings } from "@/lib/event-finance-settings";
+import { applyFinanceSettings } from "@/lib/event-finance-settings";
 
 export interface EventContactSettings {
   name: string;
@@ -42,6 +44,7 @@ export function buildEventSettings(
     contact?: EventContactSettings;
     microsite?: EventMicrositeSettings;
     checkout?: EventCheckoutSettings;
+    finance?: EventFinanceSettings;
   },
 ): Record<string, unknown> {
   const next: Record<string, unknown> = { ...(existing ?? {}) };
@@ -75,6 +78,10 @@ export function buildEventSettings(
 
   if (patch.checkout) {
     return applyCheckoutSettings(next, patch.checkout);
+  }
+
+  if (patch.finance) {
+    return applyFinanceSettings(next, patch.finance);
   }
 
   return next;

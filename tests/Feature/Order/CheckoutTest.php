@@ -6,6 +6,7 @@ use App\Modules\Auth\Models\User;
 use App\Modules\Event\Enums\EventStatus;
 use App\Modules\Event\Models\Event;
 use App\Modules\Order\Enums\OrderStatus;
+use App\Modules\Order\Models\PromoCode;
 use App\Modules\Order\Models\Ticket;
 use App\Modules\Organizer\Models\Organizer;
 use App\Modules\Organizer\Models\OrganizerMember;
@@ -211,5 +212,104 @@ class CheckoutTest extends TestCase
 
         $response = $this->getJson("/api/v1/public/orders/{$uuid}");
         $response->assertNotFound();
+    }
+
+    public function test_checkout_quote_applies_promo_code(): void
+    {
+        [$buyer, $event, $ticketType] = $this->createPublishedEventWithTicket(false);
+
+        PromoCode::withoutOrganizerScope()->create([
+            'organizer_id' => $event->organizer_id,
+            'event_id' => $event->id,
+            'code' => 'SAVE10',
+            'discount_type' => 'percentage',
+            'discount_value' => 10,
+            'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($buyer);
+
+        $response = $this->getJson(
+            "/api/v1/public/events/{$event->uuid}/checkout/quote?ticket_type_id={$ticketType->id}&quantity=1&promo_code=save10"
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath('data.subtotal', 100000);
+        $response->assertJsonPath('data.discount_amount', 10000);
+        $response->assertJsonPath('data.promo_code', 'SAVE10');
+        $response->assertJsonPath('data.organizer_net_amount', 90000);
+        $response->assertJsonPath('data.platform_fee_total', 4500);
+        $response->assertJsonPath('data.total_amount', 94500);
+    }
+
+    public function test_checkout_with_promo_code_records_discount_and_usage(): void
+    {
+        config([
+            'payment_module.midtrans.server_key' => 'SB-Mid-server-test',
+            'payment_module.midtrans.client_key' => 'SB-Mid-client-test',
+        ]);
+
+        Http::fake([
+            'https://app.sandbox.midtrans.com/snap/v1/transactions' => Http::response([
+                'token' => 'snap-token-promo',
+                'redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/snap-token-promo',
+            ], 201),
+        ]);
+
+        [$buyer, $event, $ticketType] = $this->createPublishedEventWithTicket(false);
+
+        $promo = PromoCode::withoutOrganizerScope()->create([
+            'organizer_id' => $event->organizer_id,
+            'event_id' => $event->id,
+            'code' => 'FLAT25K',
+            'discount_type' => 'fixed',
+            'discount_value' => 25000,
+            'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($buyer);
+
+        $response = $this->postJson("/api/v1/public/events/{$event->uuid}/checkout", [
+            'ticket_type_id' => $ticketType->id,
+            'quantity' => 1,
+            'buyer_name' => 'Promo Buyer',
+            'buyer_email' => 'promo-buyer@example.com',
+            'promo_code' => 'FLAT25K',
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('data.order.discount_amount', 25000);
+        $response->assertJsonPath('data.order.total_amount', 78750);
+
+        $orderUuid = $response->json('data.order.uuid');
+
+        $this->assertDatabaseHas('orders', [
+            'uuid' => $orderUuid,
+            'promo_code_id' => $promo->id,
+            'promo_code_snapshot' => 'FLAT25K',
+            'discount_amount' => 25000,
+            'total_amount' => 78750,
+            'organizer_net_amount' => 75000,
+        ]);
+
+        $this->assertDatabaseHas('promo_code_usages', [
+            'promo_code_id' => $promo->id,
+            'discount_applied' => 25000,
+        ]);
+
+        $promo->refresh();
+        $this->assertSame(1, $promo->usage_count);
+    }
+
+    public function test_invalid_promo_code_returns_error_on_quote(): void
+    {
+        [$buyer, $event, $ticketType] = $this->createPublishedEventWithTicket(false);
+        Sanctum::actingAs($buyer);
+
+        $response = $this->getJson(
+            "/api/v1/public/events/{$event->uuid}/checkout/quote?ticket_type_id={$ticketType->id}&quantity=1&promo_code=INVALID"
+        );
+
+        $response->assertUnprocessable();
     }
 }

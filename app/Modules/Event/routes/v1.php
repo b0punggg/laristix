@@ -7,7 +7,9 @@ use App\Modules\Event\Http\Controllers\V1\EventCategoryController;
 use App\Modules\Event\Http\Controllers\V1\EventController;
 use App\Modules\Event\Http\Controllers\V1\EventDashboardController;
 use App\Modules\Event\Http\Controllers\V1\EventManagementController;
+use App\Modules\Event\Http\Controllers\V1\EventPromoCodeController;
 use App\Modules\Event\Http\Controllers\V1\EventTagController;
+use App\Modules\Event\Http\Controllers\V1\EventWithdrawalController;
 use App\Modules\Event\Http\Controllers\V1\VenueController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,6 +59,15 @@ Route::middleware('auth:sanctum')->group(function () {
             ->name('events.attendees.index');
         Route::get('events/{uuid}/orders/{orderUuid}', [EventAttendeeController::class, 'showOrder'])
             ->name('events.orders.show');
+
+        Route::get('events/{uuid}/promo-codes', [EventPromoCodeController::class, 'index'])
+            ->name('events.promo-codes.index');
+        Route::post('events/{uuid}/promo-codes', [EventPromoCodeController::class, 'store'])
+            ->name('events.promo-codes.store');
+        Route::get('events/{uuid}/withdrawals', [EventWithdrawalController::class, 'index'])
+            ->name('events.withdrawals.index');
+        Route::post('events/{uuid}/withdrawals', [EventWithdrawalController::class, 'store'])
+            ->name('events.withdrawals.store');
 
         Route::get('venues', [VenueController::class, 'index'])->name('venues.index');
         Route::post('venues', [VenueController::class, 'store'])->name('venues.store');

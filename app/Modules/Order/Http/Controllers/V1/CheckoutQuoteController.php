@@ -22,6 +22,7 @@ class CheckoutQuoteController extends Controller
         $validated = $request->validate([
             'ticket_type_id' => ['required', 'integer', 'min:1'],
             'quantity' => ['required', 'integer', 'min:1', 'max:20'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
         ]);
 
         $event = Event::withoutOrganizerScope()
@@ -46,7 +47,8 @@ class CheckoutQuoteController extends Controller
         $quote = $this->checkoutService->quote(
             $event,
             $ticketType,
-            (int) $validated['quantity']
+            (int) $validated['quantity'],
+            $validated['promo_code'] ?? null,
         );
 
         return response()->json(['data' => $quote]);

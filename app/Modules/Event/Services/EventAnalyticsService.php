@@ -9,6 +9,7 @@ use App\Modules\CheckIn\Models\CheckInGate;
 use App\Modules\Event\Contracts\EventAnalyticsServiceInterface;
 use App\Modules\Event\Enums\EventStatus;
 use App\Modules\Event\Models\Event;
+use App\Modules\Event\Models\EventWithdrawal;
 use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
@@ -53,6 +54,14 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
             ->where('status', 'active')
             ->sum('reserved_count');
 
+        $quotationTotal = $this->quotationTotal($event);
+        $withdrawnTotal = $this->withdrawnTotal($eventId);
+        $pendingWithdrawalTotal = $this->pendingWithdrawalTotal($eventId);
+        $revenueNet = (float) Order::query()
+            ->where('event_id', $eventId)
+            ->whereIn('status', self::PAID_STATUSES)
+            ->sum('organizer_net_amount');
+
         return [
             'event' => $this->eventSummary($event),
             'totals' => [
@@ -73,14 +82,28 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
                     ->where('event_id', $eventId)
                     ->whereIn('status', self::PAID_STATUSES)
                     ->sum('total_amount'),
-                'revenue_net' => (float) Order::query()
+                'ticket_sales_gross' => (float) Order::query()
                     ->where('event_id', $eventId)
                     ->whereIn('status', self::PAID_STATUSES)
-                    ->sum('organizer_net_amount'),
+                    ->sum('subtotal'),
+                'promo_total' => (float) Order::query()
+                    ->where('event_id', $eventId)
+                    ->whereIn('status', self::PAID_STATUSES)
+                    ->sum('discount_amount'),
+                'promo_usage_count' => (int) Order::query()
+                    ->where('event_id', $eventId)
+                    ->whereIn('status', self::PAID_STATUSES)
+                    ->where('discount_amount', '>', 0)
+                    ->count(),
+                'revenue_net' => $revenueNet,
                 'platform_fees' => (float) Order::query()
                     ->where('event_id', $eventId)
                     ->whereIn('status', self::PAID_STATUSES)
                     ->sum('platform_fee_total'),
+                'quotation_total' => $quotationTotal,
+                'withdrawn_total' => $withdrawnTotal,
+                'pending_withdrawal_total' => $pendingWithdrawalTotal,
+                'available_to_withdraw' => max(0, round($revenueNet - $quotationTotal - $withdrawnTotal - $pendingWithdrawalTotal, 2)),
             ],
             'today' => [
                 'orders' => Order::query()
@@ -99,6 +122,16 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
                     ->whereIn('status', self::PAID_STATUSES)
                     ->whereDate('paid_at', $today)
                     ->sum('total_amount'),
+                'ticket_sales_gross' => (float) Order::query()
+                    ->where('event_id', $eventId)
+                    ->whereIn('status', self::PAID_STATUSES)
+                    ->whereDate('paid_at', $today)
+                    ->sum('subtotal'),
+                'promo_total' => (float) Order::query()
+                    ->where('event_id', $eventId)
+                    ->whereIn('status', self::PAID_STATUSES)
+                    ->whereDate('paid_at', $today)
+                    ->sum('discount_amount'),
                 'revenue_net' => (float) Order::query()
                     ->where('event_id', $eventId)
                     ->whereIn('status', self::PAID_STATUSES)
@@ -182,6 +215,7 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
                 return [
                     'ticket_type_id' => $ticketType->id,
                     'name' => $ticketType->name,
+                    'unit_price' => (float) $ticketType->price,
                     'sold' => (int) ($row->sold ?? 0),
                     'quantity' => $ticketType->quantity,
                     'remaining' => $ticketType->availableQuantity(),
@@ -206,6 +240,25 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
                 'total_amount' => (float) $order->total_amount,
                 'organizer_net_amount' => (float) $order->organizer_net_amount,
                 'paid_at' => $order->paid_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+
+        $promoBreakdown = Order::query()
+            ->select('promo_code_snapshot')
+            ->selectRaw('COUNT(*) as usage_count')
+            ->selectRaw('COALESCE(SUM(discount_amount), 0) as discount_total')
+            ->where('event_id', $eventId)
+            ->whereIn('status', self::PAID_STATUSES)
+            ->where('discount_amount', '>', 0)
+            ->whereNotNull('promo_code_snapshot')
+            ->groupBy('promo_code_snapshot')
+            ->orderByDesc('discount_total')
+            ->get()
+            ->map(fn ($row) => [
+                'code' => (string) $row->promo_code_snapshot,
+                'usage_count' => (int) $row->usage_count,
+                'discount_total' => (float) $row->discount_total,
             ])
             ->values()
             ->all();
@@ -250,6 +303,7 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
 
         return [
             'ticket_breakdown' => $ticketBreakdown,
+            'promo_breakdown' => $promoBreakdown,
             'recent_orders' => $recentOrders,
             'check_in_today' => [
                 'count' => CheckIn::query()
@@ -275,6 +329,30 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
             'timezone' => $event->timezone,
             'is_free' => $event->is_free,
         ];
+    }
+
+    private function quotationTotal(Event $event): float
+    {
+        $settings = is_array($event->settings) ? $event->settings : [];
+        $finance = isset($settings['finance']) && is_array($settings['finance']) ? $settings['finance'] : [];
+
+        return round(max(0, (float) ($finance['quotation_amount'] ?? 0)), 2);
+    }
+
+    private function withdrawnTotal(int $eventId): float
+    {
+        return (float) EventWithdrawal::query()
+            ->where('event_id', $eventId)
+            ->where('status', 'paid')
+            ->sum('amount');
+    }
+
+    private function pendingWithdrawalTotal(int $eventId): float
+    {
+        return (float) EventWithdrawal::query()
+            ->where('event_id', $eventId)
+            ->whereIn('status', ['pending', 'processing'])
+            ->sum('amount');
     }
 
     private function trendsFromLiveData(int $eventId, int $days, Carbon $startDate): array

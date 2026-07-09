@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Ticket,
   Users,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -18,6 +19,8 @@ import { RefreshButton } from "@/components/common/refresh-button";
 import { OrganizerMetricCard } from "@/components/features/organizer/organizer-metric-card";
 import { OrganizerDashboardCharts } from "@/components/features/organizer/organizer-dashboard-sections";
 import { EventDashboardInsightsPanel } from "@/components/features/events/event-dashboard-insights";
+import { EventFinancialSummary } from "@/components/features/events/event-financial-summary";
+import { EventWithdrawalSection } from "@/components/features/events/event-withdrawal-section";
 import { EventStatusBadge } from "@/components/features/events/event-status-badge";
 import { EventSubNav } from "@/components/features/events/event-sub-nav";
 import {
@@ -47,7 +50,7 @@ interface EventDashboardPanelProps {
 
 function EventRevenueHero({
   revenueNet,
-  revenueGross,
+  ticketSalesGross,
   platformFees,
   todayNet,
   todayOrders,
@@ -55,7 +58,7 @@ function EventRevenueHero({
   isLoading,
 }: {
   revenueNet: number;
-  revenueGross: number;
+  ticketSalesGross: number;
   platformFees: number;
   todayNet: number;
   todayOrders: number;
@@ -67,7 +70,7 @@ function EventRevenueHero({
       <CardContent className="flex flex-col gap-6 p-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
           <Text variant="overline" className="text-brand">
-            Pendapatan bersih event
+            Total pendapatan event
           </Text>
           {isLoading ? (
             <Skeleton className="h-10 w-40" />
@@ -80,7 +83,7 @@ function EventRevenueHero({
             Hari ini:{" "}
             <span className="font-semibold text-foreground">{formatIdr(todayNet)}</span>
             {" · "}
-            Gross: {formatIdr(revenueGross)}
+            Penjualan tiket: {formatIdr(ticketSalesGross)}
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -241,12 +244,18 @@ export function EventDashboardPanel({ eventUuid }: EventDashboardPanelProps) {
 
       <EventRevenueHero
         revenueNet={totals?.revenue_net ?? 0}
-        revenueGross={totals?.revenue_gross ?? 0}
+        ticketSalesGross={totals?.ticket_sales_gross ?? 0}
         platformFees={totals?.platform_fees ?? 0}
         todayNet={today?.revenue_net ?? 0}
         todayOrders={today?.orders ?? 0}
         ticketsSold={totals?.tickets_sold ?? 0}
         isLoading={summaryQuery.isLoading}
+      />
+
+      <EventFinancialSummary
+        summary={summaryQuery.data}
+        isLoading={summaryQuery.isLoading}
+        isError={summaryQuery.isError}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -271,7 +280,7 @@ export function EventDashboardPanel({ eventUuid }: EventDashboardPanelProps) {
         <OrganizerMetricCard
           label="Pendapatan hari ini"
           value={today ? formatIdr(today.revenue_net) : formatIdr(0)}
-          hint={`Gross: ${today ? formatIdr(today.revenue_gross) : formatIdr(0)}`}
+          hint={`Penjualan tiket: ${today ? formatIdr(today.ticket_sales_gross) : formatIdr(0)}`}
           icon={DollarSign}
           accent="emerald"
           isLoading={summaryQuery.isLoading}
@@ -288,7 +297,7 @@ export function EventDashboardPanel({ eventUuid }: EventDashboardPanelProps) {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <OrganizerMetricCard
           label="Registrasi"
           value={totals?.registrations ?? 0}
@@ -307,6 +316,15 @@ export function EventDashboardPanel({ eventUuid }: EventDashboardPanelProps) {
           isLoading={summaryQuery.isLoading}
           isError={summaryQuery.isError}
         />
+        <OrganizerMetricCard
+          label="Dana belum ditarik"
+          value={totals ? formatIdr(totals.available_to_withdraw) : formatIdr(0)}
+          hint={`Quotation: ${totals ? formatIdr(totals.quotation_total) : formatIdr(0)}`}
+          icon={Wallet}
+          accent="emerald"
+          isLoading={summaryQuery.isLoading}
+          isError={summaryQuery.isError}
+        />
       </div>
 
       <OrganizerDashboardCharts
@@ -320,6 +338,11 @@ export function EventDashboardPanel({ eventUuid }: EventDashboardPanelProps) {
         insights={insightsQuery.data}
         isLoading={insightsQuery.isLoading}
         isError={insightsQuery.isError}
+      />
+
+      <EventWithdrawalSection
+        eventUuid={eventUuid}
+        onCreated={refreshAll}
       />
 
       <div className="flex flex-wrap gap-2">

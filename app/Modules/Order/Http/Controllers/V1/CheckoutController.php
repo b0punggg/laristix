@@ -36,6 +36,7 @@ class CheckoutController extends Controller
             userAgent: $request->userAgent(),
             answers: $request->validated('answers') ?? [],
             attendees: $request->validated('attendees') ?? [],
+            promoCode: $request->validated('promo_code'),
         ));
 
         return (new CheckoutResource($result))

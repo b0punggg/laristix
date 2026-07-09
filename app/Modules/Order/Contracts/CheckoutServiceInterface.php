@@ -18,6 +18,9 @@ interface CheckoutServiceInterface
     /**
      * @return array{
      *   subtotal: float,
+     *   discount_amount: float,
+     *   promo_code: string|null,
+     *   promo_description: string|null,
      *   platform_fee_pct_rate: float,
      *   platform_fee_flat: float,
      *   platform_fee_total: float,
@@ -26,7 +29,7 @@ interface CheckoutServiceInterface
      *   organizer_net_amount: float
      * }
      */
-    public function quote(Event $event, TicketType $ticketType, int $quantity): array;
+    public function quote(Event $event, TicketType $ticketType, int $quantity, ?string $promoCode = null): array;
 
     public function showPublic(string $uuid): Order;
 

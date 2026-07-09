@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ShoppingBag, Ticket } from "lucide-react";
+import { AlertTriangle, Percent, ShoppingBag, Ticket } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,11 +42,52 @@ export function EventDashboardInsightsPanel({
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="h-full lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Percent className="size-4 text-brand" aria-hidden />
+              Penggunaan promo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-12 w-full" />
+            ) : (insights?.promo_breakdown.length ?? 0) === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">
+                Belum ada transaksi yang menggunakan kode promo.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[360px] text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 pr-3 font-medium">Kode promo</th>
+                      <th className="pb-2 pr-3 font-medium">Penggunaan</th>
+                      <th className="pb-2 font-medium text-right">Total diskon</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {insights?.promo_breakdown.map((row) => (
+                      <tr key={row.code}>
+                        <td className="py-3 pr-3 font-medium text-foreground">{row.code}</td>
+                        <td className="py-3 pr-3 text-muted-foreground">{row.usage_count}x</td>
+                        <td className="py-3 text-right font-medium text-destructive">
+                          −{formatIdr(row.discount_total)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card className="h-full">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Ticket className="size-4 text-brand" aria-hidden />
-              Breakdown per tiket
+              Penjualan tiket
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -65,19 +106,23 @@ export function EventDashboardInsightsPanel({
               </p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[320px] text-sm">
+                <table className="w-full min-w-[480px] text-sm">
                   <thead>
                     <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 pr-3 font-medium">Tipe</th>
-                      <th className="pb-2 pr-3 font-medium">Terjual</th>
+                      <th className="pb-2 pr-3 font-medium">Nama tiket</th>
+                      <th className="pb-2 pr-3 font-medium text-right">Harga tiket</th>
+                      <th className="pb-2 pr-3 font-medium">Tiket terjual</th>
                       <th className="pb-2 pr-3 font-medium">Sisa</th>
-                      <th className="pb-2 font-medium text-right">Gross</th>
+                      <th className="pb-2 font-medium text-right">Total penjualan</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {insights?.ticket_breakdown.map((row) => (
                       <tr key={row.ticket_type_id}>
                         <td className="py-3 pr-3 font-medium text-foreground">{row.name}</td>
+                        <td className="py-3 pr-3 text-right text-muted-foreground">
+                          {formatIdr(row.unit_price)}
+                        </td>
                         <td className="py-3 pr-3 text-muted-foreground">
                           {row.sold}
                           {row.quantity > 0 ? ` / ${row.quantity}` : ""}
@@ -87,6 +132,27 @@ export function EventDashboardInsightsPanel({
                       </tr>
                     ))}
                   </tbody>
+                  {(insights?.ticket_breakdown.length ?? 0) > 0 ? (
+                    <tfoot>
+                      <tr className="border-t font-semibold text-foreground">
+                        <td className="py-3 pr-3" colSpan={2}>
+                          Total penjualan tiket
+                        </td>
+                        <td className="py-3 pr-3">
+                          {insights?.ticket_breakdown.reduce((sum, row) => sum + row.sold, 0)}
+                        </td>
+                        <td className="py-3 pr-3" />
+                        <td className="py-3 text-right">
+                          {formatIdr(
+                            insights?.ticket_breakdown.reduce(
+                              (sum, row) => sum + row.revenue_gross,
+                              0,
+                            ) ?? 0,
+                          )}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  ) : null}
                 </table>
               </div>
             )}

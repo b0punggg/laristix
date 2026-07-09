@@ -9,20 +9,22 @@ import type { CreateCheckoutPayload } from "@/types/checkout";
 export const checkoutKeys = {
   all: ["checkout"] as const,
   order: (uuid: string) => ["checkout", "order", uuid] as const,
-  quote: (eventUuid: string, ticketTypeId: number, quantity: number) =>
-    ["checkout", "quote", eventUuid, ticketTypeId, quantity] as const,
+  quote: (eventUuid: string, ticketTypeId: number, quantity: number, promoCode?: string) =>
+    ["checkout", "quote", eventUuid, ticketTypeId, quantity, promoCode ?? ""] as const,
 };
 
 export function useCheckoutQuoteQuery(
   eventUuid: string,
   ticketTypeId: number,
   quantity: number,
+  promoCode?: string,
   enabled = true,
 ) {
   return useQuery({
-    queryKey: checkoutKeys.quote(eventUuid, ticketTypeId, quantity),
-    queryFn: () => checkoutApi.quote(eventUuid, ticketTypeId, quantity),
+    queryKey: checkoutKeys.quote(eventUuid, ticketTypeId, quantity, promoCode),
+    queryFn: () => checkoutApi.quote(eventUuid, ticketTypeId, quantity, promoCode),
     enabled: enabled && ticketTypeId > 0 && quantity > 0,
+    retry: false,
   });
 }
 

@@ -32,5 +32,6 @@ final class CreateCheckoutDto
         public readonly ?string $userAgent,
         public readonly array $answers = [],
         public readonly array $attendees = [],
+        public readonly ?string $promoCode = null,
     ) {}
 }

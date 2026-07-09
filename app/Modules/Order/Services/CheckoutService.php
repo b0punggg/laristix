@@ -8,6 +8,7 @@ use App\Modules\Event\Models\Event;
 use App\Modules\Event\Support\EventCheckoutSettings;
 use App\Modules\Order\Contracts\CheckoutServiceInterface;
 use App\Modules\Order\Contracts\OrderFulfillmentServiceInterface;
+use App\Modules\Order\Contracts\PromoCodeServiceInterface;
 use App\Modules\Order\DTOs\CreateCheckoutDto;
 use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Order\Enums\RegistrationStatus;
@@ -15,6 +16,7 @@ use App\Modules\Order\Exceptions\CheckoutException;
 use App\Modules\Order\Exceptions\OrderNotFoundException;
 use App\Modules\Order\Models\Order;
 use App\Modules\Order\Models\OrderItem;
+use App\Modules\Order\Models\PromoCode;
 use App\Modules\Order\Models\Registration;
 use App\Modules\Order\Repositories\Contracts\OrderRepositoryInterface;
 use App\Modules\Organizer\Models\OrganizerFeeConfig;
@@ -34,6 +36,7 @@ class CheckoutService implements CheckoutServiceInterface
         private readonly PlatformSettingServiceInterface $platformSettings,
         private readonly OrganizerComplianceService $complianceService,
         private readonly RegistrationFormService $registrationForms,
+        private readonly PromoCodeServiceInterface $promoCodes,
     ) {}
 
     public function checkout(CreateCheckoutDto $dto): array
@@ -100,10 +103,16 @@ class CheckoutService implements CheckoutServiceInterface
                 );
             }
 
+            $promoResolution = $this->resolvePromoDiscount($event, $subtotal, $dto->promoCode);
+            /** @var PromoCode|null $promo */
+            $promo = $promoResolution['promo'];
+            $discountAmount = $promoResolution['discount_amount'];
+
             $pricing = $this->calculatePricing(
                 $event->organizer_id,
                 $subtotal,
-                $checkoutSettings->feeBearer
+                $checkoutSettings->feeBearer,
+                $discountAmount,
             );
 
             $buyerMetadata = $this->buildBuyerMetadata($dto);
@@ -119,19 +128,25 @@ class CheckoutService implements CheckoutServiceInterface
                 'status' => OrderStatus::PENDING,
                 'currency' => $ticketType->currency,
                 'subtotal' => $subtotal,
-                'discount_amount' => 0,
+                'discount_amount' => $pricing['discount_amount'],
                 'platform_fee_pct_rate' => $pricing['platform_fee_pct_rate'],
                 'platform_fee_flat' => $pricing['platform_fee_flat'],
                 'platform_fee_total' => $pricing['platform_fee_total'],
                 'fee_bearer' => $pricing['fee_bearer'],
                 'total_amount' => $pricing['total_amount'],
                 'organizer_net_amount' => $pricing['organizer_net_amount'],
+                'promo_code_id' => $promo?->id,
+                'promo_code_snapshot' => $promo?->code,
                 'idempotency_key' => $dto->idempotencyKey,
                 'expires_at' => now()->addMinutes((int) config('order_module.order_ttl_minutes', 30)),
                 'ip_address' => $dto->ipAddress,
                 'user_agent' => $dto->userAgent,
                 'metadata' => $buyerMetadata !== [] ? ['buyer_profile' => $buyerMetadata] : null,
             ]);
+
+            if ($promo !== null) {
+                $this->promoCodes->reserve($order, $promo, $pricing['discount_amount']);
+            }
 
             $orderItem = OrderItem::withoutOrganizerScope()->create([
                 'order_id' => $order->id,
@@ -200,7 +215,7 @@ class CheckoutService implements CheckoutServiceInterface
      *   organizer_net_amount: float
      * }
      */
-    public function quote(Event $event, TicketType $ticketType, int $quantity): array
+    public function quote(Event $event, TicketType $ticketType, int $quantity, ?string $promoCode = null): array
     {
         $checkoutSettings = EventCheckoutSettings::fromEventSettings($event->settings);
         $maxPerOrder = $checkoutSettings->effectiveMaxPerOrder($ticketType->max_per_order);
@@ -212,13 +227,21 @@ class CheckoutService implements CheckoutServiceInterface
         }
 
         $subtotal = round((float) $ticketType->price * $quantity, 2);
+        $promoResolution = $this->resolvePromoDiscount($event, $subtotal, $promoCode);
+        /** @var PromoCode|null $promo */
+        $promo = $promoResolution['promo'];
+
         $pricing = $this->calculatePricing(
             $event->organizer_id,
             $subtotal,
-            $checkoutSettings->feeBearer
+            $checkoutSettings->feeBearer,
+            $promoResolution['discount_amount'],
         );
 
-        return array_merge(['subtotal' => $subtotal], $pricing);
+        return array_merge(['subtotal' => $subtotal], $pricing, [
+            'promo_code' => $promo?->code,
+            'promo_description' => $promo?->description,
+        ]);
     }
 
     public function showPublic(string $uuid): Order
@@ -413,7 +436,34 @@ class CheckoutService implements CheckoutServiceInterface
     }
 
     /**
+     * @return array{discount_amount: float, promo: PromoCode|null}
+     */
+    private function resolvePromoDiscount(Event $event, float $subtotal, ?string $promoCode): array
+    {
+        if ($promoCode === null || trim($promoCode) === '') {
+            return [
+                'discount_amount' => 0.0,
+                'promo' => null,
+            ];
+        }
+
+        $promo = $this->promoCodes->findForEvent($event, $promoCode);
+
+        if ($promo === null) {
+            throw CheckoutException::make('Kode promo tidak ditemukan.');
+        }
+
+        $this->promoCodes->validate($promo, $event, $subtotal);
+
+        return [
+            'discount_amount' => $this->promoCodes->calculateDiscount($promo, $subtotal),
+            'promo' => $promo,
+        ];
+    }
+
+    /**
      * @return array{
+     *   discount_amount: float,
      *   platform_fee_pct_rate: float,
      *   platform_fee_flat: float,
      *   platform_fee_total: float,
@@ -422,8 +472,12 @@ class CheckoutService implements CheckoutServiceInterface
      *   organizer_net_amount: float
      * }
      */
-    private function calculatePricing(int $organizerId, float $subtotal, ?string $eventFeeBearer = null): array
-    {
+    private function calculatePricing(
+        int $organizerId,
+        float $subtotal,
+        ?string $eventFeeBearer = null,
+        float $discountAmount = 0,
+    ): array {
         $config = OrganizerFeeConfig::query()
             ->where('organizer_id', $organizerId)
             ->where('effective_from', '<=', now())
@@ -437,6 +491,7 @@ class CheckoutService implements CheckoutServiceInterface
         if ($config !== null) {
             return $this->buildPricing(
                 $subtotal,
+                $discountAmount,
                 (float) $config->percentage_rate,
                 (float) $config->flat_amount,
                 $eventFeeBearer ?? $config->fee_bearer
@@ -448,6 +503,7 @@ class CheckoutService implements CheckoutServiceInterface
         if ($default !== null) {
             return $this->buildPricing(
                 $subtotal,
+                $discountAmount,
                 (float) ($default['percentage_rate'] ?? 0),
                 (float) ($default['flat_amount'] ?? 0),
                 $eventFeeBearer ?? (string) ($default['fee_bearer'] ?? 'attendee')
@@ -456,18 +512,12 @@ class CheckoutService implements CheckoutServiceInterface
 
         $feeBearer = $eventFeeBearer ?? 'attendee';
 
-        return [
-            'platform_fee_pct_rate' => 0,
-            'platform_fee_flat' => 0,
-            'platform_fee_total' => 0,
-            'fee_bearer' => $feeBearer,
-            'total_amount' => $subtotal,
-            'organizer_net_amount' => $subtotal,
-        ];
+        return $this->buildPricing($subtotal, $discountAmount, 0, 0, $feeBearer);
     }
 
     /**
      * @return array{
+     *   discount_amount: float,
      *   platform_fee_pct_rate: float,
      *   platform_fee_flat: float,
      *   platform_fee_total: float,
@@ -478,15 +528,19 @@ class CheckoutService implements CheckoutServiceInterface
      */
     private function buildPricing(
         float $subtotal,
+        float $discountAmount,
         float $pctRate,
         float $flat,
         string $feeBearer
     ): array {
-        $feeTotal = round($subtotal * $pctRate / 100 + $flat, 2);
-        $totalAmount = $feeBearer === 'attendee' ? $subtotal + $feeTotal : $subtotal;
-        $organizerNet = $feeBearer === 'organizer' ? $subtotal - $feeTotal : $subtotal;
+        $discountAmount = min(max(0, round($discountAmount, 2)), $subtotal);
+        $netSubtotal = round($subtotal - $discountAmount, 2);
+        $feeTotal = round($netSubtotal * $pctRate / 100 + $flat, 2);
+        $totalAmount = $feeBearer === 'attendee' ? $netSubtotal + $feeTotal : $netSubtotal;
+        $organizerNet = $feeBearer === 'organizer' ? $netSubtotal - $feeTotal : $netSubtotal;
 
         return [
+            'discount_amount' => $discountAmount,
             'platform_fee_pct_rate' => $pctRate,
             'platform_fee_flat' => $flat,
             'platform_fee_total' => $feeTotal,
