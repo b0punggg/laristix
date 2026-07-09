@@ -23,6 +23,7 @@ use App\Modules\Organizer\Models\OrganizerFeeConfig;
 use App\Modules\Organizer\Services\OrganizerComplianceService;
 use App\Modules\Payment\Contracts\MidtransSnapServiceInterface;
 use App\Modules\Ticketing\Models\TicketType;
+use App\Modules\WaitingRoom\Contracts\WaitingRoomServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -37,6 +38,7 @@ class CheckoutService implements CheckoutServiceInterface
         private readonly OrganizerComplianceService $complianceService,
         private readonly RegistrationFormService $registrationForms,
         private readonly PromoCodeServiceInterface $promoCodes,
+        private readonly WaitingRoomServiceInterface $waitingRoom,
     ) {}
 
     public function checkout(CreateCheckoutDto $dto): array
@@ -138,7 +140,7 @@ class CheckoutService implements CheckoutServiceInterface
                 'promo_code_id' => $promo?->id,
                 'promo_code_snapshot' => $promo?->code,
                 'idempotency_key' => $dto->idempotencyKey,
-                'expires_at' => now()->addMinutes((int) config('order_module.order_ttl_minutes', 30)),
+                'expires_at' => now()->addMinutes($this->waitingRoom->getOrderTtlMinutes($event->id)),
                 'ip_address' => $dto->ipAddress,
                 'user_agent' => $dto->userAgent,
                 'metadata' => $buyerMetadata !== [] ? ['buyer_profile' => $buyerMetadata] : null,

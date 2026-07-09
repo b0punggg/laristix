@@ -15,6 +15,7 @@ import type {
   PlatformSetting,
   StoreOrganizerFeeConfigPayload,
   UpdateAdminWithdrawalPayload,
+  AdminQueueListResponse,
 } from "@/types/admin";
 import type { PaginatedResponse } from "@/types/event";
 import { fetchAllPaginated } from "@/lib/fetch-paginated-all";
@@ -130,6 +131,22 @@ export const adminApi = {
     await ensureCsrfCookie();
     const { data } = await apiClient.delete<{ message: string }>(
       apiPaths.admin.organizerFeeConfig(organizerUuid, feeConfigId),
+    );
+    return data;
+  },
+
+  async listWaitingRoomQueues(filters: { search?: string; active_only?: boolean } = {}) {
+    const { data } = await apiClient.get<ApiResponse<AdminQueueListResponse>>(
+      apiPaths.admin.waitingRoomQueues,
+      { params: filters },
+    );
+    return data.data;
+  },
+
+  async promoteWaitingRoomEvent(eventUuid: string) {
+    await ensureCsrfCookie();
+    const { data } = await apiClient.post<ApiResponse<{ promoted_count: number }>>(
+      apiPaths.admin.waitingRoomPromote(eventUuid),
     );
     return data;
   },

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AuthGuard } from "@/components/features/auth/auth-guard";
 import { CheckoutPanel } from "@/components/features/checkout/checkout-panel";
+import { CheckoutQueueGuard } from "@/components/features/checkout/checkout-queue-guard";
 
 interface CheckoutPageProps {
   params: { uuid: string };
@@ -13,13 +14,19 @@ function CheckoutPageContent({ params, searchParams }: CheckoutPageProps) {
 
   return (
     <AuthGuard requireEmailVerified={false} preserveReturnUrl>
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <CheckoutPanel
-          eventUuid={params.uuid}
-          ticketTypeId={ticketTypeId}
-          initialQuantity={initialQuantity}
-        />
-      </div>
+      <CheckoutQueueGuard
+        eventUuid={params.uuid}
+        ticketTypeId={ticketTypeId}
+        quantity={initialQuantity}
+      >
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <CheckoutPanel
+            eventUuid={params.uuid}
+            ticketTypeId={ticketTypeId}
+            initialQuantity={initialQuantity}
+          />
+        </div>
+      </CheckoutQueueGuard>
     </AuthGuard>
   );
 }

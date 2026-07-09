@@ -12,11 +12,12 @@ Route::prefix('public')->name('public.')->group(function () {
         ->name('events.registration-form.show');
 
     Route::get('events/{eventUuid}/checkout/quote', [CheckoutQuoteController::class, 'show'])
+        ->middleware('waiting-room.admit')
         ->name('events.checkout.quote');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('events/{eventUuid}/checkout', [CheckoutController::class, 'store'])
-            ->middleware('throttle:'.config('order_module.rate_limits.checkout'))
+            ->middleware(['waiting-room.admit', 'throttle:'.config('order_module.rate_limits.checkout')])
             ->name('events.checkout');
 
         Route::get('orders', [PublicOrderController::class, 'index'])

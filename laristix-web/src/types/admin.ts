@@ -165,3 +165,59 @@ export type AdminWithdrawalDocumentType =
   | "invoice"
   | "supporting_document"
   | "transfer_proof";
+
+export interface AdminQueueEventSummary {
+  uuid: string;
+  title: string;
+  status: string;
+  start_at: string | null;
+  organizer: {
+    uuid: string;
+    name: string;
+    slug: string;
+  } | null;
+}
+
+export interface AdminQueueSnapshot {
+  event: AdminQueueEventSummary;
+  queue_active: boolean;
+  waiting_count: number;
+  admitted_count: number;
+  promoted_total: number;
+  traffic_count: number;
+  traffic_threshold: number;
+  traffic_window_seconds: number;
+  traffic_pressure_percent: number;
+  admission_slot_rate_percent: number;
+  admitted_rate_percent: number;
+  queue_activated_at: string | null;
+  last_promote_at: string | null;
+  order_ttl_minutes: number;
+  waiting_room_enabled: boolean;
+}
+
+export interface AdminQueueSummary {
+  tracked_events: number;
+  active_queues: number;
+  total_waiting: number;
+  total_admitted: number;
+  total_promoted: number;
+  avg_admitted_rate_percent: number;
+  max_traffic_pressure_percent: number;
+}
+
+export interface AdminQueueConfig {
+  enabled: boolean;
+  admit_batch_size: number;
+  admit_interval_seconds: number;
+  admission_token_ttl_seconds: number;
+  traffic_threshold: number;
+  traffic_window_seconds: number;
+  order_ttl_high_demand_minutes: number;
+}
+
+export interface AdminQueueListResponse {
+  summary: AdminQueueSummary;
+  queues: AdminQueueSnapshot[];
+  config: AdminQueueConfig;
+}

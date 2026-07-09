@@ -1,5 +1,6 @@
 import { apiClient, ensureCsrfCookie } from "@/lib/api/client";
 import { apiPaths } from "@/config/env";
+import { getQueueSessionToken } from "@/lib/waiting-room-session";
 import type { ApiResponse } from "@/types/auth";
 import type {
   CheckoutResponse,
@@ -12,12 +13,19 @@ import type {
 export const checkoutApi = {
   async create(eventUuid: string, payload: CreateCheckoutPayload, idempotencyKey?: string) {
     await ensureCsrfCookie();
-    const headers = idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined;
+    const queueSession = getQueueSessionToken(eventUuid);
+    const headers: Record<string, string> = {};
+    if (idempotencyKey) {
+      headers["Idempotency-Key"] = idempotencyKey;
+    }
+    if (queueSession) {
+      headers["X-Queue-Session"] = queueSession;
+    }
     const { data } = await apiClient.post<ApiResponse<CheckoutResponse>>(
       apiPaths.checkout.create(eventUuid),
       payload,
       {
-        headers,
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
       },
     );
     return data.data;
@@ -31,8 +39,11 @@ export const checkoutApi = {
     if (promoCode) {
       params.set("promo_code", promoCode);
     }
+    const queueSession = getQueueSessionToken(eventUuid);
+    const headers = queueSession ? { "X-Queue-Session": queueSession } : undefined;
     const { data } = await apiClient.get<ApiResponse<CheckoutQuote>>(
       `${apiPaths.checkout.quote(eventUuid)}?${params.toString()}`,
+      { headers },
     );
     return data.data;
   },

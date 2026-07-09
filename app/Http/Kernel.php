@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'resolve.organizer' => \App\Core\Tenancy\Middleware\ResolveOrganizerContext::class,
         'organizer.context' => \App\Core\Tenancy\Middleware\EnsureOrganizerContext::class,
+        'waiting-room.admit' => \App\Modules\WaitingRoom\Http\Middleware\EnsureCheckoutQueueAccess::class,
     ];
 }

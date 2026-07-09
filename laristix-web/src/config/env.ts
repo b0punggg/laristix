@@ -107,6 +107,10 @@ export const apiPaths = {
     showOrder: (uuid: string) => `/api/v1/public/orders/${uuid}`,
     validatePayment: (uuid: string) => `/api/v1/public/orders/${uuid}/validate-payment`,
   },
+  waitingRoom: {
+    status: (eventUuid: string) => `/api/v1/public/events/${eventUuid}/queue/status`,
+    join: (eventUuid: string) => `/api/v1/public/events/${eventUuid}/queue/join`,
+  },
   checkIn: {
     gates: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/gates`,
     verify: (eventUuid: string) => `/api/v1/events/${eventUuid}/check-ins/verify`,
@@ -129,6 +133,9 @@ export const apiPaths = {
     organizerFeeConfigs: (uuid: string) => `/api/v1/admin/organizers/${uuid}/fee-configs`,
     organizerFeeConfig: (uuid: string, id: number) =>
       `/api/v1/admin/organizers/${uuid}/fee-configs/${id}`,
+    waitingRoomQueues: "/api/v1/admin/waiting-room/queues",
+    waitingRoomEvent: (uuid: string) => `/api/v1/admin/waiting-room/events/${uuid}`,
+    waitingRoomPromote: (uuid: string) => `/api/v1/admin/waiting-room/events/${uuid}/promote`,
   },
 } as const;
 
@@ -149,6 +156,13 @@ export const routes = {
       params.set("qty", String(qty));
     }
     return `/events/${uuid}/checkout?${params.toString()}`;
+  },
+  publicEventWaitingRoom: (uuid: string, ticketTypeId: number, qty = 1) => {
+    const params = new URLSearchParams({ ticket: String(ticketTypeId) });
+    if (qty > 1) {
+      params.set("qty", String(qty));
+    }
+    return `/events/${uuid}/waiting-room?${params.toString()}`;
   },
   checkoutFinish: (orderUuid: string) => `/checkout/${orderUuid}/finish`,
   myTickets: "/my/tickets",
@@ -185,6 +199,7 @@ export const routes = {
   adminOrganizers: "/admin/organizers",
   adminOrganizerDetail: (uuid: string) => `/admin/organizers/${uuid}`,
   adminWithdrawals: "/admin/withdrawals",
+  adminWaitingRoom: "/admin/waiting-room",
   adminSettings: "/admin/settings",
   adminAnalytics: "/admin/analytics",
   adminLogs: "/admin/logs",
